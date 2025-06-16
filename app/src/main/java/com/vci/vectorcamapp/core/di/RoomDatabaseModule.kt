@@ -58,14 +58,32 @@ object RoomDatabaseModule {
                         SiteEntity(
                             id = 1,
                             programId = 1,
-                            district = "Jinja",
-                            subCounty = "Bugembe",
-                            parish = "Kakira",
-                            sentinelSite = "Site A",
+                            district = "Mayuge",
+                            subCounty = "county1",
+                            parish = "Bukatube",
+                            sentinelSite = "Bukasero",
                             healthCenter = "Health Center 1"
                         ),
                         SiteEntity(
                             id = 2,
+                            programId = 1,
+                            district = "Mayuge",
+                            subCounty = "county2",
+                            parish = "Malongo",
+                            sentinelSite = "Namadhi",
+                            healthCenter = "Health Center 2"
+                        ),
+                        SiteEntity(
+                            id = 3,
+                            programId = 1,
+                            district = "Adjumani",
+                            subCounty = "county3",
+                            parish = "Ofua",
+                            sentinelSite = "Ofua Site",
+                            healthCenter = "Health Center 3"
+                        ),
+                        SiteEntity(
+                            id = 4,
                             programId = 2,
                             district = "Kisumu",
                             subCounty = "Central",

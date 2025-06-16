@@ -19,20 +19,26 @@
     <!-- Network error: Unknown error -->
     <string name="network_error_unknown">An unknown error occurred. Please try again or contact support if the issue persists.</string>
 
-    <!-- Form validation error: Blank country -->
-    <string name="form_validation_error_blank_country">Country is required.</string>
+    <!-- Form validation error: Blank collector title -->
+    <string name="form_validation_error_blank_collector_title">Collector title is required.</string>
+
+    <!-- Form validation error: Blank collector name -->
+    <string name="form_validation_error_blank_collector_name">Collector name is required.</string>
 
     <!-- Form validation error: Blank district -->
     <string name="form_validation_error_blank_district">District is required.</string>
-
-    <!-- Form validation error: Blank health center -->
-    <string name="form_validation_error_blank_health_center">Health center is required.</string>
 
     <!-- Form validation error: Blank sentinel site -->
     <string name="form_validation_error_blank_sentinel_site">Sentinel site is required.</string>
 
     <!-- Form validation error: Blank household number -->
-    <string name="form_validation_error_blank_household_number">Household number is required.</string>
+    <string name="form_validation_error_blank_house_number">House number is required.</string>
+
+    <!-- Form validation error: Blank LLIN type -->
+    <string name="form_validation_error_blank_llin_type">LLIN type is required when LLINs are available.</string>
+
+    <!-- Form validation error: Blank LLIN brand -->
+    <string name="form_validation_error_blank_llin_brand">LLIN brand is required when LLINs are available.</string>
 
     <!-- Form validation error: Future collection date -->
     <string name="form_validation_error_future_collection_date">Collection date cannot be in the future.</string>
@@ -40,17 +46,8 @@
     <!-- Form validation error: Blank collection method -->
     <string name="form_validation_error_blank_collection_method">Collection method is required.</string>
 
-    <!-- Form validation error: Blank collector name -->
-    <string name="form_validation_error_blank_collector_name">Collector name is required.</string>
-
-    <!-- Form validation error: Blank collector title -->
-    <string name="form_validation_error_blank_collector_title">Collector title is required.</string>
-
-    <!-- Form validation error: Blank LLIN type -->
-    <string name="form_validation_error_blank_llin_type">LLIN type is required when LLINs are available.</string>
-
-    <!-- Form validation error: Blank LLIN brand -->
-    <string name="form_validation_error_blank_llin_brand">LLIN brand is required when LLINs are available.</string>
+    <!-- Form validation error: Blank specimen condition -->
+    <string name="form_validation_error_blank_specimen_condition">Specimen condition is required.</string>
 
     <!-- Imaging error: Capture error -->
     <string name="imaging_error_capture_error">Couldn’t take the photo. Please try again.</string>
