@@ -3,7 +3,9 @@ package com.vci.vectorcamapp.core.di
 import android.util.Log
 import com.vci.vectorcamapp.BuildConfig
 import com.vci.vectorcamapp.core.data.cache.CurrentSessionCacheImplementation
+import com.vci.vectorcamapp.core.data.cache.DeviceCacheImplementation
 import com.vci.vectorcamapp.core.domain.cache.CurrentSessionCache
+import com.vci.vectorcamapp.core.domain.cache.DeviceCache
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
@@ -23,6 +25,12 @@ import javax.inject.Singleton
 //    abstract fun bindCurrentSessionCache(
 //        currentSessionCacheImplementation: CurrentSessionCacheImplementation
 //    ) : CurrentSessionCache
+//
+//    @Binds
+//    @Singleton
+//    abstract fun bindDeviceCache(
+//        deviceCacheImplementation: DeviceCacheImplementation
+//    ) : DeviceCache
 //}
 
 // TODO: ⚠️ For development only: wipe database on every launch
@@ -41,6 +49,14 @@ object CacheModule {
                 impl.clearSession()
             }
         }
+        return impl
+    }
+
+    @Provides
+    @Singleton
+    fun provideDeviceCache(
+        impl: DeviceCacheImplementation
+    ): DeviceCache {
         return impl
     }
 }
