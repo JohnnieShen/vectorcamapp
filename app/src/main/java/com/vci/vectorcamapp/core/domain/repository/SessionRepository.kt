@@ -9,6 +9,7 @@ import java.util.UUID
 
 interface SessionRepository {
     suspend fun upsertSession(session: Session): Result<Unit, RoomDbError>
+    fun getSessionById(sessionId: UUID): Session?
     suspend fun deleteSession(session: Session): Boolean
     suspend fun markSessionAsComplete(sessionId: UUID): Boolean
     fun observeCompleteSessions(): Flow<List<Session>>

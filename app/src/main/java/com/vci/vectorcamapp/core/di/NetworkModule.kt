@@ -30,6 +30,7 @@ object NetworkModule {
             install(ContentNegotiation) {
                 json(json = Json {
                     ignoreUnknownKeys = true
+                    encodeDefaults = true
                 })
             }
         }

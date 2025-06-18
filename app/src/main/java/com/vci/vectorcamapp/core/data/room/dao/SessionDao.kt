@@ -17,6 +17,9 @@ interface SessionDao {
     @Upsert
     suspend fun upsertSession(session: SessionEntity): Long
 
+    @Query("SELECT * FROM session WHERE id = :sessionId")
+    fun getSessionById(sessionId: UUID): SessionEntity?
+
     @Delete
     suspend fun deleteSession(session: SessionEntity): Int
 

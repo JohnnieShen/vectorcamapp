@@ -9,8 +9,10 @@ import androidx.work.Constraints
 import androidx.work.ExistingWorkPolicy
 import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.OutOfQuotaPolicy
 import androidx.work.WorkManager
 import androidx.work.WorkRequest
+import androidx.work.workDataOf
 import com.vci.vectorcamapp.core.data.room.TransactionHelper
 import com.vci.vectorcamapp.core.data.upload.image.ImageUploadWorker
 import com.vci.vectorcamapp.core.data.upload.metadata.MetadataUploadWorker
@@ -154,29 +156,30 @@ class ImagingViewModel @Inject constructor(
                     }
                     val success = sessionRepository.markSessionAsComplete(currentSession.id)
                     if (success) {
-                        currentSessionCache.clearSession()
-                        _events.send(ImagingEvent.NavigateBackToLandingScreen)
-
                         val uploadConstraints = Constraints.Builder()
                             .setRequiredNetworkType(NetworkType.CONNECTED)
                             .build()
 
                         val metadataUploadRequest = OneTimeWorkRequestBuilder<MetadataUploadWorker>()
+                            .setInputData(workDataOf("sessionId" to currentSession.id.toString()))
                             .setConstraints(uploadConstraints)
                             .setBackoffCriteria(
                                 BackoffPolicy.LINEAR,
                                 WorkRequest.MIN_BACKOFF_MILLIS,
                                 TimeUnit.MILLISECONDS,
                             )
+                            .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
                             .build()
 
                         val imageUploadRequest = OneTimeWorkRequestBuilder<ImageUploadWorker>()
+                            .setInputData(workDataOf("sessionId" to currentSession.id.toString()))
                             .setConstraints(uploadConstraints)
                             .setBackoffCriteria(
                                 BackoffPolicy.LINEAR,
                                 WorkRequest.MIN_BACKOFF_MILLIS,
                                 TimeUnit.MILLISECONDS,
                             )
+                            .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
                             .build()
 
                         WorkManager.getInstance(context).beginUniqueWork(
@@ -184,6 +187,9 @@ class ImagingViewModel @Inject constructor(
                             ExistingWorkPolicy.REPLACE,
                             metadataUploadRequest
                         ).then(imageUploadRequest).enqueue()
+
+                        currentSessionCache.clearSession()
+                        _events.send(ImagingEvent.NavigateBackToLandingScreen)
                     }
                 }
 

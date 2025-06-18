@@ -6,15 +6,19 @@ import android.content.Context
 import android.content.pm.ServiceInfo
 import android.util.Log
 import androidx.core.app.NotificationCompat
+import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.ForegroundInfo
 import androidx.work.WorkerParameters
 import com.vci.vectorcamapp.R
+import dagger.assisted.Assisted
+import dagger.assisted.AssistedInject
 import kotlinx.coroutines.delay
 
-class ImageUploadWorker(
-    private val context: Context,
-    workerParams: WorkerParameters,
+@HiltWorker
+class ImageUploadWorker @AssistedInject constructor(
+    @Assisted private val context: Context,
+    @Assisted workerParams: WorkerParameters
 ) : CoroutineWorker(context, workerParams) {
 
     private val notificationManager: NotificationManager =
@@ -25,10 +29,13 @@ class ImageUploadWorker(
 
         setForeground(createForegroundInfo())
 
+        val sessionId = inputData.getString("sessionId")
+
         try {
             for (i in 1..TOTAL_IMAGES) {
                 // Simulate image upload
                 delay(1000)
+                Log.d("UploadWorker", "Uploading image $sessionId")
                 updateNotification(i)
             }
 
