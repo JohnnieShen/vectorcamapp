@@ -8,4 +8,5 @@ data class LandingState(
     val isLoading: Boolean = false,
     val incompleteSessions: List<Session> = emptyList(),
     val completeSessions: List<Session> = emptyList(),
+    val showResumeDialog: Boolean = false
 )

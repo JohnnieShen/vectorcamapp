@@ -29,12 +29,16 @@ import com.vci.vectorcamapp.imaging.presentation.extensions.toUprightBitmap
 import com.vci.vectorcamapp.imaging.presentation.model.composites.SpecimenAndBoundingBoxUi
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
@@ -51,59 +55,56 @@ class ImagingViewModel @Inject constructor(
     private val specimenRepository: SpecimenRepository,
     private val boundingBoxRepository: BoundingBoxRepository,
     private val cameraRepository: CameraRepository,
-    private val inferenceRepository: InferenceRepository,
+    private val inferenceRepository: InferenceRepository
 ) : ViewModel() {
 
     @Inject
     lateinit var transactionHelper: TransactionHelper
 
-    private val _capturedSpecimensAndBoundingBoxesUi =
-        MutableStateFlow<List<SpecimenAndBoundingBoxUi>>(emptyList())
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private val specimensUiFlow: Flow<List<SpecimenAndBoundingBoxUi>> =
+        flow {
+            val session = currentSessionCache.getSession()
+            emit(session)
+        }.flatMapLatest { session ->
+            if (session == null) {
+                flowOf(emptyList())
+            } else {
+                specimenRepository
+                    .observeSpecimensAndBoundingBoxesBySession(session.localId)
+                    .map { relations ->
+                        relations.map { relation ->
+                            SpecimenAndBoundingBoxUi(
+                                specimen = relation.specimen,
+                                boundingBoxUi = inferenceRepository
+                                    .convertToBoundingBoxUi(relation.boundingBox)
+                            )
+                        }
+                    }
+            }
+        }
+
     private val _state = MutableStateFlow(ImagingState())
-    val state = combine(
-        _capturedSpecimensAndBoundingBoxesUi, _state
-    ) { capturedSpecimensAndBoundingBoxesUi, state ->
-        state.copy(
-            capturedSpecimensAndBoundingBoxesUi = capturedSpecimensAndBoundingBoxesUi
-        )
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), ImagingState())
+    val state: StateFlow<ImagingState> = combine(
+        specimensUiFlow,
+        _state
+    ) { specimensUi, state ->
+        state.copy(capturedSpecimensAndBoundingBoxesUi = specimensUi)
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000L),
+        initialValue = ImagingState()
+    )
 
     private val _events = Channel<ImagingEvent>()
     val events = _events.receiveAsFlow()
 
     init {
         viewModelScope.launch {
-            val currentSession = currentSessionCache.getSession()
-            if (currentSession == null) {
+            if (currentSessionCache.getSession() == null) {
                 _events.send(ImagingEvent.NavigateBackToLandingScreen)
                 _events.send(ImagingEvent.DisplayImagingError(ImagingError.NO_ACTIVE_SESSION))
-                return@launch
             }
-
-            sessionRepository.observeSessionWithSpecimens(currentSession.localId).filterNotNull()
-                .collectLatest { sessionWithSpecimens ->
-                    val specimensAndBoundingBoxUiFlows =
-                        sessionWithSpecimens.specimens.map { specimen ->
-                            specimenRepository.observeSpecimenAndBoundingBox(specimen.id)
-                                .filterNotNull().map { specimenAndBoundingBox ->
-                                    val boundingBoxUi = inferenceRepository.convertToBoundingBoxUi(
-                                        specimenAndBoundingBox.boundingBox
-                                    )
-                                    SpecimenAndBoundingBoxUi(
-                                        specimen = specimenAndBoundingBox.specimen,
-                                        boundingBoxUi = boundingBoxUi
-                                    )
-                                }
-                        }
-                    if (specimensAndBoundingBoxUiFlows.isEmpty()) {
-                        _capturedSpecimensAndBoundingBoxesUi.value = emptyList()
-                    } else {
-                        combine(specimensAndBoundingBoxUiFlows) { it.toList() }.collect { capturedSpecimensAndBoundingBoxesUi ->
-                            _capturedSpecimensAndBoundingBoxesUi.value =
-                                capturedSpecimensAndBoundingBoxesUi
-                        }
-                    }
-                }
         }
     }
 

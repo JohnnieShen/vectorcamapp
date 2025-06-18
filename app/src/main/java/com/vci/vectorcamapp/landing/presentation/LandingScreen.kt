@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.material3.AlertDialog
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Badge
@@ -19,6 +20,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -147,6 +149,23 @@ fun LandingScreen(
             text = "Version: ${state.versionName}",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onBackground
+        )
+    }
+    if (state.showResumeDialog) {
+        AlertDialog(
+            onDismissRequest = { onAction(LandingAction.DismissResumePrompt) },
+            title = { Text("Resume unfinished session?") },
+            text = { Text("You have an incomplete surveillance session. Resume where you left off?") },
+            confirmButton = {
+                TextButton(onClick = { onAction(LandingAction.ResumeSession) }) {
+                    Text("Yes, resume")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { onAction(LandingAction.DismissResumePrompt) }) {
+                    Text("No, start new")
+                }
+            }
         )
     }
 }

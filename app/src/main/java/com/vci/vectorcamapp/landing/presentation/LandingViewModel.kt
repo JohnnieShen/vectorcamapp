@@ -3,6 +3,9 @@ package com.vci.vectorcamapp.landing.presentation
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.vci.vectorcamapp.core.domain.cache.CurrentSessionCache
+import com.vci.vectorcamapp.core.domain.repository.SessionRepository
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -13,8 +16,12 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-class LandingViewModel : ViewModel() {
+@HiltViewModel
+class LandingViewModel @Inject constructor(
+    private val currentSessionCache: CurrentSessionCache,
+) : ViewModel() {
     private val _state = MutableStateFlow(LandingState())
     val state: StateFlow<LandingState> = _state.onStart {
         loadCompleteAndIncompleteSessions()
@@ -24,6 +31,14 @@ class LandingViewModel : ViewModel() {
 
     private val _events = Channel<LandingEvent>()
     val events = _events.receiveAsFlow()
+
+    init {
+        viewModelScope.launch {
+            if (currentSessionCache.getSession() != null) {
+                _state.update { it.copy(showResumeDialog = true) }
+            }
+        }
+    }
 
     fun onAction(action: LandingAction) {
         viewModelScope.launch {
@@ -46,6 +61,16 @@ class LandingViewModel : ViewModel() {
                     Log.d(
                         "Navigation", "ViewCompleteSessions"
                     )
+                }
+
+                LandingAction.ResumeSession -> {
+                    _state.update { it.copy(showResumeDialog = false) }
+                    _events.send(LandingEvent.NavigateToNewSurveillanceSessionScreen)
+                }
+
+                LandingAction.DismissResumePrompt -> {
+                    currentSessionCache.clearSession()
+                    _state.update { it.copy(showResumeDialog = false) }
                 }
             }
         }

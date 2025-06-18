@@ -28,4 +28,10 @@ class CurrentSessionCacheImplementation @Inject constructor(
             SessionDto()
         }
     }
+
+    override suspend fun getSiteId(): Int? {
+        val sessionDto = dataStore.data.firstOrNull()
+        return if (sessionDto == null || sessionDto.isEmpty()) null
+        else sessionDto.siteId
+    }
 }

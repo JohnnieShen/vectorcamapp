@@ -42,4 +42,16 @@ class SpecimenRepositoryImplementation @Inject constructor(
             }
         }
     }
+
+    override fun observeSpecimensAndBoundingBoxesBySession(sessionId: UUID): Flow<List<SpecimenAndBoundingBox>> {
+        return specimenDao.observeSpecimensAndBoundingBoxesBySession(sessionId)
+            .map { specimenAndBoundingBoxRelations ->
+                specimenAndBoundingBoxRelations.map {
+                    SpecimenAndBoundingBox(
+                        specimen = it.specimenEntity.toDomain(),
+                        boundingBox = it.boundingBoxEntity.toDomain()
+                    )
+                }
+            }
+    }
 }

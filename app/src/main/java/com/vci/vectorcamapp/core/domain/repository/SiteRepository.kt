@@ -4,4 +4,5 @@ import com.vci.vectorcamapp.core.domain.model.Site
 
 interface SiteRepository {
     suspend fun getAllSitesByProgramId(programId: Int): List<Site>
+    suspend fun getSiteById(id: Int): Site?
 }
