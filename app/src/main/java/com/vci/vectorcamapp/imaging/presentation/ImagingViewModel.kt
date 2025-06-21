@@ -125,12 +125,21 @@ class ImagingViewModel @Inject constructor(
                         val bitmap = action.frame.toUprightBitmap()
 
                         val specimenId = inferenceRepository.readSpecimenId(bitmap)
-                        val boundingBox = inferenceRepository.detectSpecimen(bitmap)
+                        val boundingBoxes = inferenceRepository.detectSpecimen(bitmap)
+                        Log.d("ViewModel", "Detected bounding boxes: ${boundingBoxes.size}")
+                        for (boundingBox in boundingBoxes) {
+                            Log.d("ViewModel", "Detected bounding box: ${boundingBox.topLeftX}")
+                            Log.d("ViewModel", "Detected bounding box: ${boundingBox.topLeftY}")
+                            Log.d("ViewModel", "Detected bounding box: ${boundingBox.width}")
+                            Log.d("ViewModel", "Detected bounding box: ${boundingBox.height}")
+                            Log.d("ViewModel", "Detected bounding box: ${boundingBox.confidence}")
+                            Log.d("ViewModel", "Detected bounding box: ${boundingBox.classId}")
+                        }
 
                         _state.update {
                             it.copy(
                                 currentSpecimen = it.currentSpecimen.copy(id = specimenId),
-                                currentBoundingBoxUi = boundingBox?.let { boundingBox ->
+                                boundingBoxesUiList = boundingBoxes.map { boundingBox ->
                                     inferenceRepository.convertToBoundingBoxUi(boundingBox)
                                 })
                         }
@@ -257,8 +266,7 @@ class ImagingViewModel @Inject constructor(
                         )
 
                         val success = transactionHelper.runAsTransaction {
-                            val boundingBoxUi =
-                                _state.value.currentBoundingBoxUi ?: return@runAsTransaction false
+                            val boundingBoxUi = _state.value.boundingBoxesUiList.maxByOrNull { it.confidence } ?: return@runAsTransaction false
                             val boundingBox = inferenceRepository.convertToBoundingBox(
                                 boundingBoxUi
                             )
@@ -299,7 +307,7 @@ class ImagingViewModel @Inject constructor(
                     id = "", species = null, sex = null, abdomenStatus = null
                 ),
                 currentImage = null,
-                currentBoundingBoxUi = null,
+                boundingBoxesUiList = emptyList(),
             )
         }
     }

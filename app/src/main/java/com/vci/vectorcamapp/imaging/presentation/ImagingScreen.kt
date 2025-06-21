@@ -62,10 +62,10 @@ fun ImagingScreen(
                 )
             }
 
-            (state.currentImage != null && state.currentBoundingBoxUi != null) -> {
+            (state.currentImage != null && state.boundingBoxesUiList.isNotEmpty()) -> {
                 CapturedSpecimenOverlay(
                     specimen = state.currentSpecimen,
-                    boundingBoxUi = state.currentBoundingBoxUi,
+                    boundingBoxUi = state.boundingBoxesUiList.maxBy { it.confidence },
                     modifier = modifier,
                     specimenBitmap = state.currentImage,
                     onSpecimenIdCorrected = { onAction(ImagingAction.CorrectSpecimenId(it)) },
@@ -77,7 +77,7 @@ fun ImagingScreen(
             else -> {
                 LiveCameraPreviewPage(
                     controller = controller,
-                    boundingBoxUi = state.currentBoundingBoxUi,
+                    boundingBoxesUiList = state.boundingBoxesUiList,
                     onImageCaptured = { onAction(ImagingAction.CaptureImage(controller)) },
                     onSaveSessionProgress = { onAction(ImagingAction.SaveSessionProgress) },
                     onSubmitSession = { onAction(ImagingAction.SubmitSession) },

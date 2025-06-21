@@ -84,8 +84,8 @@ class TfLiteSpecimenDetector(
 
     override fun getOutputTensorShape(): Pair<Int, Int> = outputNumChannels to outputNumElements
 
-    override suspend fun detect(bitmap: Bitmap): BoundingBox? {
-        if (!isReady()) return null
+    override suspend fun detect(bitmap: Bitmap): List<BoundingBox> {
+        if (!isReady()) return emptyList()
 
         return suspendCoroutine { continuation ->
             handler.post {
@@ -100,15 +100,15 @@ class TfLiteSpecimenDetector(
                     )
 
                     val result = synchronized(detectorLock) {
-                        if (!isReady()) return@post continuation.resume(null)
+                        if (!isReady()) return@post continuation.resume(emptyList())
                         detector?.run(input.buffer, output.buffer)
-                        getBestBox(output.floatArray)
+                        getDetectedBoxes(output.floatArray)
                     }
 
                     continuation.resume(result)
                 } catch (e: Exception) {
                     Log.e(TAG, "Inference failed: ${e.message}")
-                    continuation.resume(null)
+                    continuation.resume(emptyList())
                 }
             }
         }
@@ -136,7 +136,7 @@ class TfLiteSpecimenDetector(
         !isClosed && detector != null
     }
 
-    private fun getBestBox(boxes: FloatArray): BoundingBox? {
+    private fun getDetectedBoxes(boxes: FloatArray): List<BoundingBox> {
         val boundingBoxes = mutableListOf<BoundingBox>()
 
         for (i in 0 until outputNumChannels) {
@@ -179,7 +179,7 @@ class TfLiteSpecimenDetector(
             )
         }
 
-        return applyNMS(boundingBoxes).maxByOrNull { it.confidence }
+        return applyNMS(boundingBoxes)
     }
 
     private fun applyNMS(boxes: List<BoundingBox>): MutableList<BoundingBox> {
@@ -223,7 +223,7 @@ class TfLiteSpecimenDetector(
         private const val DEFAULT_TENSOR_WIDTH = 640
         private const val DEFAULT_NUM_CHANNELS = 25200
         private const val DEFAULT_NUM_ELEMENTS = 6
-        private const val CONFIDENCE_THRESHOLD = 0.6f
-        private const val IOU_THRESHOLD = 0.7f
+        private const val CONFIDENCE_THRESHOLD = 0.4f
+        private const val IOU_THRESHOLD = 0.5f
     }
 }

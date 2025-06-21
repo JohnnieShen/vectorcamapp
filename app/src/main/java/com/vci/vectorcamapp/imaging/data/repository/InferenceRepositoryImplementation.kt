@@ -55,7 +55,7 @@ class InferenceRepositoryImplementation @Inject constructor(
         }
     }
 
-    override suspend fun detectSpecimen(bitmap: Bitmap): BoundingBox? =
+    override suspend fun detectSpecimen(bitmap: Bitmap): List<BoundingBox> =
         withContext(Dispatchers.Default) {
             val (tensorHeight, tensorWidth) = specimenDetector.getInputTensorShape()
 
@@ -65,7 +65,7 @@ class InferenceRepositoryImplementation @Inject constructor(
 
     override suspend fun classifySpecimen(bitmap: Bitmap): Triple<SpeciesLabel?, SexLabel?, AbdomenStatusLabel?> =
         withContext(Dispatchers.Default) {
-            val boundingBox = detectSpecimen(bitmap)
+            val boundingBox = detectSpecimen(bitmap).maxByOrNull { it.confidence }
 
             val croppedAndPadded = boundingBox?.let {
                 bitmap.cropToBoundingBoxAndPad(it)
