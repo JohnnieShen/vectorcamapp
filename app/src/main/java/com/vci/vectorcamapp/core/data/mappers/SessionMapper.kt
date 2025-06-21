@@ -3,7 +3,6 @@ package com.vci.vectorcamapp.core.data.mappers
 import com.vci.vectorcamapp.core.data.dto.SessionDto
 import com.vci.vectorcamapp.core.data.room.entities.SessionEntity
 import com.vci.vectorcamapp.core.domain.model.Session
-import java.util.UUID
 
 fun SessionEntity.toDomain(): Session {
     return Session(

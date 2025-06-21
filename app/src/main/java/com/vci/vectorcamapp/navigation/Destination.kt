@@ -14,4 +14,10 @@ sealed interface Destination {
 
     @Serializable
     data object IncompleteSession : Destination
+
+    @Serializable
+    data object CompleteSessionList : Destination
+
+    @Serializable
+    data class CompleteSessionDetails(val sessionId: String) : Destination
 }
