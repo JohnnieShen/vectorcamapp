@@ -28,6 +28,10 @@ class SessionRepositoryImplementation @Inject constructor(
         }
     }
 
+    override suspend fun getSessionById(sessionId: UUID): Session? {
+        return sessionDao.getSessionById(sessionId)?.toDomain()
+    }
+
     override suspend fun deleteSession(session: Session, siteId: Int): Boolean {
         return sessionDao.deleteSession(session.toEntity(siteId)) > 0
     }

@@ -45,51 +45,52 @@ object RoomDatabaseModule {
             if (BuildConfig.DEBUG) {
                 CoroutineScope(Dispatchers.IO).launch {
                     Log.w("VectorCamDatabase", "Clearing all tables (DEBUG only)")
-//                    clearAllTables()
+                    clearAllTables()
 
                     val seededPrograms = listOf(
-                        ProgramEntity(id = 1, name = "Uganda Surveillance Program", country = "Uganda"),
-                        ProgramEntity(id = 2, name = "Kenya Research Study", country = "Kenya")
+                        ProgramEntity(id = 1, name = "Test Program", country = "Singapore"),
+                        ProgramEntity(id = 2, name = "Uganda Ministry of Health", country = "Uganda"),
+                        ProgramEntity(id = 3, name = "Jhpiego", country = "India")
                     )
 
                     programDao.insertAll(seededPrograms)
 
                     val seededSites = listOf(
                         SiteEntity(
-                            id = 1,
-                            programId = 1,
+                            id = 2,
+                            programId = 2,
                             district = "Mayuge",
-                            subCounty = "county1",
-                            parish = "Bukatube",
-                            sentinelSite = "Bukasero",
+                            subCounty = "County1",
+                            parish = "Parish1",
+                            sentinelSite = "Bukatube",
                             healthCenter = "Health Center 1"
                         ),
                         SiteEntity(
-                            id = 2,
-                            programId = 1,
+                            id = 3,
+                            programId = 2,
                             district = "Mayuge",
-                            subCounty = "county2",
-                            parish = "Malongo",
+                            subCounty = "County2",
+                            parish = "Parish2",
                             sentinelSite = "Namadhi",
                             healthCenter = "Health Center 2"
                         ),
                         SiteEntity(
-                            id = 3,
-                            programId = 1,
+                            id = 4,
+                            programId = 2,
                             district = "Adjumani",
-                            subCounty = "county3",
-                            parish = "Ofua",
-                            sentinelSite = "Ofua Site",
+                            subCounty = "County3",
+                            parish = "Parish3",
+                            sentinelSite = "Ofua",
                             healthCenter = "Health Center 3"
                         ),
                         SiteEntity(
-                            id = 4,
-                            programId = 2,
-                            district = "Kisumu",
-                            subCounty = "Central",
-                            parish = "Market",
-                            sentinelSite = "Site B",
-                            healthCenter = "Health Center 2"
+                            id = 5,
+                            programId = 3,
+                            district = "Ahmedabad",
+                            subCounty = "County4",
+                            parish = "Parish4",
+                            sentinelSite = "Vastrapur",
+                            healthCenter = "Health Center 4"
                         )
                     )
 

@@ -1,12 +1,13 @@
 package com.vci.vectorcamapp.core.di
 
+import android.os.Build
 import android.util.Log
 import com.vci.vectorcamapp.BuildConfig
 import com.vci.vectorcamapp.core.data.cache.CurrentSessionCacheImplementation
 import com.vci.vectorcamapp.core.data.cache.DeviceCacheImplementation
 import com.vci.vectorcamapp.core.domain.cache.CurrentSessionCache
 import com.vci.vectorcamapp.core.domain.cache.DeviceCache
-import dagger.Binds
+import com.vci.vectorcamapp.core.domain.model.Device
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -57,6 +58,17 @@ object CacheModule {
     fun provideDeviceCache(
         impl: DeviceCacheImplementation
     ): DeviceCache {
+        if (BuildConfig.DEBUG) {
+            CoroutineScope(Dispatchers.IO).launch {
+                impl.saveDevice(
+                    Device(
+                        id = 1,
+                        model = Build.MANUFACTURER + " " + Build.MODEL,
+                        registeredAt = System.currentTimeMillis(),
+                    ), programId = 2
+                )
+            }
+        }
         return impl
     }
 }

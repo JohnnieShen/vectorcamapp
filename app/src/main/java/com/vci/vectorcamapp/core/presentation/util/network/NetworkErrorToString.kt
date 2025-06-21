@@ -12,6 +12,8 @@ fun NetworkError.toString(context: Context): String {
         NetworkError.SERVER_ERROR -> R.string.network_error_server_error
         NetworkError.SERIALIZATION -> R.string.network_error_serialization
         NetworkError.UNKNOWN -> R.string.network_error_unknown
+
+        NetworkError.SESSION_NOT_COMPLETED -> R.string.network_error_session_not_completed
     }
     return context.getString(resId)
 }

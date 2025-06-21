@@ -352,7 +352,7 @@ class SurveillanceFormViewModel @Inject constructor(
                     isLoading = true
                 )
             }
-            val allSitesInProgram = siteRepository.getAllSitesByProgramId(1)
+            val allSitesInProgram = siteRepository.getAllSitesByProgramId(2)
             _state.update {
                 it.copy(
                     allSitesInProgram = allSitesInProgram

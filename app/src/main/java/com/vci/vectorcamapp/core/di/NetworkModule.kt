@@ -1,22 +1,28 @@
-package com.vci.vectorcamapp.core.data.network
+package com.vci.vectorcamapp.core.di
 
+import dagger.Module
+import dagger.Provides
+import dagger.hilt.InstallIn
+import dagger.hilt.components.SingletonComponent
 import io.ktor.client.HttpClient
-import io.ktor.client.engine.HttpClientEngine
+import io.ktor.client.engine.android.Android
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
-import io.ktor.client.plugins.defaultRequest
 import io.ktor.client.plugins.logging.ANDROID
 import io.ktor.client.plugins.logging.LogLevel
 import io.ktor.client.plugins.logging.Logger
 import io.ktor.client.plugins.logging.Logging
-import io.ktor.http.ContentType
-import io.ktor.http.contentType
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
+import javax.inject.Singleton
 
-object HttpClientFactory {
+@Module
+@InstallIn(SingletonComponent::class)
+object NetworkModule {
 
-    fun create(engine: HttpClientEngine): HttpClient {
-        return HttpClient(engine) {
+    @Provides
+    @Singleton
+    fun provideHttpClient(): HttpClient {
+        return HttpClient(Android) {
             install(Logging) {
                 level = LogLevel.ALL
                 logger = Logger.ANDROID
@@ -24,10 +30,9 @@ object HttpClientFactory {
             install(ContentNegotiation) {
                 json(json = Json {
                     ignoreUnknownKeys = true
+                    encodeDefaults = true
+                    prettyPrint = false
                 })
-            }
-            defaultRequest {
-                contentType(ContentType.Application.Json)
             }
         }
     }

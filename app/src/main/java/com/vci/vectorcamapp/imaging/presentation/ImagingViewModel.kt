@@ -9,12 +9,15 @@ import androidx.work.Constraints
 import androidx.work.ExistingWorkPolicy
 import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.OutOfQuotaPolicy
 import androidx.work.WorkManager
 import androidx.work.WorkRequest
+import androidx.work.workDataOf
 import com.vci.vectorcamapp.core.data.room.TransactionHelper
 import com.vci.vectorcamapp.core.data.upload.image.ImageUploadWorker
 import com.vci.vectorcamapp.core.data.upload.metadata.MetadataUploadWorker
 import com.vci.vectorcamapp.core.domain.cache.CurrentSessionCache
+import com.vci.vectorcamapp.core.domain.cache.DeviceCache
 import com.vci.vectorcamapp.core.domain.model.Specimen
 import com.vci.vectorcamapp.core.domain.repository.BoundingBoxRepository
 import com.vci.vectorcamapp.core.domain.repository.SessionRepository
@@ -50,6 +53,7 @@ import javax.inject.Inject
 @HiltViewModel
 class ImagingViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
+    private val deviceCache: DeviceCache,
     private val currentSessionCache: CurrentSessionCache,
     private val sessionRepository: SessionRepository,
     private val specimenRepository: SpecimenRepository,
@@ -151,21 +155,27 @@ class ImagingViewModel @Inject constructor(
                 }
 
                 ImagingAction.SubmitSession -> {
+                    val device = deviceCache.getDevice()
                     val currentSession = currentSessionCache.getSession()
-                    if (currentSession == null) {
+                    val currentSessionSiteId = currentSessionCache.getSiteId()
+
+                    if (device == null || currentSession == null || currentSessionSiteId == null) {
                         _events.send(ImagingEvent.NavigateBackToLandingScreen)
                         return@launch
                     }
+
                     val success = sessionRepository.markSessionAsComplete(currentSession.localId)
                     if (success) {
-                        currentSessionCache.clearSession()
-                        _events.send(ImagingEvent.NavigateBackToLandingScreen)
-
                         val uploadConstraints = Constraints.Builder()
                             .setRequiredNetworkType(NetworkType.CONNECTED)
                             .build()
 
                         val metadataUploadRequest = OneTimeWorkRequestBuilder<MetadataUploadWorker>()
+                            .setInputData(workDataOf(
+                                "session_id" to currentSession.localId.toString(),
+                                "site_id" to currentSessionSiteId,
+                                "device_id" to device.id
+                            ))
                             .setConstraints(uploadConstraints)
                             .setBackoffCriteria(
                                 BackoffPolicy.LINEAR,
@@ -175,6 +185,7 @@ class ImagingViewModel @Inject constructor(
                             .build()
 
                         val imageUploadRequest = OneTimeWorkRequestBuilder<ImageUploadWorker>()
+                            .setInputData(workDataOf("session_id" to currentSession.localId.toString()))
                             .setConstraints(uploadConstraints)
                             .setBackoffCriteria(
                                 BackoffPolicy.LINEAR,
@@ -188,6 +199,9 @@ class ImagingViewModel @Inject constructor(
                             ExistingWorkPolicy.REPLACE,
                             metadataUploadRequest
                         ).then(imageUploadRequest).enqueue()
+
+                        currentSessionCache.clearSession()
+                        _events.send(ImagingEvent.NavigateBackToLandingScreen)
                     }
                 }
 

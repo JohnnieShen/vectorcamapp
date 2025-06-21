@@ -6,6 +6,7 @@ import io.ktor.client.statement.HttpResponse
 import io.ktor.util.network.UnresolvedAddressException
 import kotlinx.coroutines.ensureActive
 import kotlinx.serialization.SerializationException
+import java.net.UnknownHostException
 import kotlin.coroutines.coroutineContext
 
 suspend inline fun <reified T> safeCall(
@@ -14,6 +15,8 @@ suspend inline fun <reified T> safeCall(
     val response = try {
         execute()
     } catch (e: UnresolvedAddressException) {
+        return Result.Error(NetworkError.NO_INTERNET)
+    } catch (e: UnknownHostException) {
         return Result.Error(NetworkError.NO_INTERNET)
     } catch (e: SerializationException) {
         return Result.Error(NetworkError.SERIALIZATION)

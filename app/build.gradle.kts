@@ -23,11 +23,17 @@ android {
     }
 
     buildTypes {
+        debug {
+            buildConfigField("String", "BASE_URL", "\"https://api.vectorcam.org/\"")
+        }
+
         release {
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro"
             )
+            
+            buildConfigField("String", "BASE_URL", "\"https://api.vectorcam.org/\"")
         }
     }
 
@@ -104,6 +110,8 @@ dependencies {
     // Dagger Hilt Dependencies
     implementation(libs.hilt.android)
     implementation(libs.androidx.hilt.navigation.compose)
+    implementation(libs.androidx.hilt.work)
+    ksp(libs.androidx.hilt.compiler)
     ksp(libs.hilt.android.compiler)
 
     // TensorFlow Lite Library
