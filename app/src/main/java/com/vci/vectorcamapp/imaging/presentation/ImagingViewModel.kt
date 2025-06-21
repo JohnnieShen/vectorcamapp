@@ -131,9 +131,12 @@ class ImagingViewModel @Inject constructor(
                         _state.update {
                             it.copy(
                                 currentSpecimen = it.currentSpecimen.copy(id = specimenId),
-                                currentBoundingBoxUi = boundingBox?.let { boundingBox ->
+                                previewBoundingBoxUi = if (it.captureBoundingBoxUi == null && boundingBox != null) {
                                     inferenceRepository.convertToBoundingBoxUi(boundingBox)
-                                })
+                                } else {
+                                    it.previewBoundingBoxUi
+                                }
+                            )
                         }
                     } catch (e: Exception) {
                         Log.e("ViewModel", "Image processing setup failed: ${e.message}")
@@ -210,7 +213,10 @@ class ImagingViewModel @Inject constructor(
                                         species = species.label,
                                         sex = sex?.label,
                                         abdomenStatus = abdomenStatus?.label,
-                                    ), currentImage = bitmap
+                                    ),
+                                    currentImage = bitmap,
+                                    captureBoundingBoxUi = it.previewBoundingBoxUi,
+                                    previewBoundingBoxUi = null
                                 )
                             }
                         } else {
@@ -259,7 +265,7 @@ class ImagingViewModel @Inject constructor(
 
                         val success = transactionHelper.runAsTransaction {
                             val boundingBoxUi =
-                                _state.value.currentBoundingBoxUi ?: return@runAsTransaction false
+                                _state.value.captureBoundingBoxUi ?: return@runAsTransaction false
                             val boundingBox = inferenceRepository.convertToBoundingBox(
                                 boundingBoxUi
                             )
@@ -300,7 +306,8 @@ class ImagingViewModel @Inject constructor(
                     id = "", species = null, sex = null, abdomenStatus = null
                 ),
                 currentImage = null,
-                currentBoundingBoxUi = null,
+                captureBoundingBoxUi = null,
+                previewBoundingBoxUi = null,
             )
         }
     }
