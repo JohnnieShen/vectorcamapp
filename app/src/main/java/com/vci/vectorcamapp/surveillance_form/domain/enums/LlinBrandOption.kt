@@ -1,6 +1,6 @@
 package com.vci.vectorcamapp.surveillance_form.domain.enums
 
-enum class LlinBrandOption(override val label: String) : SurveillanceFormDropdownOption {
+enum class LlinBrandOption(override val label: String) : DropdownOption {
     OLYSET_NET("OLYSET Net"),
     OLYSET_PLUS("OLYSET Plus"),
     INTERCEPTOR("Interceptor"),

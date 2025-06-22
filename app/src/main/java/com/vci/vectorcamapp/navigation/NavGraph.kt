@@ -41,6 +41,9 @@ import com.vci.vectorcamapp.complete_session.specimens.presentation.CompleteSess
 import com.vci.vectorcamapp.complete_session.specimens.presentation.CompleteSessionSpecimensViewModel
 import com.vci.vectorcamapp.incomplete_session.presentation.IncompleteSessionScreen
 import com.vci.vectorcamapp.incomplete_session.presentation.IncompleteSessionViewModel
+import com.vci.vectorcamapp.registration.presentation.RegistrationEvent
+import com.vci.vectorcamapp.registration.presentation.RegistrationScreen
+import com.vci.vectorcamapp.registration.presentation.RegistrationViewModel
 import com.vci.vectorcamapp.surveillance_form.presentation.SurveillanceFormEvent
 import com.vci.vectorcamapp.surveillance_form.presentation.SurveillanceFormScreen
 import com.vci.vectorcamapp.surveillance_form.presentation.SurveillanceFormViewModel
@@ -50,12 +53,35 @@ private const val TAB_SESSION_FORM = 0
 private const val TAB_SESSION_SPECIMENS = 1
 
 @Composable
-fun NavGraph() {
+fun NavGraph(startDestination: Destination) {
     val navController = rememberNavController()
 
     NavHost(
-        navController = navController, startDestination = Destination.Landing
+        navController = navController, startDestination = startDestination
     ) {
+        composable<Destination.Registration> {
+            val viewModel = hiltViewModel<RegistrationViewModel>()
+            val state by viewModel.state.collectAsStateWithLifecycle()
+
+            ObserveAsEvents(events = viewModel.events) { event ->
+                when (event) {
+                    RegistrationEvent.NavigateToLandingScreen -> {
+                        navController.navigate(Destination.Landing) {
+                            popUpTo(Destination.Registration) { inclusive = true }
+                        }
+                    }
+                }
+            }
+
+            Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
+                RegistrationScreen(
+                    state = state,
+                    onAction = viewModel::onAction,
+                    modifier = Modifier.padding(innerPadding)
+                )
+            }
+        }
+
         composable<Destination.Landing> {
             val viewModel = hiltViewModel<LandingViewModel>()
             val state by viewModel.state.collectAsStateWithLifecycle()

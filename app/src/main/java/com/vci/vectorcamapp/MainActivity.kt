@@ -20,19 +20,18 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.core.app.ActivityCompat
+import com.vci.vectorcamapp.animation.presentation.LoadingAnimation
 import com.vci.vectorcamapp.navigation.NavGraph
-import com.vci.vectorcamapp.permission.presentation.PermissionAction
-import com.vci.vectorcamapp.permission.presentation.PermissionEvent
-import com.vci.vectorcamapp.permission.presentation.PermissionScreen
-import com.vci.vectorcamapp.permission.presentation.PermissionViewModel
+import com.vci.vectorcamapp.main.presentation.MainAction
+import com.vci.vectorcamapp.main.presentation.MainEvent
+import com.vci.vectorcamapp.main.presentation.components.PermissionAndGpsPrompt
+import com.vci.vectorcamapp.main.presentation.MainViewModel
 import com.vci.vectorcamapp.ui.theme.VectorcamappTheme
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
-
-    private val viewModel: PermissionViewModel by viewModels()
+    private val viewModel: MainViewModel by viewModels()
 
     private val permissionsRequired = buildList {
         add(Manifest.permission.ACCESS_FINE_LOCATION)
@@ -46,7 +45,7 @@ class MainActivity : ComponentActivity() {
         contract = ActivityResultContracts.RequestMultiplePermissions()
     ) { permissions ->
         val allGranted = permissions.all { it.value }
-        viewModel.onAction(PermissionAction.UpdatePermissionStatus(allGranted))
+        viewModel.onAction(MainAction.UpdatePermissionStatus(allGranted))
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -57,12 +56,12 @@ class MainActivity : ComponentActivity() {
                 LaunchedEffect(viewModel) {
                     viewModel.events.collect { event ->
                         when (event) {
-                            PermissionEvent.LaunchPermissionRequest -> {
+                            MainEvent.LaunchPermissionRequest -> {
                                 permissionLauncher.launch(permissionsRequired)
                             }
 
-                            PermissionEvent.NavigateToAppSettings -> openAppSettings()
-                            PermissionEvent.NavigateToLocationSettings -> openLocationSettings()
+                            MainEvent.NavigateToAppSettings -> openAppSettings()
+                            MainEvent.NavigateToLocationSettings -> openLocationSettings()
                         }
                     }
                 }
@@ -70,15 +69,20 @@ class MainActivity : ComponentActivity() {
                 LaunchedEffect(Unit) {
                     checkAndUpdatePermissionStatus()
                     checkAndUpdateGpsStatus()
-                    viewModel.onAction(PermissionAction.RequestPermissions)
+                    viewModel.onAction(MainAction.RequestPermissions)
                 }
 
                 val state by viewModel.state.collectAsState()
 
                 when (state.allGranted && state.isGpsEnabled) {
-                    true -> NavGraph()
+                    true -> {
+                        when (val startDestination = state.startDestination) {
+                            null -> LoadingAnimation(text = "Initializing…")
+                            else -> NavGraph(startDestination = startDestination)
+                        }
+                    }
                     false -> Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                        PermissionScreen(
+                        PermissionAndGpsPrompt(
                             state = state,
                             onAction = viewModel::onAction,
                             modifier = Modifier.padding(innerPadding)
@@ -100,14 +104,14 @@ class MainActivity : ComponentActivity() {
             checkSelfPermission(permission) == PackageManager.PERMISSION_GRANTED
         }
 
-        viewModel.onAction(PermissionAction.UpdatePermissionStatus(allGranted))
+        viewModel.onAction(MainAction.UpdatePermissionStatus(allGranted))
     }
 
     private fun checkAndUpdateGpsStatus() {
         val locationManager = application.getSystemService(Context.LOCATION_SERVICE) as LocationManager
         val isGpsEnabled = locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER) || locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)
 
-        viewModel.onAction(PermissionAction.UpdateGpsStatus(isGpsEnabled))
+        viewModel.onAction(MainAction.UpdateGpsStatus(isGpsEnabled))
     }
 
     private fun openAppSettings() {

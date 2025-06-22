@@ -1,4 +1,4 @@
-package com.vci.vectorcamapp.permission.presentation
+package com.vci.vectorcamapp.main.presentation.components
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -18,11 +18,13 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import com.vci.vectorcamapp.animation.presentation.LoadingAnimation
+import com.vci.vectorcamapp.main.presentation.MainAction
+import com.vci.vectorcamapp.main.presentation.MainState
 import com.vci.vectorcamapp.ui.theme.VectorcamappTheme
 
 @Composable
-fun PermissionScreen(
-    state: PermissionState, onAction: (PermissionAction) -> Unit, modifier: Modifier = Modifier
+fun PermissionAndGpsPrompt(
+    state: MainState, onAction: (MainAction) -> Unit, modifier: Modifier = Modifier
 ) {
     if (state.isLoading) {
         LoadingAnimation(text = "Loading...", modifier = modifier.fillMaxSize())
@@ -42,7 +44,7 @@ fun PermissionScreen(
             Spacer(modifier = Modifier.height(32.dp))
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 if (!state.allGranted) {
-                    Button(onClick = { onAction(PermissionAction.OpenAppSettings) }) {
+                    Button(onClick = { onAction(MainAction.OpenAppSettings) }) {
                         Text(
                             text = "Grant Permissions",
                             style = MaterialTheme.typography.bodyLarge,
@@ -51,7 +53,7 @@ fun PermissionScreen(
                     }
                 }
                 if (!state.isGpsEnabled) {
-                    Button(onClick = { onAction(PermissionAction.OpenLocationSettings) }) {
+                    Button(onClick = { onAction(MainAction.OpenLocationSettings) }) {
                         Text(
                             text = "Enable GPS",
                             style = MaterialTheme.typography.bodyLarge,
@@ -60,18 +62,6 @@ fun PermissionScreen(
                     }
                 }
             }
-        }
-    }
-}
-
-@PreviewLightDark
-@Composable
-fun PermissionScreenPreview() {
-    VectorcamappTheme {
-        Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-            PermissionScreen(
-                state = PermissionState(), onAction = { }, modifier = Modifier.padding(innerPadding)
-            )
         }
     }
 }

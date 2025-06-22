@@ -1,5 +1,5 @@
 package com.vci.vectorcamapp.surveillance_form.domain.enums
 
-interface SurveillanceFormDropdownOption {
+interface DropdownOption {
     val label: String
 }
