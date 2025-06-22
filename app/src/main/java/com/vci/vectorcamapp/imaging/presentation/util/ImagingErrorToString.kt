@@ -9,6 +9,7 @@ fun ImagingError.toString(context: Context): String {
         ImagingError.CAPTURE_ERROR -> R.string.imaging_error_capture_error
         ImagingError.SAVE_ERROR -> R.string.imaging_error_save_error
         ImagingError.NO_SPECIMEN_FOUND -> R.string.imaging_error_no_specimen_found
+        ImagingError.MULTIPLE_SPECIMENS_FOUND -> R.string.imaging_error_multiple_specimens_found
         ImagingError.NO_ACTIVE_SESSION -> R.string.imaging_error_no_active_session
         ImagingError.MODEL_INITIALIZATION_FAILED -> R.string.imaging_error_model_initialization_failed
         ImagingError.GPU_DELEGATE_INITIALIZATION_FAILED -> R.string.imaging_error_gpu_delegate_initialization_failed

@@ -24,7 +24,7 @@ import com.vci.vectorcamapp.imaging.presentation.model.BoundingBoxUi
 @Composable
 fun LiveCameraPreviewPage(
     controller: LifecycleCameraController,
-    boundingBoxUi: BoundingBoxUi?,
+    boundingBoxesUiList: List<BoundingBoxUi>,
     onImageCaptured: () -> Unit,
     onSaveSessionProgress: () -> Unit,
     onSubmitSession: () -> Unit,
@@ -46,7 +46,7 @@ fun LiveCameraPreviewPage(
             modifier = modifier.fillMaxSize()
         )
 
-        boundingBoxUi?.let {
+        boundingBoxesUiList.map {
             BoundingBoxOverlay(it, modifier.fillMaxSize())
         }
 

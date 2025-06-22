@@ -61,6 +61,9 @@
     <!-- Imaging error: No specimen found -->
     <string name="imaging_error_no_specimen_found">No specimen found in the photo. Please try again with a clearer image.</string>
 
+    <!-- Imaging error: No specimen found -->
+    <string name="imaging_error_multiple_specimens_found">Multiple Specimens Detected. Please make sure exactly one specimen is in frame.</string>
+
     <!-- Imaging error: No active session -->
     <string name="imaging_error_no_active_session">No active session found. Please start a new session before capturing images.</string>
 

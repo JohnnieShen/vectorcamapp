@@ -9,7 +9,6 @@ import androidx.work.Constraints
 import androidx.work.ExistingWorkPolicy
 import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
-import androidx.work.OutOfQuotaPolicy
 import androidx.work.WorkManager
 import androidx.work.WorkRequest
 import androidx.work.workDataOf
@@ -28,6 +27,7 @@ import com.vci.vectorcamapp.core.domain.util.onSuccess
 import com.vci.vectorcamapp.imaging.domain.repository.CameraRepository
 import com.vci.vectorcamapp.imaging.domain.repository.InferenceRepository
 import com.vci.vectorcamapp.imaging.domain.util.ImagingError
+import com.vci.vectorcamapp.imaging.presentation.extensions.cropToBoundingBoxAndPad
 import com.vci.vectorcamapp.imaging.presentation.extensions.toUprightBitmap
 import com.vci.vectorcamapp.imaging.presentation.model.composites.SpecimenAndBoundingBoxUi
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -66,32 +66,28 @@ class ImagingViewModel @Inject constructor(
     lateinit var transactionHelper: TransactionHelper
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    private val specimensUiFlow: Flow<List<SpecimenAndBoundingBoxUi>> =
-        flow {
-            val session = currentSessionCache.getSession()
-            emit(session)
-        }.flatMapLatest { session ->
-            if (session == null) {
-                flowOf(emptyList())
-            } else {
-                specimenRepository
-                    .observeSpecimensAndBoundingBoxesBySession(session.localId)
-                    .map { relations ->
-                        relations.map { relation ->
-                            SpecimenAndBoundingBoxUi(
-                                specimen = relation.specimen,
-                                boundingBoxUi = inferenceRepository
-                                    .convertToBoundingBoxUi(relation.boundingBox)
-                            )
-                        }
+    private val specimensUiFlow: Flow<List<SpecimenAndBoundingBoxUi>> = flow {
+        val session = currentSessionCache.getSession()
+        emit(session)
+    }.flatMapLatest { session ->
+        if (session == null) {
+            flowOf(emptyList())
+        } else {
+            specimenRepository.observeSpecimensAndBoundingBoxesBySession(session.localId)
+                .map { relations ->
+                    relations.map { relation ->
+                        SpecimenAndBoundingBoxUi(
+                            specimen = relation.specimen,
+                            boundingBoxUi = inferenceRepository.convertToBoundingBoxUi(relation.boundingBox)
+                        )
                     }
-            }
+                }
         }
+    }
 
     private val _state = MutableStateFlow(ImagingState())
     val state: StateFlow<ImagingState> = combine(
-        specimensUiFlow,
-        _state
+        specimensUiFlow, _state
     ) { specimensUi, state ->
         state.copy(capturedSpecimensAndBoundingBoxesUi = specimensUi)
     }.stateIn(
@@ -130,17 +126,16 @@ class ImagingViewModel @Inject constructor(
                         val bitmap = action.frame.toUprightBitmap()
 
                         val specimenId = inferenceRepository.readSpecimenId(bitmap)
-                        val boundingBox = inferenceRepository.detectSpecimen(bitmap)
+                        val boundingBoxes = inferenceRepository.detectSpecimen(bitmap)
 
                         _state.update {
                             it.copy(
                                 currentSpecimen = it.currentSpecimen.copy(id = specimenId),
-                                previewBoundingBoxUi = if (it.captureBoundingBoxUi == null && boundingBox != null) {
-                                    inferenceRepository.convertToBoundingBoxUi(boundingBox)
-                                } else {
-                                    it.previewBoundingBoxUi
-                                }
-                            )
+                                previewBoundingBoxesUiList = boundingBoxes.map { boundingBox ->
+                                    inferenceRepository.convertToBoundingBoxUi(
+                                        boundingBox
+                                    )
+                                })
                         }
                     } catch (e: Exception) {
                         Log.e("ViewModel", "Image processing setup failed: ${e.message}")
@@ -166,33 +161,30 @@ class ImagingViewModel @Inject constructor(
 
                     val success = sessionRepository.markSessionAsComplete(currentSession.localId)
                     if (success) {
-                        val uploadConstraints = Constraints.Builder()
-                            .setRequiredNetworkType(NetworkType.CONNECTED)
-                            .build()
+                        val uploadConstraints =
+                            Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED)
+                                .build()
 
-                        val metadataUploadRequest = OneTimeWorkRequestBuilder<MetadataUploadWorker>()
-                            .setInputData(workDataOf(
-                                "session_id" to currentSession.localId.toString(),
-                                "site_id" to currentSessionSiteId,
-                                "device_id" to device.id
-                            ))
-                            .setConstraints(uploadConstraints)
-                            .setBackoffCriteria(
+                        val metadataUploadRequest =
+                            OneTimeWorkRequestBuilder<MetadataUploadWorker>().setInputData(
+                                workDataOf(
+                                    "session_id" to currentSession.localId.toString(),
+                                    "site_id" to currentSessionSiteId,
+                                    "device_id" to device.id
+                                )
+                            ).setConstraints(uploadConstraints).setBackoffCriteria(
                                 BackoffPolicy.LINEAR,
                                 WorkRequest.MIN_BACKOFF_MILLIS,
                                 TimeUnit.MILLISECONDS,
-                            )
-                            .build()
+                            ).build()
 
-                        val imageUploadRequest = OneTimeWorkRequestBuilder<ImageUploadWorker>()
-                            .setInputData(workDataOf("session_id" to currentSession.localId.toString()))
-                            .setConstraints(uploadConstraints)
-                            .setBackoffCriteria(
-                                BackoffPolicy.LINEAR,
-                                WorkRequest.MIN_BACKOFF_MILLIS,
-                                TimeUnit.MILLISECONDS,
-                            )
-                            .build()
+                        val imageUploadRequest =
+                            OneTimeWorkRequestBuilder<ImageUploadWorker>().setInputData(workDataOf("session_id" to currentSession.localId.toString()))
+                                .setConstraints(uploadConstraints).setBackoffCriteria(
+                                    BackoffPolicy.LINEAR,
+                                    WorkRequest.MIN_BACKOFF_MILLIS,
+                                    TimeUnit.MILLISECONDS,
+                                ).build()
 
                         WorkManager.getInstance(context).beginUniqueWork(
                             "metadata_upload_work",
@@ -216,25 +208,39 @@ class ImagingViewModel @Inject constructor(
                         val bitmap = image.toUprightBitmap()
                         image.close()
 
-                        val (species, sex, abdomenStatus) = inferenceRepository.classifySpecimen(
-                            bitmap
-                        )
+                        val boundingBoxesList = inferenceRepository.detectSpecimen(bitmap)
 
-                        if (species != null) {
-                            _state.update {
-                                it.copy(
-                                    currentSpecimen = it.currentSpecimen.copy(
-                                        species = species.label,
-                                        sex = sex?.label,
-                                        abdomenStatus = abdomenStatus?.label,
-                                    ),
-                                    currentImage = bitmap,
-                                    captureBoundingBoxUi = it.previewBoundingBoxUi,
-                                    previewBoundingBoxUi = null
-                                )
+                        when (boundingBoxesList.size) {
+                            0 -> {
+                                _events.send(ImagingEvent.DisplayImagingError(ImagingError.NO_SPECIMEN_FOUND))
                             }
-                        } else {
-                            _events.send(ImagingEvent.DisplayImagingError(ImagingError.NO_SPECIMEN_FOUND))
+
+                            1 -> {
+                                val boundingBox = boundingBoxesList[0]
+                                val croppedAndPadded = bitmap.cropToBoundingBoxAndPad(boundingBox)
+                                val (species, sex, abdomenStatus) = inferenceRepository.classifySpecimen(
+                                    croppedAndPadded
+                                )
+
+                                _state.update {
+                                    it.copy(
+                                        currentSpecimen = it.currentSpecimen.copy(
+                                            species = species?.label,
+                                            sex = sex?.label,
+                                            abdomenStatus = abdomenStatus?.label,
+                                        ),
+                                        currentImage = bitmap,
+                                        captureBoundingBoxUi = inferenceRepository.convertToBoundingBoxUi(
+                                            boundingBox
+                                        ),
+                                        previewBoundingBoxesUiList = emptyList()
+                                    )
+                                }
+                            }
+
+                            else -> {
+                                _events.send(ImagingEvent.DisplayImagingError(ImagingError.MULTIPLE_SPECIMENS_FOUND))
+                            }
                         }
                     }.onError { error ->
                         if (error == ImagingError.NO_ACTIVE_SESSION) {
@@ -321,7 +327,7 @@ class ImagingViewModel @Inject constructor(
                 ),
                 currentImage = null,
                 captureBoundingBoxUi = null,
-                previewBoundingBoxUi = null,
+                previewBoundingBoxesUiList = emptyList(),
             )
         }
     }
