@@ -29,7 +29,7 @@ fun CompleteSessionListScreen(
                 site = sessionAndSite.site,
                 modifier = Modifier
                     .clickable {
-                        onAction(CompleteSessionListAction.ViewCompleteSessionDetails(sessionId = sessionAndSite.session.localId))
+                        onAction(CompleteSessionListAction.ViewCompleteSessionDetails(sessionAndSite.session.localId))
                     }
             )
         }

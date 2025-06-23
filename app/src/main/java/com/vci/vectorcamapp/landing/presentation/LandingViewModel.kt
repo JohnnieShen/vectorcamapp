@@ -22,23 +22,16 @@ import javax.inject.Inject
 class LandingViewModel @Inject constructor(
     private val currentSessionCache: CurrentSessionCache,
 ) : ViewModel() {
+
     private val _state = MutableStateFlow(LandingState())
     val state: StateFlow<LandingState> = _state.onStart {
-        loadCompleteAndIncompleteSessions()
+        launchResumeSessionDialogIfExists()
     }.stateIn(
         viewModelScope, SharingStarted.WhileSubscribed(5000L), LandingState()
     )
 
     private val _events = Channel<LandingEvent>()
     val events = _events.receiveAsFlow()
-
-    init {
-        viewModelScope.launch {
-            if (currentSessionCache.getSession() != null) {
-                _state.update { it.copy(showResumeDialog = true) }
-            }
-        }
-    }
 
     fun onAction(action: LandingAction) {
         viewModelScope.launch {
@@ -74,16 +67,18 @@ class LandingViewModel @Inject constructor(
         }
     }
 
-    // TODO: Update to load from local database. Add Repository. Add error handling (and event receiver - refer to CryptoTracker example) and display onto UI.
-    private fun loadCompleteAndIncompleteSessions() {
+    private fun launchResumeSessionDialogIfExists() {
         viewModelScope.launch {
-            _state.update {
-                it.copy(isLoading = true)
+            _state.update { it.copy(isLoading = true) }
+
+            val currentSession = currentSessionCache.getSession()
+            if (currentSession != null) {
+                _state.update { it.copy(showResumeDialog = true) }
             }
+
             delay(3000L)
-            _state.update {
-                it.copy(isLoading = false)
-            }
+
+            _state.update { it.copy(isLoading = false) }
         }
     }
 }

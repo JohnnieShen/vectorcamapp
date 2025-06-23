@@ -4,6 +4,7 @@ import android.os.Build
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.vci.vectorcamapp.core.domain.cache.CurrentSessionCache
 import com.vci.vectorcamapp.core.domain.cache.DeviceCache
 import com.vci.vectorcamapp.core.domain.model.Device
 import com.vci.vectorcamapp.core.domain.repository.ProgramRepository
@@ -16,7 +17,8 @@ import javax.inject.Inject
 @HiltViewModel
 class RegistrationViewModel @Inject constructor(
     private val programRepository: ProgramRepository,
-    private val deviceCache: DeviceCache
+    private val deviceCache: DeviceCache,
+    private val currentSessionCache: CurrentSessionCache
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(RegistrationState())
@@ -51,6 +53,7 @@ class RegistrationViewModel @Inject constructor(
                             registeredAt = System.currentTimeMillis()
                         )
                         deviceCache.saveDevice(device, selectedProgram.id)
+                        currentSessionCache.clearSession()
                         _events.send(RegistrationEvent.NavigateToLandingScreen)
                     }
                 }

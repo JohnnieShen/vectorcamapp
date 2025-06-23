@@ -32,17 +32,6 @@ class SpecimenRepositoryImplementation @Inject constructor(
         return specimenDao.deleteSpecimen(specimen.toEntity(sessionId)) > 0
     }
 
-    override fun observeSpecimenAndBoundingBox(specimenId: String): Flow<SpecimenAndBoundingBox?> {
-        return specimenDao.observeSpecimenAndBoundingBox(specimenId).map { specimenAndBoundingBoxRelation ->
-            specimenAndBoundingBoxRelation?.let {
-                SpecimenAndBoundingBox(
-                    specimen = it.specimenEntity.toDomain(),
-                    boundingBox = it.boundingBoxEntity.toDomain()
-                )
-            }
-        }
-    }
-
     override fun observeSpecimensAndBoundingBoxesBySession(sessionId: UUID): Flow<List<SpecimenAndBoundingBox>> {
         return specimenDao.observeSpecimensAndBoundingBoxesBySession(sessionId)
             .map { specimenAndBoundingBoxRelations ->

@@ -22,10 +22,10 @@ fun CompleteSessionFormScreen(
     val dateTimeFormatter = remember { SimpleDateFormat("MMM dd, yyyy 'at' h:mm a", Locale.getDefault()) }
     val dateFormatter = remember { SimpleDateFormat("MMM dd, yyyy", Locale.getDefault()) }
 
-    val createdAtDateTimeFormatted = dateTimeFormatter.format(state.session.createdAt)
     val collectionDateFormatted = dateFormatter.format(Date(state.session.collectionDate))
-    val submittedAtDateTimeFormatted = state.session.submittedAt?.let { dateTimeFormatter.format(it) }
+    val createdAtDateTimeFormatted = dateTimeFormatter.format(state.session.createdAt)
     val completedAtDateTimeFormatted = state.session.completedAt?.let { dateTimeFormatter.format(it) }
+    val submittedAtDateTimeFormatted = state.session.submittedAt?.let { dateTimeFormatter.format(it) }
 
     Column(
         modifier = modifier.padding(16.dp)

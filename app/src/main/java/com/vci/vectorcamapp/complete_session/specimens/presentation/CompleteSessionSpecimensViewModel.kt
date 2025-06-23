@@ -27,14 +27,14 @@ class CompleteSessionSpecimensViewModel @Inject constructor(
 
     private fun loadSession(sessionId: UUID) {
         viewModelScope.launch {
-            val result = sessionRepository.getSessionWithSpecimens(sessionId)
-            if (result == null) {
+            val sessionWithSpecimens = sessionRepository.getSessionWithSpecimens(sessionId)
+            if (sessionWithSpecimens == null) {
                 _state.update { it.copy(error = "No data found for session") }
             } else {
                 _state.update {
                     it.copy(
-                        session = result.session,
-                        specimens = result.specimens,
+                        session = sessionWithSpecimens.session,
+                        specimens = sessionWithSpecimens.specimens,
                         error = null
                     )
                 }

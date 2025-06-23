@@ -117,7 +117,6 @@ fun NavGraph(startDestination: Destination) {
             }
         }
         composable<Destination.SurveillanceForm> {
-            // TODO: UPON PRESSING THE BACK BUTTON, SHOULD CLEAR THE CACHE!
             val viewModel = hiltViewModel<SurveillanceFormViewModel>()
             val state by viewModel.state.collectAsStateWithLifecycle()
 
@@ -129,6 +128,10 @@ fun NavGraph(startDestination: Destination) {
 
                     SurveillanceFormEvent.NavigateBackToLandingScreen -> {
                         navController.popBackStack(Destination.Landing, false)
+                    }
+
+                    SurveillanceFormEvent.NavigateBackToRegistrationScreen -> {
+                        navController.popBackStack(Destination.Registration, false)
                     }
                 }
             }

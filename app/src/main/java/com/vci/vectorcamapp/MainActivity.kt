@@ -21,11 +21,12 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import com.vci.vectorcamapp.animation.presentation.LoadingAnimation
-import com.vci.vectorcamapp.navigation.NavGraph
+import com.vci.vectorcamapp.core.presentation.util.ObserveAsEvents
 import com.vci.vectorcamapp.main.presentation.MainAction
 import com.vci.vectorcamapp.main.presentation.MainEvent
-import com.vci.vectorcamapp.main.presentation.components.PermissionAndGpsPrompt
 import com.vci.vectorcamapp.main.presentation.MainViewModel
+import com.vci.vectorcamapp.main.presentation.components.PermissionAndGpsPrompt
+import com.vci.vectorcamapp.navigation.NavGraph
 import com.vci.vectorcamapp.ui.theme.VectorcamappTheme
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -53,16 +54,15 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             VectorcamappTheme {
-                LaunchedEffect(viewModel) {
-                    viewModel.events.collect { event ->
-                        when (event) {
-                            MainEvent.LaunchPermissionRequest -> {
-                                permissionLauncher.launch(permissionsRequired)
-                            }
-
-                            MainEvent.NavigateToAppSettings -> openAppSettings()
-                            MainEvent.NavigateToLocationSettings -> openLocationSettings()
+                ObserveAsEvents(events = viewModel.events) { event ->
+                    when (event) {
+                        MainEvent.LaunchPermissionRequest -> {
+                            permissionLauncher.launch(permissionsRequired)
                         }
+
+                        MainEvent.NavigateToAppSettings -> openAppSettings()
+
+                        MainEvent.NavigateToLocationSettings -> openLocationSettings()
                     }
                 }
 
@@ -81,6 +81,7 @@ class MainActivity : ComponentActivity() {
                             else -> NavGraph(startDestination = startDestination)
                         }
                     }
+
                     false -> Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                         PermissionAndGpsPrompt(
                             state = state,
@@ -108,8 +109,12 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun checkAndUpdateGpsStatus() {
-        val locationManager = application.getSystemService(Context.LOCATION_SERVICE) as LocationManager
-        val isGpsEnabled = locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER) || locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)
+        val locationManager =
+            application.getSystemService(Context.LOCATION_SERVICE) as LocationManager
+        val isGpsEnabled =
+            locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER) || locationManager.isProviderEnabled(
+                LocationManager.GPS_PROVIDER
+            )
 
         viewModel.onAction(MainAction.UpdateGpsStatus(isGpsEnabled))
     }

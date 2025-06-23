@@ -21,10 +21,6 @@ interface SpecimenDao {
     suspend fun deleteSpecimen(specimen: SpecimenEntity): Int
 
     @Transaction
-    @Query("SELECT * FROM specimen WHERE id = :specimenId")
-    fun observeSpecimenAndBoundingBox(specimenId: String) : Flow<SpecimenAndBoundingBoxRelation?>
-
-    @Transaction
     @Query("SELECT * FROM specimen WHERE sessionId = :sessionId")
     fun observeSpecimensAndBoundingBoxesBySession(sessionId: UUID): Flow<List<SpecimenAndBoundingBoxRelation>>
 }

@@ -22,9 +22,9 @@ class CompleteSessionListViewModel @Inject constructor(
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), emptyList())
 
     private val _state = MutableStateFlow(CompleteSessionListState())
-    val state = combine(_completeSessionsAndSites, _state) { _completeSessionsAndSites, state ->
+    val state = combine(_completeSessionsAndSites, _state) { completeSessionsAndSites, state ->
         state.copy(
-            sessionsAndSites = _completeSessionsAndSites
+            sessionsAndSites = completeSessionsAndSites
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), CompleteSessionListState())
 

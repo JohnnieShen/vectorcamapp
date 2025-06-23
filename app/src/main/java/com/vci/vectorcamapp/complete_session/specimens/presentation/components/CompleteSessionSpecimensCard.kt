@@ -31,7 +31,9 @@ fun CompleteSessionSpecimensCard(
     modifier: Modifier = Modifier
 ) {
 
-    val dateTimeFormatter = remember { SimpleDateFormat("MMM dd, yyyy 'at' h:mm a", Locale.getDefault()) }
+    val context = LocalContext.current
+    val dateTimeFormatter =
+        remember { SimpleDateFormat("MMM dd, yyyy 'at' h:mm a", Locale.getDefault()) }
     val formattedDateTime = dateTimeFormatter.format(specimen.capturedAt)
 
     Card(
@@ -47,7 +49,7 @@ fun CompleteSessionSpecimensCard(
             modifier = Modifier.padding(16.dp)
         ) {
             AsyncImage(
-                model = ImageRequest.Builder(LocalContext.current)
+                model = ImageRequest.Builder(context)
                     .data(specimen.imageUri)
                     .build(),
                 contentDescription = "",

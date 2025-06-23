@@ -24,8 +24,7 @@ class SurveillanceFormRepositoryImplementation @Inject constructor(
         }
     }
 
-    override suspend fun getSurveillanceFormBySessionId(sessionId: UUID): SurveillanceForm? =
-        surveillanceFormDao
-            .getSurveillanceFormBySessionId(sessionId)
-            ?.toDomain()
+    override suspend fun getSurveillanceFormBySessionId(sessionId: UUID): SurveillanceForm? {
+        return surveillanceFormDao.getSurveillanceFormBySessionId(sessionId)?.toDomain()
+    }
 }

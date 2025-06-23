@@ -53,7 +53,6 @@ import javax.inject.Inject
 @HiltViewModel
 class ImagingViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
-    private val deviceCache: DeviceCache,
     private val currentSessionCache: CurrentSessionCache,
     private val sessionRepository: SessionRepository,
     private val specimenRepository: SpecimenRepository,
@@ -150,11 +149,10 @@ class ImagingViewModel @Inject constructor(
                 }
 
                 ImagingAction.SubmitSession -> {
-                    val device = deviceCache.getDevice()
                     val currentSession = currentSessionCache.getSession()
                     val currentSessionSiteId = currentSessionCache.getSiteId()
 
-                    if (device == null || currentSession == null || currentSessionSiteId == null) {
+                    if (currentSession == null || currentSessionSiteId == null) {
                         _events.send(ImagingEvent.NavigateBackToLandingScreen)
                         return@launch
                     }
@@ -170,7 +168,6 @@ class ImagingViewModel @Inject constructor(
                                 workDataOf(
                                     "session_id" to currentSession.localId.toString(),
                                     "site_id" to currentSessionSiteId,
-                                    "device_id" to device.id
                                 )
                             ).setConstraints(uploadConstraints).setBackoffCriteria(
                                 BackoffPolicy.LINEAR,

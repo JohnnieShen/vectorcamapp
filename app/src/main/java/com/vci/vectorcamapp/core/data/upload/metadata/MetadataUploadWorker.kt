@@ -11,6 +11,7 @@ import androidx.work.CoroutineWorker
 import androidx.work.ForegroundInfo
 import androidx.work.WorkerParameters
 import com.vci.vectorcamapp.R
+import com.vci.vectorcamapp.core.domain.cache.DeviceCache
 import com.vci.vectorcamapp.core.domain.network.api.SessionDataSource
 import com.vci.vectorcamapp.core.domain.repository.SessionRepository
 import com.vci.vectorcamapp.core.domain.util.onError
@@ -23,7 +24,8 @@ import java.util.UUID
 @HiltWorker
 class MetadataUploadWorker @AssistedInject constructor(
     @Assisted private val context: Context,
-    @Assisted workerParams: WorkerParameters,
+    @Assisted private val workerParams: WorkerParameters,
+    private val deviceCache: DeviceCache,
     private val sessionRepository: SessionRepository,
     private val sessionDataSource: SessionDataSource,
 ) : CoroutineWorker(context, workerParams) {
@@ -39,14 +41,15 @@ class MetadataUploadWorker @AssistedInject constructor(
         val session = inputData.getString("session_id")?.let { UUID.fromString(it) }
             ?.let { sessionRepository.getSessionById(it) } ?: return Result.retry()
         val siteId = inputData.getInt("site_id", -1)
-        val deviceId = inputData.getInt("device_id", -1)
+        val device = deviceCache.getDevice()
 
-        if (siteId == -1 || deviceId == -1) return Result.retry()
+        if (siteId == -1 || device == null) return Result.retry()
 
         try {
             // TODO: UPLOAD DEVICE FOR REGISTRATION IF POSSIBLE
             // TODO: THIS IS JUST A TEST EXECUTION OF AN ENDPOINT. THIS ENTIRE ALGORITHM SHOULD BE REWRITTEN.
-            sessionDataSource.postSession(session, siteId, deviceId).onSuccess {
+            val deviceId = device.id // TODO: CHANGE THIS WHEN ALGORITHM IS WRITTEN
+            sessionDataSource.postSession(session, siteId, 1).onSuccess {
                 Log.d("UploadWorker", "Session uploaded successfully")
             }.onError {
                 Log.d("UploadWorker", "Error during upload: $it")
