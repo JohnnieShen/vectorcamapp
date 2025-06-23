@@ -5,6 +5,7 @@ plugins {
     alias(libs.plugins.google.dagger.hilt.android)
     alias(libs.plugins.google.devtools.ksp)
     alias(libs.plugins.androidx.room)
+    alias(libs.plugins.sentry.android.gradle)
     kotlin("plugin.serialization") version "2.0.21"
 }
 
@@ -32,7 +33,7 @@ android {
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro"
             )
-            
+
             buildConfigField("String", "BASE_URL", "\"https://api.vectorcam.org/\"")
         }
     }
@@ -152,4 +153,14 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4) // Compose JUnit testing
     debugImplementation(libs.androidx.ui.tooling) // Debugging tools for Compose
     debugImplementation(libs.androidx.ui.test.manifest) // Debugging Compose manifest tests
+}
+
+sentry {
+    org.set("vectorcam")
+    projectName.set("android")
+    includeSourceContext.set(true)
+    includeProguardMapping.set(true)
+    autoUploadProguardMapping.set(true)
+
+    ignoredBuildTypes.set(setOf("debug"))
 }
