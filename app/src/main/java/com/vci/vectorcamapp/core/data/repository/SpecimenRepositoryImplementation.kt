@@ -17,7 +17,9 @@ import javax.inject.Inject
 class SpecimenRepositoryImplementation @Inject constructor(
     private val specimenDao: SpecimenDao
 ) : SpecimenRepository {
-    override suspend fun insertSpecimen(specimen: Specimen, sessionId: UUID): Result<Unit, RoomDbError> {
+    override suspend fun insertSpecimen(
+        specimen: Specimen, sessionId: UUID
+    ): Result<Unit, RoomDbError> {
         return try {
             specimenDao.insertSpecimen(specimen.toEntity(sessionId))
             Result.Success(Unit)
@@ -30,6 +32,15 @@ class SpecimenRepositoryImplementation @Inject constructor(
 
     override suspend fun deleteSpecimen(specimen: Specimen, sessionId: UUID): Boolean {
         return specimenDao.deleteSpecimen(specimen.toEntity(sessionId)) > 0
+    }
+
+    override suspend fun getSpecimensAndBoundingBoxesBySession(sessionId: UUID): List<SpecimenAndBoundingBox> {
+        return specimenDao.getSpecimensAndBoundingBoxesBySession(sessionId).map {
+            SpecimenAndBoundingBox(
+                specimen = it.specimenEntity.toDomain(),
+                boundingBox = it.boundingBoxEntity.toDomain()
+            )
+        }
     }
 
     override fun observeSpecimensAndBoundingBoxesBySession(sessionId: UUID): Flow<List<SpecimenAndBoundingBox>> {

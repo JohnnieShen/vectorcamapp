@@ -19,7 +19,9 @@ class RemoteSessionDataSource @Inject constructor(
     private val httpClient: HttpClient
 ) : SessionDataSource {
 
-    override suspend fun postSession(session: Session, siteId: Int, deviceId: Int): Result<PostSessionResponseDto, NetworkError> {
+    override suspend fun postSession(
+        session: Session, siteId: Int, deviceId: Int
+    ): Result<PostSessionResponseDto, NetworkError> {
         if (session.completedAt == null) {
             return Result.Error(NetworkError.SESSION_NOT_COMPLETED)
         }
@@ -27,20 +29,22 @@ class RemoteSessionDataSource @Inject constructor(
         return safeCall<PostSessionResponseDto> {
             httpClient.post(constructUrl("sessions")) {
                 contentType(ContentType.Application.Json)
-                setBody(PostSessionRequestDto(
-                    frontendId = session.localId,
-                    houseNumber = session.houseNumber,
-                    collectorTitle = session.collectorTitle,
-                    collectorName = session.collectorName,
-                    collectionDate = session.collectionDate,
-                    collectionMethod = session.collectionMethod,
-                    specimenCondition = session.specimenCondition,
-                    createdAt = session.createdAt,
-                    completedAt = session.completedAt,
-                    notes = session.notes,
-                    siteId = siteId,
-                    deviceId = deviceId,
-                ))
+                setBody(
+                    PostSessionRequestDto(
+                        frontendId = session.localId,
+                        houseNumber = session.houseNumber,
+                        collectorTitle = session.collectorTitle,
+                        collectorName = session.collectorName,
+                        collectionDate = session.collectionDate,
+                        collectionMethod = session.collectionMethod,
+                        specimenCondition = session.specimenCondition,
+                        createdAt = session.createdAt,
+                        completedAt = session.completedAt,
+                        notes = session.notes,
+                        siteId = siteId,
+                        deviceId = deviceId,
+                    )
+                )
             }
         }
     }

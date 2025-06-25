@@ -1,6 +1,8 @@
 package com.vci.vectorcamapp.core.di
 
+import com.vci.vectorcamapp.core.data.network.api.RemoteDeviceDataSource
 import com.vci.vectorcamapp.core.data.network.api.RemoteSessionDataSource
+import com.vci.vectorcamapp.core.domain.network.api.DeviceDataSource
 import com.vci.vectorcamapp.core.domain.network.api.SessionDataSource
 import dagger.Binds
 import dagger.Module
@@ -17,4 +19,10 @@ abstract class DataSourceModule {
     abstract fun bindSessionDataSource(
         remoteSessionDataSource: RemoteSessionDataSource
     ): SessionDataSource
+
+    @Binds
+    @Singleton
+    abstract fun bindDeviceDataSource(
+        remoteDeviceDataSource: RemoteDeviceDataSource
+    ): DeviceDataSource
 }

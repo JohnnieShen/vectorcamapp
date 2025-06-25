@@ -22,5 +22,9 @@ interface SpecimenDao {
 
     @Transaction
     @Query("SELECT * FROM specimen WHERE sessionId = :sessionId")
+    fun getSpecimensAndBoundingBoxesBySession(sessionId: UUID): List<SpecimenAndBoundingBoxRelation>
+
+    @Transaction
+    @Query("SELECT * FROM specimen WHERE sessionId = :sessionId")
     fun observeSpecimensAndBoundingBoxesBySession(sessionId: UUID): Flow<List<SpecimenAndBoundingBoxRelation>>
 }

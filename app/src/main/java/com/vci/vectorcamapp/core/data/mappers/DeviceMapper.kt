@@ -7,7 +7,8 @@ fun DeviceDto.toDomain() : Device {
     return Device(
         id = this.id,
         model = this.model,
-        registeredAt = this.registeredAt
+        registeredAt = this.registeredAt,
+        submittedAt = this.submittedAt
     )
 }
 
@@ -16,6 +17,7 @@ fun Device.toDto(programId: Int) : DeviceDto {
         id = this.id,
         programId = programId,
         model = this.model,
-        registeredAt = this.registeredAt
+        registeredAt = this.registeredAt,
+        submittedAt = this.submittedAt
     )
 }

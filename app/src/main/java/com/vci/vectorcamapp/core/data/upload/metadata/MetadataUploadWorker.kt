@@ -12,8 +12,12 @@ import androidx.work.ForegroundInfo
 import androidx.work.WorkerParameters
 import com.vci.vectorcamapp.R
 import com.vci.vectorcamapp.core.domain.cache.DeviceCache
+import com.vci.vectorcamapp.core.domain.model.Device
+import com.vci.vectorcamapp.core.domain.model.Session
+import com.vci.vectorcamapp.core.domain.network.api.DeviceDataSource
 import com.vci.vectorcamapp.core.domain.network.api.SessionDataSource
 import com.vci.vectorcamapp.core.domain.repository.SessionRepository
+import com.vci.vectorcamapp.core.domain.repository.SpecimenRepository
 import com.vci.vectorcamapp.core.domain.util.onError
 import com.vci.vectorcamapp.core.domain.util.onSuccess
 import dagger.assisted.Assisted
@@ -27,6 +31,8 @@ class MetadataUploadWorker @AssistedInject constructor(
     @Assisted private val workerParams: WorkerParameters,
     private val deviceCache: DeviceCache,
     private val sessionRepository: SessionRepository,
+    private val specimenRepository: SpecimenRepository,
+    private val deviceDataSource: DeviceDataSource,
     private val sessionDataSource: SessionDataSource,
 ) : CoroutineWorker(context, workerParams) {
 
@@ -36,37 +42,97 @@ class MetadataUploadWorker @AssistedInject constructor(
     override suspend fun doWork(): Result {
         createNotificationChannel()
 
-        setForeground(createForegroundInfo())
+        setForeground(showInitialMetadataNotification())
 
         val session = inputData.getString("session_id")?.let { UUID.fromString(it) }
-            ?.let { sessionRepository.getSessionById(it) } ?: return Result.retry()
+            ?.let { sessionRepository.getSessionById(it) }
         val siteId = inputData.getInt("site_id", -1)
-        val device = deviceCache.getDevice()
 
-        if (siteId == -1 || device == null) return Result.retry()
+        var device = deviceCache.getDevice()
+        val programId = deviceCache.getProgramId()
+
+        if (session == null || siteId == -1 || device == null || programId == null) return Result.failure()
 
         try {
-            // TODO: UPLOAD DEVICE FOR REGISTRATION IF POSSIBLE
-            // TODO: THIS IS JUST A TEST EXECUTION OF AN ENDPOINT. THIS ENTIRE ALGORITHM SHOULD BE REWRITTEN.
-            val deviceId = device.id // TODO: CHANGE THIS WHEN ALGORITHM IS WRITTEN
-            sessionDataSource.postSession(session, siteId, 1).onSuccess {
-                Log.d("UploadWorker", "Session uploaded successfully")
-            }.onError {
-                Log.d("UploadWorker", "Error during upload: $it")
+            if (device.submittedAt == null) {
+                deviceDataSource.registerDevice(device, programId)
+                    .onSuccess { registerDeviceResponseDto ->
+                        val deviceResponseDto = registerDeviceResponseDto.device
+                        deviceCache.saveDevice(
+                            Device(
+                                id = deviceResponseDto.deviceId,
+                                model = deviceResponseDto.model,
+                                registeredAt = deviceResponseDto.registeredAt,
+                                submittedAt = deviceResponseDto.submittedAt
+                            ), deviceResponseDto.programId
+                        )
+                    }.onError {
+                        Log.e("UploadWorker", "Error during device registration: $it")
+                        showUploadErrorNotification("Error during device registration: $it")
+                        return Result.failure()
+                    }
             }
 
-            for (i in 1..TOTAL_DATAPOINTS) {
-                // Simulate metadata upload
-                delay(1000)
-                Log.d("UploadWorker", i.toString())
-                updateNotification(i)
+            device = deviceCache.getDevice()
+            Log.d("UploadWorker", "Device: $device")
+            if (device == null) return Result.failure()
+
+            if (session.submittedAt == null) {
+                sessionDataSource.postSession(session, siteId, device.id)
+                    .onSuccess { postSessionResponseDto ->
+                        val sessionResponseDto = postSessionResponseDto.session
+                        sessionRepository.upsertSession(
+                            Session(
+                                localId = sessionResponseDto.frontendId,
+                                remoteId = sessionResponseDto.sessionId,
+                                houseNumber = sessionResponseDto.houseNumber,
+                                collectorTitle = sessionResponseDto.collectorTitle,
+                                collectorName = sessionResponseDto.collectorName,
+                                collectionDate = sessionResponseDto.collectionDate,
+                                collectionMethod = sessionResponseDto.collectionMethod,
+                                specimenCondition = sessionResponseDto.specimenCondition,
+                                createdAt = sessionResponseDto.createdAt,
+                                completedAt = sessionResponseDto.completedAt,
+                                submittedAt = sessionResponseDto.submittedAt,
+                                notes = sessionResponseDto.notes
+                            ), sessionResponseDto.siteId
+                        ).onError {
+                            Log.e("UploadWorker", "Error during saving session locally: $it")
+                            showUploadErrorNotification("Error during saving session locally: $it")
+                            return Result.failure()
+                        }
+                    }.onError {
+                        Log.e("UploadWorker", "Error during session upload: $it")
+                        showUploadErrorNotification("Error during session upload: $it")
+                        return Result.failure()
+                    }
             }
+
+            val submittedSession = sessionRepository.getSessionById(session.localId)
+            if (submittedSession?.remoteId == null) {
+                Log.e("UploadWorker", "Submitted session not found locally")
+                showUploadErrorNotification("Submitted session not found locally")
+                return Result.failure()
+            }
+
+            // TODO: SURVEILLANCE FORM SUBMISSION HERE
+
+            val specimensAndBoundingBoxes =
+                specimenRepository.getSpecimensAndBoundingBoxesBySession(submittedSession.localId)
+
+            specimensAndBoundingBoxes.forEachIndexed { index, (specimen, boundingBox) ->
+                delay(7000)
+                Log.d("UploadWorker", "Specimen: $specimen, BoundingBox: $boundingBox")
+                showSpecimenUploadProgress(index + 1, specimensAndBoundingBoxes.size)
+            }
+
+            return Result.success()
+
         } catch (e: Exception) {
-            Log.d("UploadWorker", "Error during upload: ${e.message}")
-            return Result.retry()
+            Log.e("UploadWorker", "Error during upload: ${e.message}")
+            e.message?.let { showUploadErrorNotification(it) }
+            return Result.failure()
         }
-
-        return Result.success()
     }
 
     private fun createNotificationChannel() {
@@ -76,11 +142,9 @@ class MetadataUploadWorker @AssistedInject constructor(
         notificationManager.createNotificationChannel(channel)
     }
 
-    private fun createForegroundInfo(): ForegroundInfo {
+    private fun showInitialMetadataNotification(): ForegroundInfo {
         val notification = NotificationCompat.Builder(context, CHANNEL_ID)
-            .setContentTitle("Session Metadata Upload in Progress")
-            .setContentText("Uploading datapoint 0 of $TOTAL_DATAPOINTS")
-            .setProgress(TOTAL_DATAPOINTS, 0, false).setSmallIcon(R.drawable.ic_upload)
+            .setContentTitle("Registering device and session...").setSmallIcon(R.drawable.ic_upload)
             .setOngoing(true).build()
 
         return ForegroundInfo(
@@ -88,20 +152,27 @@ class MetadataUploadWorker @AssistedInject constructor(
         )
     }
 
-    private fun updateNotification(counter: Int) {
-        val updatedNotification = NotificationCompat.Builder(context, CHANNEL_ID)
-            .setContentTitle("Session Metadata Upload in Progress")
-            .setContentText("Uploading datapoint $counter of $TOTAL_DATAPOINTS")
-            .setProgress(TOTAL_DATAPOINTS, counter, false).setSmallIcon(R.drawable.ic_upload)
-            .setOngoing(true).build()
+    private fun showSpecimenUploadProgress(current: Int, total: Int) {
+        val notification =
+            NotificationCompat.Builder(context, CHANNEL_ID).setContentTitle("Uploading specimens")
+                .setContentText("Uploading $current of $total specimens")
+                .setSmallIcon(R.drawable.ic_upload).setProgress(total, current, false)
+                .setOngoing(true).build()
 
-        notificationManager.notify(NOTIFICATION_ID, updatedNotification)
+        notificationManager.notify(NOTIFICATION_ID, notification)
+    }
+
+    private fun showUploadErrorNotification(message: String) {
+        val notification =
+            NotificationCompat.Builder(context, CHANNEL_ID).setContentTitle("Upload failed")
+                .setContentText(message).setSmallIcon(R.drawable.ic_error).build()
+
+        notificationManager.notify(NOTIFICATION_ID, notification)
     }
 
     companion object {
         const val CHANNEL_ID = "metadata_upload_channel"
         const val CHANNEL_NAME = "Metadata Upload Channel"
         const val NOTIFICATION_ID = 1002
-        const val TOTAL_DATAPOINTS = 20
     }
 }

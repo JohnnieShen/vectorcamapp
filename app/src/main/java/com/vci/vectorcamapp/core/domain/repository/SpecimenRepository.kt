@@ -10,5 +10,6 @@ import java.util.UUID
 interface SpecimenRepository {
     suspend fun insertSpecimen(specimen: Specimen, sessionId: UUID): Result<Unit, RoomDbError>
     suspend fun deleteSpecimen(specimen: Specimen, sessionId: UUID): Boolean
+    suspend fun getSpecimensAndBoundingBoxesBySession(sessionId: UUID): List<SpecimenAndBoundingBox>
     fun observeSpecimensAndBoundingBoxesBySession(sessionId: UUID): Flow<List<SpecimenAndBoundingBox>>
 }
