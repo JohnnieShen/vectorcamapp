@@ -5,5 +5,5 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class RegisterDeviceResponseDto(
     val message: String = "",
-    val device: DeviceResponseDto = DeviceResponseDto()
+    val device: DeviceDto = DeviceDto()
 )

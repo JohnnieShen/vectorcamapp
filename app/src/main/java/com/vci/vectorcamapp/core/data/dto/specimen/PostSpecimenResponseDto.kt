@@ -5,5 +5,5 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class PostSpecimenResponseDto(
     val message: String = "",
-    val specimen: SpecimenResponseDto = SpecimenResponseDto()
+    val specimen: SpecimenDto = SpecimenDto()
 )

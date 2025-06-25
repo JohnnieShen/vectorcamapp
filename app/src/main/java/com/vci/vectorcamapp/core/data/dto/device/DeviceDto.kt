@@ -1,12 +1,12 @@
-package com.vci.vectorcamapp.core.data.dto
+package com.vci.vectorcamapp.core.data.dto.device
 
 import kotlinx.serialization.Serializable
 
 @Serializable
 data class DeviceDto(
-    val id: Int = -1,
-    val programId: Int = -1,
+    val deviceId: Int = -1,
     val model: String = "",
     val registeredAt: Long = 0L,
-    val submittedAt: Long? = null
+    val submittedAt: Long = 0L,
+    val programId: Int = -1
 )

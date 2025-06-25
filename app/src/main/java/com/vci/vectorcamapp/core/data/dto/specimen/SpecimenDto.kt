@@ -4,7 +4,7 @@ import com.vci.vectorcamapp.core.data.dto.inference_result.InferenceResultDto
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class SpecimenResponseDto(
+data class SpecimenDto(
     val specimenId: String = "",
     val sessionId: Int = -1,
     val species: String = "",
