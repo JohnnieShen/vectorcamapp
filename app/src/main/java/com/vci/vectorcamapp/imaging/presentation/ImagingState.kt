@@ -15,6 +15,7 @@ data class ImagingState(
         abdomenStatus = null,
         imageUri = Uri.EMPTY,
         capturedAt = 0L,
+        submittedAt = null
     ),
     val currentImage: Bitmap? = null,
     val captureBoundingBoxUi: BoundingBoxUi? = null,

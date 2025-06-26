@@ -13,6 +13,7 @@ fun SurveillanceFormEntity.toDomain() : SurveillanceForm {
         llinType = this.llinType,
         llinBrand = this.llinBrand,
         numPeopleSleptUnderLlin = this.numPeopleSleptUnderLlin,
+        submittedAt = this.submittedAt
     )
 }
 
@@ -26,5 +27,6 @@ fun SurveillanceForm.toEntity(sessionId: UUID) : SurveillanceFormEntity {
         llinType = this.llinType,
         llinBrand = this.llinBrand,
         numPeopleSleptUnderLlin = this.numPeopleSleptUnderLlin,
+        submittedAt = this.submittedAt
     )
 }

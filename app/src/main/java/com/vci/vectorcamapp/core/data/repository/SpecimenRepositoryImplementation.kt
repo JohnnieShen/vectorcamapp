@@ -24,7 +24,20 @@ class SpecimenRepositoryImplementation @Inject constructor(
             specimenDao.insertSpecimen(specimen.toEntity(sessionId))
             Result.Success(Unit)
         } catch (e: SQLiteConstraintException) {
-            Result.Error(RoomDbError.DUPLICATE_SPECIMEN_ID)
+            Result.Error(RoomDbError.CONSTRAINT_VIOLATION)
+        } catch (e: Exception) {
+            Result.Error(RoomDbError.UNKNOWN_ERROR)
+        }
+    }
+
+    override suspend fun updateSpecimen(
+        specimen: Specimen, sessionId: UUID
+    ): Result<Unit, RoomDbError> {
+        return try {
+            specimenDao.updateSpecimen(specimen.toEntity(sessionId))
+            Result.Success(Unit)
+        } catch (e: SQLiteConstraintException) {
+            Result.Error(RoomDbError.CONSTRAINT_VIOLATION)
         } catch (e: Exception) {
             Result.Error(RoomDbError.UNKNOWN_ERROR)
         }

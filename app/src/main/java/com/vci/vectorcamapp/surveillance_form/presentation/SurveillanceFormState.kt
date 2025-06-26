@@ -33,6 +33,7 @@ data class SurveillanceFormState(
         llinType = null,
         llinBrand = null,
         numPeopleSleptUnderLlin = null,
+        submittedAt = null
     ),
     val surveillanceFormErrors: SurveillanceFormErrors = SurveillanceFormErrors(
         collectorTitle = null,

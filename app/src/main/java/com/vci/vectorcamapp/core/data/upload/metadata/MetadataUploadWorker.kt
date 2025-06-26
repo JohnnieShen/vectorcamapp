@@ -14,15 +14,19 @@ import com.vci.vectorcamapp.R
 import com.vci.vectorcamapp.core.domain.cache.DeviceCache
 import com.vci.vectorcamapp.core.domain.model.Device
 import com.vci.vectorcamapp.core.domain.model.Session
+import com.vci.vectorcamapp.core.domain.model.Specimen
+import com.vci.vectorcamapp.core.domain.model.SurveillanceForm
 import com.vci.vectorcamapp.core.domain.network.api.DeviceDataSource
 import com.vci.vectorcamapp.core.domain.network.api.SessionDataSource
+import com.vci.vectorcamapp.core.domain.network.api.SpecimenDataSource
+import com.vci.vectorcamapp.core.domain.network.api.SurveillanceFormDataSource
 import com.vci.vectorcamapp.core.domain.repository.SessionRepository
 import com.vci.vectorcamapp.core.domain.repository.SpecimenRepository
+import com.vci.vectorcamapp.core.domain.repository.SurveillanceFormRepository
 import com.vci.vectorcamapp.core.domain.util.onError
 import com.vci.vectorcamapp.core.domain.util.onSuccess
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
-import kotlinx.coroutines.delay
 import java.util.UUID
 
 @HiltWorker
@@ -31,14 +35,18 @@ class MetadataUploadWorker @AssistedInject constructor(
     @Assisted private val workerParams: WorkerParameters,
     private val deviceCache: DeviceCache,
     private val sessionRepository: SessionRepository,
+    private val surveillanceFormRepository: SurveillanceFormRepository,
     private val specimenRepository: SpecimenRepository,
     private val deviceDataSource: DeviceDataSource,
     private val sessionDataSource: SessionDataSource,
+    private val surveillanceFormDataSource: SurveillanceFormDataSource,
+    private val specimenDataSource: SpecimenDataSource
 ) : CoroutineWorker(context, workerParams) {
 
     private val notificationManager: NotificationManager =
         context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
+    // TODO: Update once Inference Result data points become available
     override suspend fun doWork(): Result {
         createNotificationChannel()
 
@@ -57,14 +65,14 @@ class MetadataUploadWorker @AssistedInject constructor(
             if (device.submittedAt == null) {
                 deviceDataSource.registerDevice(device, programId)
                     .onSuccess { registerDeviceResponseDto ->
-                        val deviceResponseDto = registerDeviceResponseDto.device
+                        val deviceDto = registerDeviceResponseDto.device
                         deviceCache.saveDevice(
                             Device(
-                                id = deviceResponseDto.deviceId,
-                                model = deviceResponseDto.model,
-                                registeredAt = deviceResponseDto.registeredAt,
-                                submittedAt = deviceResponseDto.submittedAt
-                            ), deviceResponseDto.programId
+                                id = deviceDto.deviceId,
+                                model = deviceDto.model,
+                                registeredAt = deviceDto.registeredAt,
+                                submittedAt = deviceDto.submittedAt
+                            ), deviceDto.programId
                         )
                     }.onError {
                         Log.e("UploadWorker", "Error during device registration: $it")
@@ -80,22 +88,22 @@ class MetadataUploadWorker @AssistedInject constructor(
             if (session.submittedAt == null) {
                 sessionDataSource.postSession(session, siteId, device.id)
                     .onSuccess { postSessionResponseDto ->
-                        val sessionResponseDto = postSessionResponseDto.session
+                        val sessionDto = postSessionResponseDto.session
                         sessionRepository.upsertSession(
                             Session(
-                                localId = sessionResponseDto.frontendId,
-                                remoteId = sessionResponseDto.sessionId,
-                                houseNumber = sessionResponseDto.houseNumber,
-                                collectorTitle = sessionResponseDto.collectorTitle,
-                                collectorName = sessionResponseDto.collectorName,
-                                collectionDate = sessionResponseDto.collectionDate,
-                                collectionMethod = sessionResponseDto.collectionMethod,
-                                specimenCondition = sessionResponseDto.specimenCondition,
-                                createdAt = sessionResponseDto.createdAt,
-                                completedAt = sessionResponseDto.completedAt,
-                                submittedAt = sessionResponseDto.submittedAt,
-                                notes = sessionResponseDto.notes
-                            ), sessionResponseDto.siteId
+                                localId = sessionDto.frontendId,
+                                remoteId = sessionDto.sessionId,
+                                houseNumber = sessionDto.houseNumber,
+                                collectorTitle = sessionDto.collectorTitle,
+                                collectorName = sessionDto.collectorName,
+                                collectionDate = sessionDto.collectionDate,
+                                collectionMethod = sessionDto.collectionMethod,
+                                specimenCondition = sessionDto.specimenCondition,
+                                createdAt = sessionDto.createdAt,
+                                completedAt = sessionDto.completedAt,
+                                submittedAt = sessionDto.submittedAt,
+                                notes = sessionDto.notes
+                            ), sessionDto.siteId
                         ).onError {
                             Log.e("UploadWorker", "Error during saving session locally: $it")
                             showUploadErrorNotification("Error during saving session locally: $it")
@@ -115,15 +123,73 @@ class MetadataUploadWorker @AssistedInject constructor(
                 return Result.failure()
             }
 
-            // TODO: SURVEILLANCE FORM SUBMISSION HERE
+            val surveillanceForm =
+                surveillanceFormRepository.getSurveillanceFormBySessionId(submittedSession.localId)
+            if (surveillanceForm != null) {
+                if (surveillanceForm.submittedAt == null) {
+                    surveillanceFormDataSource.postSurveillanceForm(
+                        surveillanceForm, submittedSession.remoteId
+                    ).onSuccess { postSurveillanceFormResponseDto ->
+                        val surveillanceFormDto = postSurveillanceFormResponseDto.form
+                        surveillanceFormRepository.upsertSurveillanceForm(
+                            SurveillanceForm(
+                                numPeopleSleptInHouse = surveillanceFormDto.numPeopleSleptInHouse,
+                                wasIrsConducted = surveillanceFormDto.wasIrsConducted,
+                                monthsSinceIrs = surveillanceFormDto.monthsSinceIrs,
+                                numLlinsAvailable = surveillanceFormDto.numLlinsAvailable,
+                                llinType = surveillanceFormDto.llinType,
+                                llinBrand = surveillanceFormDto.llinBrand,
+                                numPeopleSleptUnderLlin = surveillanceFormDto.numPeopleSleptUnderLlin,
+                                submittedAt = surveillanceFormDto.submittedAt
+                            ), submittedSession.localId
+                        ).onError {
+                            Log.e(
+                                "UploadWorker", "Error during saving surveillance form locally: $it"
+                            )
+                            showUploadErrorNotification("Error during saving surveillance form locally: $it")
+                            return Result.failure()
+                        }
+                    }.onError {
+                        Log.e("UploadWorker", "Error during surveillance form upload: $it")
+                        showUploadErrorNotification("Error during surveillance form upload: $it")
+                        return Result.failure()
+                    }
+                }
+            }
 
             val specimensAndBoundingBoxes =
                 specimenRepository.getSpecimensAndBoundingBoxesBySession(submittedSession.localId)
 
             specimensAndBoundingBoxes.forEachIndexed { index, (specimen, boundingBox) ->
-                delay(7000)
-                Log.d("UploadWorker", "Specimen: $specimen, BoundingBox: $boundingBox")
-                showSpecimenUploadProgress(index + 1, specimensAndBoundingBoxes.size)
+                if (specimen.submittedAt == null) {
+                    specimenDataSource.postSpecimen(
+                        specimen, boundingBox, submittedSession.remoteId
+                    ).onSuccess { postSpecimenResponseDto ->
+                        val specimenDto = postSpecimenResponseDto.specimen
+                        specimenRepository.updateSpecimen(
+                            Specimen(
+                                id = specimenDto.specimenId,
+                                species = specimenDto.species,
+                                sex = specimenDto.sex,
+                                abdomenStatus = specimenDto.abdomenStatus,
+                                imageUri = specimen.imageUri,
+                                capturedAt = specimenDto.capturedAt,
+                                submittedAt = specimenDto.submittedAt
+                            ), submittedSession.localId
+                        ).onSuccess {
+                            Log.d("UploadWorker", "Specimen: $specimen, BoundingBox: $boundingBox")
+                            showSpecimenUploadProgress(index + 1, specimensAndBoundingBoxes.size)
+                        }.onError {
+                            Log.e("UploadWorker", "Error during saving specimen locally: $it")
+                            showUploadErrorNotification("Error during saving specimen locally: $it")
+                            return Result.failure()
+                        }
+                    }.onError {
+                        Log.e("UploadWorker", "Error during specimen upload: $it")
+                        showUploadErrorNotification("Error during specimen upload: $it")
+                        return Result.failure()
+                    }
+                }
             }
 
             return Result.success()

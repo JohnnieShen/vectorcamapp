@@ -7,9 +7,9 @@ import kotlinx.serialization.Serializable
 data class PostSpecimenRequestDto(
     val specimenId: String = "",
     val sessionId: Int = -1,
-    val species: String = "",
-    val sex: String = "",
-    val abdomenStatus: String = "",
+    val species: String? = null,
+    val sex: String? = null,
+    val abdomenStatus: String? = null,
     val capturedAt: Long = 0L,
     val inferenceResult: InferenceResultDto = InferenceResultDto()
 )
