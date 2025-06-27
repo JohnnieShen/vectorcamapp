@@ -2,24 +2,31 @@ package com.vci.vectorcamapp.surveillance_form.presentation
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
+import com.vci.vectorcamapp.core.domain.util.onError
+import com.vci.vectorcamapp.core.domain.util.onSuccess
+import com.vci.vectorcamapp.surveillance_form.location.data.toString
 import com.vci.vectorcamapp.surveillance_form.domain.enums.CollectionMethodOption
 import com.vci.vectorcamapp.surveillance_form.domain.enums.DistrictOption
 import com.vci.vectorcamapp.surveillance_form.domain.enums.LlinBrandOption
 import com.vci.vectorcamapp.surveillance_form.domain.enums.LlinTypeOption
 import com.vci.vectorcamapp.surveillance_form.domain.enums.SentinelSiteOption
 import com.vci.vectorcamapp.surveillance_form.domain.enums.SpecimenConditionOption
+import com.vci.vectorcamapp.surveillance_form.location.data.LocationError
 import com.vci.vectorcamapp.surveillance_form.presentation.components.DatePickerField
 import com.vci.vectorcamapp.surveillance_form.presentation.components.DropdownField
 import com.vci.vectorcamapp.surveillance_form.presentation.components.TextEntryField
@@ -32,6 +39,8 @@ fun SurveillanceFormScreen(
     onAction: (SurveillanceFormAction) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val context = LocalContext.current
+
     val verticalScrollState = rememberScrollState()
 
     BackHandler {
@@ -195,6 +204,27 @@ fun SurveillanceFormScreen(
             onValueChange = { onAction(SurveillanceFormAction.EnterNotes(it)) },
             modifier = modifier
         )
+
+        if (state.latitude != null && state.longitude != null) {
+            Text("Latitude: ${state.latitude}", Modifier.padding(vertical = 4.dp))
+            Text("Longitude: ${state.longitude}", Modifier.padding(vertical = 4.dp))
+        } else if (state.locationError != null) {
+            Text(
+                "Could not get location: ${state.locationError.toString(context)}",
+                Modifier.padding(vertical = 4.dp)
+            )
+            if(state.locationError == LocationError.GPS_TIMEOUT) {
+                Button(onClick = {
+                    onAction(SurveillanceFormAction.RetryLocation ) },
+                    modifier = modifier
+                ) {
+                    Text("Retry Location")
+                }
+            }
+        } else {
+            CircularProgressIndicator()
+            Text("Getting location…", Modifier.padding(start = 8.dp))
+        }
 
         Button(
             onClick = { onAction(SurveillanceFormAction.SubmitSurveillanceForm) },

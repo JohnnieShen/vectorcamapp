@@ -13,8 +13,12 @@ import com.vci.vectorcamapp.core.domain.repository.SurveillanceFormRepository
 import com.vci.vectorcamapp.core.domain.util.Result
 import com.vci.vectorcamapp.core.domain.util.errorOrNull
 import com.vci.vectorcamapp.core.domain.util.onError
+import com.vci.vectorcamapp.core.domain.util.onSuccess
 import com.vci.vectorcamapp.surveillance_form.domain.use_cases.ValidationUseCases
+import com.vci.vectorcamapp.surveillance_form.location.data.LocationError
+import com.vci.vectorcamapp.surveillance_form.location.domain.repository.LocationRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -24,6 +28,7 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeout
 import javax.inject.Inject
 
 @HiltViewModel
@@ -34,7 +39,13 @@ class SurveillanceFormViewModel @Inject constructor(
     private val siteRepository: SiteRepository,
     private val surveillanceFormRepository: SurveillanceFormRepository,
     private val sessionRepository: SessionRepository,
+    private val locationRepository: LocationRepository,
 ) : ViewModel() {
+
+    companion object {
+        private const val MAX_ATTEMPTS = 2
+        private const val LOCATION_TIMEOUT_MS = 30_000L
+    }
 
     @Inject
     lateinit var transactionHelper: TransactionHelper
@@ -342,6 +353,12 @@ class SurveillanceFormViewModel @Inject constructor(
                         )
                     }
                 }
+
+                is SurveillanceFormAction.RetryLocation -> {
+                    _state.update { it.copy(locationError = null) }
+                    _state.update { it.copy(latitude = null, longitude = null) }
+                    getLocation()
+                }
             }
         }
     }
@@ -376,8 +393,6 @@ class SurveillanceFormViewModel @Inject constructor(
                 }
             }
 
-            // FETCH LOCATION HERE
-
             _state.update {
                 it.copy(
                     isLoading = false,
@@ -387,6 +402,34 @@ class SurveillanceFormViewModel @Inject constructor(
                     selectedDistrict = district,
                     selectedSentinelSite = sentinelSite
                 )
+            }
+
+            getLocation()
+        }
+    }
+
+    private suspend fun getLocation() {
+        repeat(MAX_ATTEMPTS) { attempt ->
+            val result: Result<Pair<Float, Float>, LocationError> = try {
+                val loc = withTimeout(LOCATION_TIMEOUT_MS) {
+                    locationRepository.getCurrentLocation()
+                }
+                Result.Success(loc.latitude.toFloat() to loc.longitude.toFloat())
+            } catch (e: Exception) {
+                val error = when (e) {
+                    is SecurityException -> LocationError.PERMISSION_DENIED
+                    is TimeoutCancellationException -> LocationError.GPS_TIMEOUT
+                    else -> LocationError.UNKNOWN
+                }
+                Result.Error(error)
+            }
+
+            result.onSuccess { (latitude, longitude) ->
+                _state.update {
+                    it.copy(latitude = latitude, longitude = longitude)
+                }
+            }.onError { error ->
+                _state.update { it.copy(locationError = error) }
             }
         }
     }

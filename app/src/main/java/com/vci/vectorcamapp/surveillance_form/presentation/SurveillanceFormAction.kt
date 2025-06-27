@@ -26,4 +26,5 @@ sealed interface SurveillanceFormAction {
     data class SelectCollectionMethod(val option: CollectionMethodOption) : SurveillanceFormAction
     data class SelectSpecimenCondition(val option: SpecimenConditionOption) : SurveillanceFormAction
     data class EnterNotes(val text: String) : SurveillanceFormAction
+    data object RetryLocation: SurveillanceFormAction
 }
