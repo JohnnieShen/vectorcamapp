@@ -39,6 +39,8 @@ import com.vci.vectorcamapp.complete_session.list.presentation.CompleteSessionLi
 import com.vci.vectorcamapp.complete_session.specimens.presentation.CompleteSessionSpecimensAction
 import com.vci.vectorcamapp.complete_session.specimens.presentation.CompleteSessionSpecimensScreen
 import com.vci.vectorcamapp.complete_session.specimens.presentation.CompleteSessionSpecimensViewModel
+import com.vci.vectorcamapp.incomplete_session.presentation.IncompleteSessionAction
+import com.vci.vectorcamapp.incomplete_session.presentation.IncompleteSessionEvent
 import com.vci.vectorcamapp.incomplete_session.presentation.IncompleteSessionScreen
 import com.vci.vectorcamapp.incomplete_session.presentation.IncompleteSessionViewModel
 import com.vci.vectorcamapp.registration.presentation.RegistrationEvent
@@ -74,7 +76,7 @@ fun NavGraph(startDestination: Destination) {
             }
 
             Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                RegistrationScreen(
+                 RegistrationScreen(
                     state = state,
                     onAction = viewModel::onAction,
                     modifier = Modifier.padding(innerPadding)
@@ -179,21 +181,16 @@ fun NavGraph(startDestination: Destination) {
         composable<Destination.IncompleteSession> {
             val viewModel = hiltViewModel<IncompleteSessionViewModel>()
             val state by viewModel.state.collectAsStateWithLifecycle()
-
-            Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                IncompleteSessionScreen(
-                    state = state,
-                    modifier = Modifier.padding(innerPadding)
-                )
+            ObserveAsEvents(events = viewModel.events) { event ->
+                when (event) {
+                    IncompleteSessionEvent.NavigateToSurveillanceForm ->
+                        navController.navigate(Destination.SurveillanceForm)
+                }
             }
-        }
-        composable<Destination.IncompleteSession> {
-            val viewModel = hiltViewModel<IncompleteSessionViewModel>()
-            val state by viewModel.state.collectAsStateWithLifecycle()
-
             Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                 IncompleteSessionScreen(
                     state = state,
+                    onAction = viewModel::onAction,
                     modifier = Modifier.padding(innerPadding)
                 )
             }

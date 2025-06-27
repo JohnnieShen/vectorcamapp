@@ -1,5 +1,6 @@
 package com.vci.vectorcamapp.incomplete_session.presentation.components
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -19,13 +20,16 @@ import java.text.SimpleDateFormat
 import java.util.Locale
 
 @Composable
-fun IncompleteSessionCard(session: Session, modifier: Modifier = Modifier) {
+fun IncompleteSessionCard(session: Session, onClick: () -> Unit, modifier: Modifier = Modifier) {
 
     val dateTimeFormatter = remember { SimpleDateFormat("MMM dd, yyyy 'at' h:mm a", Locale.getDefault()) }
     val formattedDateTime = dateTimeFormatter.format(session.createdAt)
 
     Card(
-        modifier = modifier.fillMaxWidth().wrapContentHeight(),
+        modifier = modifier
+            .fillMaxWidth()
+            .wrapContentHeight()
+            .clickable(onClick = onClick),
         shape = MaterialTheme.shapes.medium,
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceVariant

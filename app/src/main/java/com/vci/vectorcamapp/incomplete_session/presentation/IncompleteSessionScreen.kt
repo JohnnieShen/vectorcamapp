@@ -9,10 +9,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.vci.vectorcamapp.incomplete_session.presentation.components.IncompleteSessionCard
+import java.util.UUID
 
 @Composable
 fun IncompleteSessionScreen(
     state: IncompleteSessionState,
+    onAction: (IncompleteSessionAction) -> Unit,
     modifier: Modifier = Modifier
 ) {
     LazyColumn(
@@ -22,7 +24,10 @@ fun IncompleteSessionScreen(
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         items(items = state.sessions.asReversed(), key = { it.localId }) { session ->
-            IncompleteSessionCard(session = session, modifier = modifier)
+            IncompleteSessionCard(session = session,
+                onClick = { onAction(IncompleteSessionAction.ResumeSession(session.localId)) },
+                modifier = modifier
+            )
         }
     }
 }
