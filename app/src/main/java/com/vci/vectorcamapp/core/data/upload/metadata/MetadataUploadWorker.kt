@@ -4,7 +4,6 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
 import android.content.pm.ServiceInfo
-import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
@@ -37,7 +36,6 @@ import com.vci.vectorcamapp.core.domain.util.onSuccess
 import com.vci.vectorcamapp.core.presentation.util.network.toString
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
-import kotlinx.coroutines.delay
 import kotlinx.io.IOException
 import java.util.UUID
 import androidx.work.ListenableWorker.Result as WorkerResult
@@ -95,7 +93,6 @@ class MetadataUploadWorker @AssistedInject constructor(
                         syncDeviceResult.error.toString(context)
                     )
                 }
-            delay(5000L)
 
             val syncedSession = when (val syncSessionResult =
                 syncSessionIfNeeded(localSession, localSiteId, syncedDevice.id)) {
@@ -107,7 +104,6 @@ class MetadataUploadWorker @AssistedInject constructor(
             if (syncedSession.remoteId == null) {
                 return retryOrFailure("Session not found on the server.")
             }
-            delay(5000L)
 
             val localSurveillanceForm =
                 surveillanceFormRepository.getSurveillanceFormBySessionId(syncedSession.localId)
@@ -118,7 +114,6 @@ class MetadataUploadWorker @AssistedInject constructor(
                     return retryOrFailure(error.toString(context))
                 }
             }
-            delay(5000L)
 
             val specimensAndBoundingBoxes =
                 specimenRepository.getSpecimensAndBoundingBoxesBySession(syncedSession.localId)
@@ -130,7 +125,6 @@ class MetadataUploadWorker @AssistedInject constructor(
                 }.onError { error ->
                     return retryOrFailure(error.toString(context))
                 }
-                delay(2000L)
             }
 
             return WorkerResult.success()
@@ -163,19 +157,13 @@ class MetadataUploadWorker @AssistedInject constructor(
                 submittedAt = localDevice.submittedAt,
                 programId = localProgramId
             )
-            Log.d("Upload Worker", "Local Device DTO: $localDeviceDto")
 
             val remoteDeviceDto =
                 when (val remoteDeviceResult = deviceDataSource.getDeviceById(localDevice.id)) {
-                    is DomainResult.Success -> {
-                        Log.d("Upload Worker", "Device found in remote...fetching...")
-                        remoteDeviceResult.data
-                    }
-
+                    is DomainResult.Success -> remoteDeviceResult.data
                     is DomainResult.Error -> {
                         when (remoteDeviceResult.error) {
                             NetworkError.NOT_FOUND -> {
-                                Log.d("Upload Worker", "Registering Device...")
                                 val registerDeviceResult =
                                     deviceDataSource.registerDevice(localDevice, localProgramId)
                                 when (registerDeviceResult) {
@@ -190,7 +178,6 @@ class MetadataUploadWorker @AssistedInject constructor(
                         }
                     }
                 }
-            Log.d("Upload Worker", "Remote Device DTO: $remoteDeviceDto")
 
             val remoteDevice = Device(
                 id = remoteDeviceDto.deviceId,
@@ -198,14 +185,11 @@ class MetadataUploadWorker @AssistedInject constructor(
                 registeredAt = remoteDeviceDto.registeredAt,
                 submittedAt = remoteDeviceDto.submittedAt
             )
-            Log.d("Upload Worker", "Remote Device: $remoteDevice")
 
             if (remoteDeviceDto != localDeviceDto) {
                 deviceCache.saveDevice(remoteDevice, remoteDeviceDto.programId)
-                Log.d("Upload Worker", "Device Update Successful locally")
             }
 
-            Log.d("Upload Worker", "Device synced.")
             DomainResult.Success(remoteDevice)
         } catch (e: IOException) {
             DomainResult.Error(NetworkError.NO_INTERNET)
@@ -234,19 +218,13 @@ class MetadataUploadWorker @AssistedInject constructor(
                 siteId = localSiteId,
                 deviceId = syncedDeviceId
             )
-            Log.d("Upload Worker", "Local Session DTO: $localSessionDto")
 
             val remoteSessionDto = when (val remoteSessionResult =
                 sessionDataSource.getSessionByFrontendId(localSession.localId)) {
-                is DomainResult.Success -> {
-                    Log.d("Upload Worker", "Session found in remote...fetching...")
-                    remoteSessionResult.data
-                }
-
+                is DomainResult.Success -> remoteSessionResult.data
                 is DomainResult.Error -> {
                     when (remoteSessionResult.error) {
                         NetworkError.NOT_FOUND -> {
-                            Log.d("Upload Worker", "Posting Session...")
                             val postSessionResult = sessionDataSource.postSession(
                                 localSession, localSiteId, syncedDeviceId
                             )
@@ -260,7 +238,6 @@ class MetadataUploadWorker @AssistedInject constructor(
                     }
                 }
             }
-            Log.d("Upload Worker", "Remote Session DTO: $remoteSessionDto")
 
             val remoteSession = Session(
                 localId = remoteSessionDto.frontendId,
@@ -276,16 +253,13 @@ class MetadataUploadWorker @AssistedInject constructor(
                 submittedAt = remoteSessionDto.submittedAt,
                 notes = remoteSessionDto.notes,
             )
-            Log.d("Upload Worker", "Remote Session: $remoteSession")
 
             if (localSessionDto != remoteSessionDto) {
                 sessionRepository.upsertSession(remoteSession, remoteSessionDto.siteId).onError {
                     return DomainResult.Error(NetworkError.CLIENT_ERROR)
                 }
-                Log.d("Upload Worker", "Session Update Successful Locally.")
             }
 
-            Log.d("Upload Worker", "Session synced.")
             DomainResult.Success(remoteSession)
         } catch (e: IOException) {
             DomainResult.Error(NetworkError.NO_INTERNET)
@@ -311,19 +285,13 @@ class MetadataUploadWorker @AssistedInject constructor(
                 numPeopleSleptUnderLlin = localSurveillanceForm.numPeopleSleptUnderLlin,
                 submittedAt = localSurveillanceForm.submittedAt
             )
-            Log.d("Upload Worker", "Local Surveillance Form DTO: $localSurveillanceFormDto")
 
             val remoteSurveillanceFormDto = when (val remoteSurveillanceFormResult =
                 surveillanceFormDataSource.getSurveillanceFormBySessionId(syncedRemoteSessionId)) {
-                is DomainResult.Success -> {
-                    Log.d("Upload Worker", "Surveillance Form found in remote...fetching...")
-                    remoteSurveillanceFormResult.data
-                }
-
+                is DomainResult.Success -> remoteSurveillanceFormResult.data
                 is DomainResult.Error -> {
                     when (remoteSurveillanceFormResult.error) {
                         NetworkError.NOT_FOUND -> {
-                            Log.d("Upload Worker", "Posting Surveillance Form...")
                             val postSurveillanceFormResult =
                                 surveillanceFormDataSource.postSurveillanceForm(
                                     localSurveillanceForm, syncedRemoteSessionId
@@ -340,7 +308,6 @@ class MetadataUploadWorker @AssistedInject constructor(
                     }
                 }
             }
-            Log.d("Upload Worker", "Remote Surveillance Form DTO: $remoteSurveillanceFormDto")
 
             val remoteSurveillanceForm = SurveillanceForm(
                 numPeopleSleptInHouse = remoteSurveillanceFormDto.numPeopleSleptInHouse,
@@ -352,7 +319,6 @@ class MetadataUploadWorker @AssistedInject constructor(
                 numPeopleSleptUnderLlin = remoteSurveillanceFormDto.numPeopleSleptUnderLlin,
                 submittedAt = remoteSurveillanceFormDto.submittedAt
             )
-            Log.d("Upload Worker", "Remote Surveillance Form: $remoteSurveillanceForm")
 
             if (remoteSurveillanceFormDto != localSurveillanceFormDto) {
                 surveillanceFormRepository.upsertSurveillanceForm(
@@ -360,10 +326,8 @@ class MetadataUploadWorker @AssistedInject constructor(
                 ).onError {
                     return DomainResult.Error(NetworkError.CLIENT_ERROR)
                 }
-                Log.d("Upload Worker", "Surveillance Form Update Successful Locally.")
             }
 
-            Log.d("Upload Worker", "Surveillance Form synced.")
             DomainResult.Success(Unit)
         } catch (e: IOException) {
             DomainResult.Error(NetworkError.NO_INTERNET)
@@ -397,21 +361,13 @@ class MetadataUploadWorker @AssistedInject constructor(
                     abdomenStatusProbabilities = listOf(0f, 0f, 0f)
                 )
             )
-            Log.d("Upload Worker", "Local Specimen DTO: $localSpecimenDto")
 
             val remoteSpecimenDto = when (val remoteSpecimenResult =
                 specimenDataSource.getSpecimenById(localSpecimen.id)) {
-                is DomainResult.Success -> {
-                    Log.d(
-                        "Upload Worker", "Specimen and Bounding Box found in remote...fetching..."
-                    )
-                    remoteSpecimenResult.data
-                }
-
+                is DomainResult.Success -> remoteSpecimenResult.data
                 is DomainResult.Error -> {
                     when (remoteSpecimenResult.error) {
                         NetworkError.NOT_FOUND -> {
-                            Log.d("Upload Worker", "Posting Specimen and Bounding Box...")
                             val postSpecimenResult = specimenDataSource.postSpecimen(
                                 localSpecimen, localBoundingBox, syncedRemoteSessionId
                             )
@@ -427,7 +383,6 @@ class MetadataUploadWorker @AssistedInject constructor(
                     }
                 }
             }
-            Log.d("Upload Worker", "Remote Specimen DTO: $remoteSpecimenDto")
 
             val remoteSpecimen = Specimen(
                 id = remoteSpecimenDto.specimenId,
@@ -438,7 +393,6 @@ class MetadataUploadWorker @AssistedInject constructor(
                 capturedAt = remoteSpecimenDto.capturedAt,
                 submittedAt = remoteSpecimenDto.submittedAt,
             )
-            Log.d("Upload Worker", "Remote Specimen: $remoteSpecimen")
 
             val remoteBoundingBox = BoundingBox(
                 topLeftX = remoteSpecimenDto.inferenceResult.bboxTopLeftX,
@@ -448,7 +402,6 @@ class MetadataUploadWorker @AssistedInject constructor(
                 confidence = localBoundingBox.confidence, // TODO: REPLACE WHEN WE INCORPORATE CONFIDENCE INTO BACKEND
                 classId = localBoundingBox.classId, // TODO: REPLACE WHEN WE INCORPORATE CLASS ID INTO BACKEND
             )
-            Log.d("Upload Worker", "Remote Bounding Box: $remoteBoundingBox")
 
             if (remoteSpecimenDto != localSpecimenDto) {
                 transactionHelper.runAsTransaction {
@@ -456,17 +409,14 @@ class MetadataUploadWorker @AssistedInject constructor(
                         .onError {
                             return@runAsTransaction DomainResult.Error(NetworkError.CLIENT_ERROR)
                         }
-                    Log.d("Upload Worker", "Specimen Update Successful Locally.")
                     boundingBoxRepository.updateBoundingBox(
                         remoteBoundingBox, remoteSpecimenDto.specimenId
                     ).onError {
                         return@runAsTransaction DomainResult.Error(NetworkError.CLIENT_ERROR)
                     }
-                    Log.d("Upload Worker", "BoundingBox Update Successful Locally.")
                 }
             }
 
-            Log.d("Upload Worker", "Specimen and Bounding Box synced.")
             DomainResult.Success(Unit)
         } catch (e: IOException) {
             DomainResult.Error(NetworkError.NO_INTERNET)
