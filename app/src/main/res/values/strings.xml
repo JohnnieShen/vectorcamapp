@@ -22,6 +22,15 @@
     <!-- Network error: Session not completed-->
     <string name="network_error_session_not_completed">This session hasn\'t been marked as complete yet.</string>
 
+    <!-- Network error: Not Found -->
+    <string name="network_error_not_found">The requested item could not be found.</string>
+
+    <!-- Network error: Conflict -->
+    <string name="network_error_conflict">There’s already an existing item with the same ID.</string>
+
+    <!-- Network error: Client Error -->
+    <string name="network_error_client_error">The request was invalid. Please check your input and try again.</string>
+
     <!-- Form validation error: Blank collector title -->
     <string name="form_validation_error_blank_collector_title">Collector title is required.</string>
 

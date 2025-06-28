@@ -12,5 +12,5 @@ data class SurveillanceFormDto(
     val llinType: String? = null,
     val llinBrand: String? = null,
     val numPeopleSleptUnderLlin: Int? = null,
-    val submittedAt: Long = 0L
+    val submittedAt: Long? = null,
 )

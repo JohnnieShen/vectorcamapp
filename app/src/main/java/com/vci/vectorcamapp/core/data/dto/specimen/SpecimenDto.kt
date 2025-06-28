@@ -7,10 +7,10 @@ import kotlinx.serialization.Serializable
 data class SpecimenDto(
     val specimenId: String = "",
     val sessionId: Int = -1,
-    val species: String = "",
-    val sex: String = "",
-    val abdomenStatus: String = "",
+    val species: String? = null,
+    val sex: String? = null,
+    val abdomenStatus: String? = null,
     val capturedAt: Long = 0L,
-    val submittedAt: Long = 0L,
+    val submittedAt: Long? = null,
     val inferenceResult: InferenceResultDto = InferenceResultDto()
 )

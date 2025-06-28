@@ -3,6 +3,7 @@ package com.vci.vectorcamapp.core.data.network.api
 import com.vci.vectorcamapp.core.data.dto.inference_result.InferenceResultDto
 import com.vci.vectorcamapp.core.data.dto.specimen.PostSpecimenRequestDto
 import com.vci.vectorcamapp.core.data.dto.specimen.PostSpecimenResponseDto
+import com.vci.vectorcamapp.core.data.dto.specimen.SpecimenDto
 import com.vci.vectorcamapp.core.data.network.constructUrl
 import com.vci.vectorcamapp.core.data.network.safeCall
 import com.vci.vectorcamapp.core.domain.model.BoundingBox
@@ -11,6 +12,7 @@ import com.vci.vectorcamapp.core.domain.network.api.SpecimenDataSource
 import com.vci.vectorcamapp.core.domain.util.Result
 import com.vci.vectorcamapp.core.domain.util.network.NetworkError
 import io.ktor.client.HttpClient
+import io.ktor.client.request.get
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
@@ -43,6 +45,14 @@ class RemoteSpecimenDataSource @Inject constructor(
                         )
                     )
                 )
+            }
+        }
+    }
+
+    override suspend fun getSpecimenById(specimenId: String): Result<SpecimenDto, NetworkError> {
+        return safeCall<SpecimenDto> {
+            httpClient.get(constructUrl("specimens/$specimenId")) {
+                contentType(ContentType.Application.Json)
             }
         }
     }
