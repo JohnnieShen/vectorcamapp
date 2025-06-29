@@ -17,7 +17,18 @@ class BoundingBoxRepositoryImplementation @Inject constructor(
             boundingBoxDao.insertBoundingBox(boundingBox.toEntity(specimenId))
             Result.Success(Unit)
         } catch (e: SQLiteConstraintException) {
-            Result.Error(RoomDbError.DUPLICATE_BOUNDING_BOX_ID)
+            Result.Error(RoomDbError.CONSTRAINT_VIOLATION)
+        } catch (e: Exception) {
+            Result.Error(RoomDbError.UNKNOWN_ERROR)
+        }
+    }
+
+    override suspend fun updateBoundingBox(boundingBox: BoundingBox, specimenId: String): Result<Unit, RoomDbError> {
+        return try {
+            boundingBoxDao.updateBoundingBox(boundingBox.toEntity(specimenId))
+            Result.Success(Unit)
+        } catch (e: SQLiteConstraintException) {
+            Result.Error(RoomDbError.CONSTRAINT_VIOLATION)
         } catch (e: Exception) {
             Result.Error(RoomDbError.UNKNOWN_ERROR)
         }

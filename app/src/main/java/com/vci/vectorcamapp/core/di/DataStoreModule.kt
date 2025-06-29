@@ -5,10 +5,10 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.core.DataStoreFactory
 import androidx.datastore.core.handlers.ReplaceFileCorruptionHandler
 import androidx.datastore.dataStoreFile
-import com.vci.vectorcamapp.core.data.cache.serializers.DeviceDtoSerializer
-import com.vci.vectorcamapp.core.data.cache.serializers.SessionDtoSerializer
-import com.vci.vectorcamapp.core.data.dto.DeviceDto
-import com.vci.vectorcamapp.core.data.dto.SessionDto
+import com.vci.vectorcamapp.core.data.cache.serializers.DeviceCacheDtoSerializer
+import com.vci.vectorcamapp.core.data.cache.serializers.CurrentSessionCacheDtoSerializer
+import com.vci.vectorcamapp.core.data.dto.cache.DeviceCacheDto
+import com.vci.vectorcamapp.core.data.dto.cache.CurrentSessionCacheDto
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -28,22 +28,22 @@ object DataStoreModule {
 
     @Provides
     @Singleton
-    fun provideCurrentSessionDataStore(@ApplicationContext context: Context) : DataStore<SessionDto> {
+    fun provideCurrentSessionDataStore(@ApplicationContext context: Context) : DataStore<CurrentSessionCacheDto> {
         return DataStoreFactory.create(
-            serializer = SessionDtoSerializer,
+            serializer = CurrentSessionCacheDtoSerializer,
             produceFile = { context.dataStoreFile(CURRENT_SESSION_DATA_STORE_FILE_NAME)},
-            corruptionHandler = ReplaceFileCorruptionHandler { SessionDto() },
+            corruptionHandler = ReplaceFileCorruptionHandler { CurrentSessionCacheDto() },
             scope = CoroutineScope(Dispatchers.IO + SupervisorJob()),
         )
     }
 
     @Provides
     @Singleton
-    fun provideDeviceDataStore(@ApplicationContext context: Context) : DataStore<DeviceDto> {
+    fun provideDeviceDataStore(@ApplicationContext context: Context) : DataStore<DeviceCacheDto> {
         return DataStoreFactory.create(
-            serializer = DeviceDtoSerializer,
+            serializer = DeviceCacheDtoSerializer,
             produceFile = { context.dataStoreFile(DEVICE_DATA_STORE_FILE_NAME)},
-            corruptionHandler = ReplaceFileCorruptionHandler { DeviceDto() },
+            corruptionHandler = ReplaceFileCorruptionHandler { DeviceCacheDto() },
             scope = CoroutineScope(Dispatchers.IO + SupervisorJob()),
         )
     }

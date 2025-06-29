@@ -5,8 +5,8 @@ import kotlinx.serialization.Serializable
 import java.util.UUID
 
 @Serializable
-data class SessionResponseDto(
-    val sessionId: Int = -1,
+data class SessionDto(
+    val sessionId: Int? = null,
     @Serializable(with = UuidSerializer::class)
     val frontendId: UUID = UUID(0, 0),
     val houseNumber: String = "",
@@ -16,8 +16,8 @@ data class SessionResponseDto(
     val collectionMethod: String = "",
     val specimenCondition: String = "",
     val createdAt: Long = 0L,
-    val completedAt: Long = 0L,
-    val submittedAt: Long = 0L,
+    val completedAt: Long? = null,
+    val submittedAt: Long? = null,
     val notes: String = "",
     val siteId: Int = -1,
     val deviceId: Int = -1,

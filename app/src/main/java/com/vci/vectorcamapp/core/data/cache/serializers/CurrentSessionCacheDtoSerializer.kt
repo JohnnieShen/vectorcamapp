@@ -1,14 +1,14 @@
 package com.vci.vectorcamapp.core.data.cache.serializers
 
 import androidx.datastore.core.Serializer
-import com.vci.vectorcamapp.core.data.dto.SessionDto
+import com.vci.vectorcamapp.core.data.dto.cache.CurrentSessionCacheDto
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 import java.io.InputStream
 import java.io.OutputStream
 
-object SessionDtoSerializer : Serializer<SessionDto> {
+object CurrentSessionCacheDtoSerializer : Serializer<CurrentSessionCacheDto> {
 
     private val json = Json {
         ignoreUnknownKeys = true
@@ -16,12 +16,12 @@ object SessionDtoSerializer : Serializer<SessionDto> {
         prettyPrint = false
     }
 
-    override val defaultValue: SessionDto = SessionDto()
+    override val defaultValue: CurrentSessionCacheDto = CurrentSessionCacheDto()
 
-    override suspend fun readFrom(input: InputStream): SessionDto {
+    override suspend fun readFrom(input: InputStream): CurrentSessionCacheDto {
         return try {
             json.decodeFromString(
-                deserializer = SessionDto.serializer(),
+                deserializer = CurrentSessionCacheDto.serializer(),
                 string = input.readBytes().decodeToString()
             )
         } catch (e: Exception) {
@@ -30,11 +30,11 @@ object SessionDtoSerializer : Serializer<SessionDto> {
         }
     }
 
-    override suspend fun writeTo(t: SessionDto, output: OutputStream) {
+    override suspend fun writeTo(t: CurrentSessionCacheDto, output: OutputStream) {
         withContext(Dispatchers.IO) {
             output.write(
                 json.encodeToString(
-                    serializer = SessionDto.serializer(),
+                    serializer = CurrentSessionCacheDto.serializer(),
                     value = t
                 ).encodeToByteArray()
             )

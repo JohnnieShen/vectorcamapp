@@ -7,5 +7,6 @@ data class SurveillanceForm(
     val numLlinsAvailable: Int,
     val llinType: String?,
     val llinBrand: String?,
-    val numPeopleSleptUnderLlin: Int?
+    val numPeopleSleptUnderLlin: Int?,
+    val submittedAt: Long?,
 )

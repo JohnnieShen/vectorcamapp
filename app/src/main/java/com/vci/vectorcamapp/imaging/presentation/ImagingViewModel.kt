@@ -290,7 +290,8 @@ class ImagingViewModel @Inject constructor(
                             sex = _state.value.currentSpecimen.sex,
                             abdomenStatus = _state.value.currentSpecimen.abdomenStatus,
                             imageUri = imageUri,
-                            capturedAt = timestamp
+                            capturedAt = timestamp,
+                            submittedAt = null
                         )
 
                         val success = transactionHelper.runAsTransaction {

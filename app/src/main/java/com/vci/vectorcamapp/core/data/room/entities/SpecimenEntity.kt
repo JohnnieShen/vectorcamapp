@@ -24,4 +24,5 @@ data class SpecimenEntity(
     val abdomenStatus: String? = null,
     val imageUri: Uri = Uri.EMPTY,
     val capturedAt: Long = 0L,
+    val submittedAt: Long?
 )

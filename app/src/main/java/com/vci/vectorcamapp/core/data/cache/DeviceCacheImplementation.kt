@@ -1,33 +1,47 @@
 package com.vci.vectorcamapp.core.data.cache
 
 import androidx.datastore.core.DataStore
-import com.vci.vectorcamapp.core.data.dto.DeviceDto
-import com.vci.vectorcamapp.core.data.mappers.toDomain
-import com.vci.vectorcamapp.core.data.mappers.toDto
+import com.vci.vectorcamapp.core.data.dto.cache.DeviceCacheDto
 import com.vci.vectorcamapp.core.domain.cache.DeviceCache
 import com.vci.vectorcamapp.core.domain.model.Device
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.firstOrNull
-import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 
 class DeviceCacheImplementation @Inject constructor(
-    private val dataStore: DataStore<DeviceDto>
+    private val dataStore: DataStore<DeviceCacheDto>
 ) : DeviceCache {
     override suspend fun saveDevice(device: Device, programId: Int) {
         dataStore.updateData {
-            device.toDto(programId)
+            DeviceCacheDto(
+                id = device.id,
+                programId = programId,
+                model = device.model,
+                registeredAt = device.registeredAt,
+                submittedAt = device.submittedAt
+            )
         }
     }
 
     override suspend fun getDevice(): Device? {
-        val deviceDto = dataStore.data.firstOrNull()
-        return if (deviceDto == null || !deviceDto.hasId()) null else deviceDto.toDomain()
+        val deviceCacheDto = dataStore.data.firstOrNull()
+        return if (deviceCacheDto == null || deviceCacheDto == DeviceCacheDto()) {
+            null
+        } else {
+            Device(
+                id = deviceCacheDto.id,
+                model = deviceCacheDto.model,
+                registeredAt = deviceCacheDto.registeredAt,
+                submittedAt = deviceCacheDto.submittedAt
+            )
+        }
     }
 
     override suspend fun getProgramId(): Int? {
-        val deviceDto = dataStore.data.firstOrNull()
-        return if (deviceDto == null || !deviceDto.hasId()) null else deviceDto.programId
+        val deviceCacheDto = dataStore.data.firstOrNull()
+        return if (deviceCacheDto == null || deviceCacheDto == DeviceCacheDto()) {
+            null
+        } else {
+            deviceCacheDto.programId
+        }
     }
 }

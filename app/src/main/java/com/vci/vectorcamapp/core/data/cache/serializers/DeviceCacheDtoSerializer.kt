@@ -1,14 +1,14 @@
 package com.vci.vectorcamapp.core.data.cache.serializers
 
 import androidx.datastore.core.Serializer
-import com.vci.vectorcamapp.core.data.dto.DeviceDto
+import com.vci.vectorcamapp.core.data.dto.cache.DeviceCacheDto
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 import java.io.InputStream
 import java.io.OutputStream
 
-object DeviceDtoSerializer : Serializer<DeviceDto> {
+object DeviceCacheDtoSerializer : Serializer<DeviceCacheDto> {
 
     private val json = Json {
         ignoreUnknownKeys = true
@@ -16,12 +16,12 @@ object DeviceDtoSerializer : Serializer<DeviceDto> {
         prettyPrint = false
     }
 
-    override val defaultValue: DeviceDto = DeviceDto()
+    override val defaultValue: DeviceCacheDto = DeviceCacheDto()
 
-    override suspend fun readFrom(input: InputStream): DeviceDto {
+    override suspend fun readFrom(input: InputStream): DeviceCacheDto {
         return try {
             json.decodeFromString(
-                deserializer = DeviceDto.serializer(),
+                deserializer = DeviceCacheDto.serializer(),
                 string = input.readBytes().decodeToString()
             )
         } catch (e: Exception) {
@@ -30,11 +30,11 @@ object DeviceDtoSerializer : Serializer<DeviceDto> {
         }
     }
 
-    override suspend fun writeTo(t: DeviceDto, output: OutputStream) {
+    override suspend fun writeTo(t: DeviceCacheDto, output: OutputStream) {
         withContext(Dispatchers.IO) {
             output.write(
                 json.encodeToString(
-                    serializer = DeviceDto.serializer(),
+                    serializer = DeviceCacheDto.serializer(),
                     value = t
                 ).encodeToByteArray()
             )

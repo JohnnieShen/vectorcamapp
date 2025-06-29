@@ -9,4 +9,5 @@ data class Specimen(
     val abdomenStatus: String?,
     val imageUri: Uri,
     val capturedAt: Long,
+    val submittedAt: Long?
 )

@@ -1,11 +1,11 @@
-package com.vci.vectorcamapp.core.data.dto
+package com.vci.vectorcamapp.core.data.dto.cache
 
 import com.vci.vectorcamapp.core.data.dto.serializers.UuidSerializer
 import kotlinx.serialization.Serializable
 import java.util.UUID
 
 @Serializable
-data class SessionDto(
+data class CurrentSessionCacheDto(
     @Serializable(with = UuidSerializer::class)
     val localId: UUID = UUID(0, 0),
     val siteId: Int = -1,

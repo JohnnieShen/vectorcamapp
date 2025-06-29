@@ -26,7 +26,7 @@ import com.vci.vectorcamapp.core.data.room.entities.SurveillanceFormEntity
         SpecimenEntity::class,
         BoundingBoxEntity::class,
         SurveillanceFormEntity::class],
-    version = 4,
+    version = 5,
 )
 @TypeConverters(UuidConverter::class, UriConverter::class)
 abstract class VectorCamDatabase : RoomDatabase() {
