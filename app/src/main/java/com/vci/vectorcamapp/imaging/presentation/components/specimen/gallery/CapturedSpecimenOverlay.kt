@@ -67,7 +67,7 @@ fun CapturedSpecimenOverlay(
         }
 
         BoundingBoxOverlay(
-            boundingBoxUi = boundingBoxUi, modifier = modifier.fillMaxSize()
+            boundingBoxUi = boundingBoxUi, modifier = Modifier.fillMaxSize()
         )
 
         Column(
@@ -80,7 +80,7 @@ fun CapturedSpecimenOverlay(
             SpecimenInfoCard(
                 specimen = specimen,
                 onSpecimenIdChanged = onSpecimenIdCorrected,
-                modifier = modifier.align(Alignment.CenterHorizontally)
+                modifier = Modifier.align(Alignment.CenterHorizontally)
             )
 
             if (onRetakeImage != null || onSaveImageToSession != null) {
@@ -94,7 +94,7 @@ fun CapturedSpecimenOverlay(
                     onRetakeImage?.let {
                         IconButton(
                             onClick = onRetakeImage,
-                            modifier = modifier
+                            modifier = Modifier
                                 .size(64.dp)
                                 .background(MaterialTheme.colorScheme.error, CircleShape)
                         ) {
@@ -109,7 +109,7 @@ fun CapturedSpecimenOverlay(
                     onSaveImageToSession?.let {
                         IconButton(
                             onClick = onSaveImageToSession,
-                            modifier = modifier
+                            modifier = Modifier
                                 .size(64.dp)
                                 .background(MaterialTheme.colorScheme.primary, CircleShape)
                         ) {

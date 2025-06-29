@@ -41,25 +41,25 @@ fun SpecimenInfoCard(
                     singleLine = true
                 )
             } else {
-                LabelRow("Specimen ID: ", specimen.id, modifier = modifier)
+                LabelRow("Specimen ID: ", specimen.id, modifier = Modifier)
             }
 
             specimen.species?.let {
                 Spacer(modifier = Modifier.height(12.dp))
 
-                LabelRow("Species: ", it, modifier = modifier)
+                LabelRow("Species: ", it, modifier = Modifier)
             }
 
             specimen.sex?.let {
                 Spacer(modifier = Modifier.height(12.dp))
 
-                LabelRow("Sex: ", it, modifier = modifier)
+                LabelRow("Sex: ", it, modifier = Modifier)
             }
 
             specimen.abdomenStatus?.let {
                 Spacer(modifier = Modifier.height(12.dp))
 
-                LabelRow("Abdomen Status: ", it, modifier = modifier)
+                LabelRow("Abdomen Status: ", it, modifier = Modifier)
             }
         }
     }

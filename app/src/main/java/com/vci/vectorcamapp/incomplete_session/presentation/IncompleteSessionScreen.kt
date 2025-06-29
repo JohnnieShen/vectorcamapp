@@ -26,7 +26,7 @@ fun IncompleteSessionScreen(
         items(items = state.sessions.asReversed(), key = { it.localId }) { session ->
             IncompleteSessionCard(session = session,
                 onClick = { onAction(IncompleteSessionAction.ResumeSession(session.localId)) },
-                modifier = modifier
+                modifier = Modifier
             )
         }
     }

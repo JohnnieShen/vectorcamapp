@@ -60,7 +60,7 @@ fun SurveillanceFormScreen(
             onValueChange = { onAction(SurveillanceFormAction.EnterCollectorTitle(it)) },
             singleLine = true,
             error = state.surveillanceFormErrors.collectorTitle,
-            modifier = modifier,
+            modifier = Modifier,
         )
 
         TextEntryField(
@@ -69,7 +69,7 @@ fun SurveillanceFormScreen(
             onValueChange = { onAction(SurveillanceFormAction.EnterCollectorName(it)) },
             singleLine = true,
             error = state.surveillanceFormErrors.collectorName,
-            modifier = modifier,
+            modifier = Modifier,
         )
 
         DropdownField(
@@ -79,7 +79,7 @@ fun SurveillanceFormScreen(
             selectedOption = DistrictOption(state.selectedDistrict),
             onOptionSelected = { onAction(SurveillanceFormAction.SelectDistrict(it)) },
             error = state.surveillanceFormErrors.district,
-            modifier = modifier
+            modifier = Modifier
         )
 
         if (state.selectedDistrict.isNotBlank()) {
@@ -90,7 +90,7 @@ fun SurveillanceFormScreen(
                 selectedOption = SentinelSiteOption(state.selectedSentinelSite),
                 onOptionSelected = { onAction(SurveillanceFormAction.SelectSentinelSite(it)) },
                 error = state.surveillanceFormErrors.sentinelSite,
-                modifier = modifier
+                modifier = Modifier
             )
         }
 
@@ -100,7 +100,7 @@ fun SurveillanceFormScreen(
             onValueChange = { onAction(SurveillanceFormAction.EnterHouseNumber(it)) },
             singleLine = true,
             error = state.surveillanceFormErrors.houseNumber,
-            modifier = modifier
+            modifier = Modifier
         )
 
         TextEntryField(
@@ -109,14 +109,14 @@ fun SurveillanceFormScreen(
             onValueChange = { onAction(SurveillanceFormAction.EnterNumPeopleSleptInHouse(it)) },
             singleLine = true,
             keyboardType = KeyboardType.Number,
-            modifier = modifier
+            modifier = Modifier
         )
 
         ToggleField(
             label = "IRS Conducted in this Household",
             checked = state.surveillanceForm.wasIrsConducted,
             onCheckedChange = { onAction(SurveillanceFormAction.ToggleIrsConducted(it)) },
-            modifier = modifier,
+            modifier = Modifier,
         )
 
         state.surveillanceForm.monthsSinceIrs?.let {
@@ -126,7 +126,7 @@ fun SurveillanceFormScreen(
                 onValueChange = { onAction(SurveillanceFormAction.EnterMonthsSinceIrs(it)) },
                 singleLine = true,
                 keyboardType = KeyboardType.Number,
-                modifier = modifier
+                modifier = Modifier
             )
         }
 
@@ -136,7 +136,7 @@ fun SurveillanceFormScreen(
             onValueChange = { onAction(SurveillanceFormAction.EnterNumLlinsAvailable(it)) },
             singleLine = true,
             keyboardType = KeyboardType.Number,
-            modifier = modifier
+            modifier = Modifier
         )
 
         state.surveillanceForm.llinType?.let {
@@ -146,7 +146,7 @@ fun SurveillanceFormScreen(
                 selectedOption = LlinTypeOption.entries.find { it.label == state.surveillanceForm.llinType },
                 onOptionSelected = { onAction(SurveillanceFormAction.SelectLlinType(it)) },
                 error = state.surveillanceFormErrors.llinType,
-                modifier = modifier
+                modifier = Modifier
             )
         }
 
@@ -157,7 +157,7 @@ fun SurveillanceFormScreen(
                 selectedOption = LlinBrandOption.entries.find { it.label == state.surveillanceForm.llinBrand },
                 onOptionSelected = { onAction(SurveillanceFormAction.SelectLlinBrand(it)) },
                 error = state.surveillanceFormErrors.llinBrand,
-                modifier = modifier
+                modifier = Modifier
             )
         }
 
@@ -168,7 +168,7 @@ fun SurveillanceFormScreen(
                 onValueChange = { onAction(SurveillanceFormAction.EnterNumPeopleSleptUnderLlin(it)) },
                 singleLine = true,
                 keyboardType = KeyboardType.Number,
-                modifier = modifier
+                modifier = Modifier
             )
         }
 
@@ -177,7 +177,7 @@ fun SurveillanceFormScreen(
             selectedDateInMillis = state.session.collectionDate,
             onDateSelected = { onAction(SurveillanceFormAction.PickCollectionDate(it)) },
             error = state.surveillanceFormErrors.collectionDate,
-            modifier = modifier
+            modifier = Modifier
         )
 
         DropdownField(
@@ -186,7 +186,7 @@ fun SurveillanceFormScreen(
             selectedOption = CollectionMethodOption.entries.find { it.label == state.session.collectionMethod },
             onOptionSelected = { onAction(SurveillanceFormAction.SelectCollectionMethod(it)) },
             error = state.surveillanceFormErrors.collectionMethod,
-            modifier = modifier
+            modifier = Modifier
         )
 
         DropdownField(
@@ -195,14 +195,14 @@ fun SurveillanceFormScreen(
             selectedOption = SpecimenConditionOption.entries.find { it.label == state.session.specimenCondition },
             onOptionSelected = { onAction(SurveillanceFormAction.SelectSpecimenCondition(it)) },
             error = state.surveillanceFormErrors.specimenCondition,
-            modifier = modifier
+            modifier = Modifier
         )
 
         TextEntryField(
             label = "Notes",
             value = state.session.notes,
             onValueChange = { onAction(SurveillanceFormAction.EnterNotes(it)) },
-            modifier = modifier
+            modifier = Modifier
         )
 
         if (state.latitude != null && state.longitude != null) {
@@ -216,7 +216,7 @@ fun SurveillanceFormScreen(
             if(state.locationError == LocationError.GPS_TIMEOUT) {
                 Button(onClick = {
                     onAction(SurveillanceFormAction.RetryLocation ) },
-                    modifier = modifier
+                    modifier = Modifier
                 ) {
                     Text("Retry Location")
                 }
@@ -228,7 +228,7 @@ fun SurveillanceFormScreen(
 
         Button(
             onClick = { onAction(SurveillanceFormAction.SubmitSurveillanceForm) },
-            modifier = modifier
+            modifier = Modifier
         ) {
             Text("Start Imaging")
         }

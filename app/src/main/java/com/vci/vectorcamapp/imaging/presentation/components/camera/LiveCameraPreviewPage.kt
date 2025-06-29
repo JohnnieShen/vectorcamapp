@@ -43,16 +43,16 @@ fun LiveCameraPreviewPage(
                     controller.bindToLifecycle(lifecycleOwner)
                 }
             },
-            modifier = modifier.fillMaxSize()
+            modifier = Modifier.fillMaxSize()
         )
 
         boundingBoxesUiList.map {
-            BoundingBoxOverlay(it, modifier.fillMaxSize())
+            BoundingBoxOverlay(it, Modifier.fillMaxSize())
         }
 
         IconButton(
             onClick = onSaveSessionProgress,
-            modifier = modifier
+            modifier = Modifier
                 .padding(24.dp)
                 .size(64.dp)
                 .background(MaterialTheme.colorScheme.tertiary, CircleShape)
@@ -61,14 +61,14 @@ fun LiveCameraPreviewPage(
             Icon(
                 painter = painterResource(id = R.drawable.ic_save),
                 contentDescription = "Save Session Progress",
-                modifier = modifier.size(32.dp),
+                modifier = Modifier.size(32.dp),
                 tint = MaterialTheme.colorScheme.onTertiary
             )
         }
 
         IconButton(
             onClick = onSubmitSession,
-            modifier = modifier
+            modifier = Modifier
                 .padding(24.dp)
                 .size(64.dp)
                 .background(MaterialTheme.colorScheme.tertiary, CircleShape)
@@ -77,14 +77,14 @@ fun LiveCameraPreviewPage(
             Icon(
                 painter = painterResource(id = R.drawable.ic_upload),
                 contentDescription = "Submit Session",
-                modifier = modifier.size(32.dp),
+                modifier = Modifier.size(32.dp),
                 tint = MaterialTheme.colorScheme.onTertiary
             )
         }
 
         IconButton(
             onClick = onImageCaptured,
-            modifier = modifier
+            modifier = Modifier
                 .padding(bottom = 48.dp)
                 .size(64.dp)
                 .background(MaterialTheme.colorScheme.primary, CircleShape)
@@ -93,7 +93,7 @@ fun LiveCameraPreviewPage(
             Icon(
                 painter = painterResource(id = R.drawable.ic_camera),
                 contentDescription = "Capture Image",
-                modifier = modifier.size(32.dp),
+                modifier = Modifier.size(32.dp),
                 tint = MaterialTheme.colorScheme.onPrimary
             )
         }
