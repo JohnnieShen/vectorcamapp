@@ -2,6 +2,7 @@ package com.vci.vectorcamapp.imaging.presentation
 
 import android.content.Context
 import android.util.Log
+import android.view.OrientationEventListener
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.work.BackoffPolicy
@@ -16,7 +17,6 @@ import com.vci.vectorcamapp.core.data.room.TransactionHelper
 import com.vci.vectorcamapp.core.data.upload.image.ImageUploadWorker
 import com.vci.vectorcamapp.core.data.upload.metadata.MetadataUploadWorker
 import com.vci.vectorcamapp.core.domain.cache.CurrentSessionCache
-import com.vci.vectorcamapp.core.domain.cache.DeviceCache
 import com.vci.vectorcamapp.core.domain.model.Specimen
 import com.vci.vectorcamapp.core.domain.repository.BoundingBoxRepository
 import com.vci.vectorcamapp.core.domain.repository.SessionRepository
@@ -84,6 +84,15 @@ class ImagingViewModel @Inject constructor(
         }
     }
 
+    private val orientationListener = object : OrientationEventListener(context) {
+        override fun onOrientationChanged(displayOrientation: Int) {
+            val currentRotation = _state.value.displayOrientation
+            if (currentRotation != displayOrientation) {
+                _state.update { it.copy(displayOrientation = displayOrientation) }
+            }
+        }
+    }
+
     private val _state = MutableStateFlow(ImagingState())
     val state: StateFlow<ImagingState> = combine(
         specimensUiFlow, _state
@@ -99,6 +108,8 @@ class ImagingViewModel @Inject constructor(
     val events = _events.receiveAsFlow()
 
     init {
+        orientationListener.enable()
+
         viewModelScope.launch {
             if (currentSessionCache.getSession() == null) {
                 _events.send(ImagingEvent.NavigateBackToLandingScreen)
@@ -122,7 +133,8 @@ class ImagingViewModel @Inject constructor(
 
                 is ImagingAction.ProcessFrame -> {
                     try {
-                        val bitmap = action.frame.toUprightBitmap()
+                        val displayOrientation = _state.value.displayOrientation
+                        val bitmap = action.frame.toUprightBitmap(displayOrientation)
 
                         val specimenId = inferenceRepository.readSpecimenId(bitmap)
                         val boundingBoxes = inferenceRepository.detectSpecimen(bitmap)
@@ -202,7 +214,8 @@ class ImagingViewModel @Inject constructor(
                     _state.update { it.copy(isCapturing = false) }
 
                     captureResult.onSuccess { image ->
-                        val bitmap = image.toUprightBitmap()
+                        val displayOrientation = _state.value.displayOrientation
+                        val bitmap = image.toUprightBitmap(displayOrientation)
                         image.close()
 
                         val boundingBoxesList = inferenceRepository.detectSpecimen(bitmap)
@@ -332,6 +345,7 @@ class ImagingViewModel @Inject constructor(
     override fun onCleared() {
         super.onCleared()
 
+        orientationListener.disable()
         inferenceRepository.closeResources()
     }
 }
