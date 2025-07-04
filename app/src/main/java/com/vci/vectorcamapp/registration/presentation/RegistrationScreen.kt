@@ -20,7 +20,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import com.vci.vectorcamapp.R
 import com.vci.vectorcamapp.animation.presentation.LoadingAnimation
@@ -79,18 +78,17 @@ fun RegistrationScreen(
                         ).fillMaxSize(), verticalArrangement = Arrangement.SpaceAround
                 ) {
                     Column(
-                        verticalArrangement = Arrangement.spacedBy(MaterialTheme.dimensions.spacingSmall)
+                        verticalArrangement = Arrangement.spacedBy(MaterialTheme.dimensions.spacingMedium)
                     ) {
                         Text(
                             text = "Register Program",
-                            style = MaterialTheme.typography.headlineLarge,
-                            color = MaterialTheme.colors.textPrimary,
-                            fontWeight = FontWeight.Black
+                            style = MaterialTheme.typography.displayLarge,
+                            color = MaterialTheme.colors.textPrimary
                         )
 
                         Text(
                             text = "Select your affiliated program",
-                            style = MaterialTheme.typography.titleMedium,
+                            style = MaterialTheme.typography.titleLarge,
                             color = MaterialTheme.colors.textPrimary
                         )
                     }

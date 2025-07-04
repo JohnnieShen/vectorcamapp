@@ -36,15 +36,19 @@ data class Dimensions(
     val cornerRadiusLarge: Dp = 24.dp,
 
     // Elevation / Shadows
-    val shadowOffsetYSmall: Dp = 2.dp,
-    val shadowOffsetYMedium: Dp = 4.dp,
-    val shadowOffsetYLarge: Dp = 8.dp,
+    val shadowOffsetExtraSmall: Dp = 1.dp,
+    val shadowOffsetSmall: Dp = 2.dp,
+    val shadowOffsetMedium: Dp = 4.dp,
+    val shadowOffsetLarge: Dp = 8.dp,
     val shadowBlurSmall: Dp = 4.dp,
     val shadowBlurMedium: Dp = 8.dp,
     val shadowBlurLarge: Dp = 16.dp,
     val shadowSpreadSmall: Dp = 2.dp,
     val shadowSpreadMedium: Dp = 4.dp,
     val shadowSpreadLarge: Dp = 6.dp,
+    val elevationSmall: Dp = 2.dp,
+    val elevationMedium: Dp = 4.dp,
+    val elevationLarge: Dp = 8.dp,
 
     // Divider / Border
     val dividerThickness: Dp = 2.dp,

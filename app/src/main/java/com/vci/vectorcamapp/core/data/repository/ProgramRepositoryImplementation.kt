@@ -13,4 +13,8 @@ class ProgramRepositoryImplementation @Inject constructor(
     override suspend fun getAllPrograms(): List<Program> {
         return programDao.getAllPrograms().map { it.toDomain() }
     }
+
+    override suspend fun getProgramById(programId: Int): Program? {
+        return programDao.getProgramById(programId)?.toDomain()
+    }
 }

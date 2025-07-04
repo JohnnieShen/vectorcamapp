@@ -66,7 +66,7 @@ fun <T : DropdownOption> DropdownField(
                 placeholder = {
                     Text(
                         text = label,
-                        style = MaterialTheme.typography.titleMedium,
+                        style = MaterialTheme.typography.bodyLarge,
                         modifier = Modifier.padding(start = MaterialTheme.dimensions.paddingSmall)
                     )
                 },

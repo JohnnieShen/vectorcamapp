@@ -20,14 +20,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.vci.vectorcamapp.core.presentation.util.ObserveAsEvents
-import com.vci.vectorcamapp.imaging.presentation.util.toString
-import com.vci.vectorcamapp.imaging.presentation.ImagingEvent
-import com.vci.vectorcamapp.imaging.presentation.ImagingScreen
-import com.vci.vectorcamapp.imaging.presentation.ImagingViewModel
-import com.vci.vectorcamapp.landing.presentation.LandingEvent
-import com.vci.vectorcamapp.landing.presentation.LandingScreen
-import com.vci.vectorcamapp.landing.presentation.LandingViewModel
 import androidx.navigation.toRoute
 import com.vci.vectorcamapp.animation.presentation.LoadingAnimation
 import com.vci.vectorcamapp.complete_session.form.presentation.CompleteSessionFormAction
@@ -39,10 +31,17 @@ import com.vci.vectorcamapp.complete_session.list.presentation.CompleteSessionLi
 import com.vci.vectorcamapp.complete_session.specimens.presentation.CompleteSessionSpecimensAction
 import com.vci.vectorcamapp.complete_session.specimens.presentation.CompleteSessionSpecimensScreen
 import com.vci.vectorcamapp.complete_session.specimens.presentation.CompleteSessionSpecimensViewModel
-import com.vci.vectorcamapp.incomplete_session.presentation.IncompleteSessionAction
+import com.vci.vectorcamapp.core.presentation.util.ObserveAsEvents
+import com.vci.vectorcamapp.imaging.presentation.ImagingEvent
+import com.vci.vectorcamapp.imaging.presentation.ImagingScreen
+import com.vci.vectorcamapp.imaging.presentation.ImagingViewModel
+import com.vci.vectorcamapp.imaging.presentation.util.toString
 import com.vci.vectorcamapp.incomplete_session.presentation.IncompleteSessionEvent
 import com.vci.vectorcamapp.incomplete_session.presentation.IncompleteSessionScreen
 import com.vci.vectorcamapp.incomplete_session.presentation.IncompleteSessionViewModel
+import com.vci.vectorcamapp.landing.presentation.LandingEvent
+import com.vci.vectorcamapp.landing.presentation.LandingScreen
+import com.vci.vectorcamapp.landing.presentation.LandingViewModel
 import com.vci.vectorcamapp.registration.presentation.RegistrationEvent
 import com.vci.vectorcamapp.registration.presentation.RegistrationScreen
 import com.vci.vectorcamapp.registration.presentation.RegistrationViewModel
@@ -76,7 +75,7 @@ fun NavGraph(startDestination: Destination) {
             }
 
             Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                 RegistrationScreen(
+                RegistrationScreen(
                     state = state,
                     onAction = viewModel::onAction,
                     modifier = Modifier.padding(innerPadding)
@@ -100,6 +99,10 @@ fun NavGraph(startDestination: Destination) {
 
                     LandingEvent.NavigateToCompleteSessionsScreen -> navController.navigate(
                         Destination.CompleteSessionList
+                    )
+
+                    LandingEvent.NavigateBackToRegistrationScreen -> navController.popBackStack(
+                        Destination.Registration, false
                     )
                 }
             }
@@ -128,13 +131,13 @@ fun NavGraph(startDestination: Destination) {
                         Destination.Imaging
                     )
 
-                    SurveillanceFormEvent.NavigateBackToLandingScreen -> {
-                        navController.popBackStack(Destination.Landing, false)
-                    }
+                    SurveillanceFormEvent.NavigateBackToLandingScreen -> navController.popBackStack(
+                        Destination.Landing, false
+                    )
 
-                    SurveillanceFormEvent.NavigateBackToRegistrationScreen -> {
-                        navController.popBackStack(Destination.Registration, false)
-                    }
+                    SurveillanceFormEvent.NavigateBackToRegistrationScreen -> navController.popBackStack(
+                        Destination.Registration, false
+                    )
                 }
             }
 
@@ -164,9 +167,9 @@ fun NavGraph(startDestination: Destination) {
                             .show()
                     }
 
-                    ImagingEvent.NavigateBackToLandingScreen -> {
-                        navController.popBackStack(Destination.Landing, false)
-                    }
+                    ImagingEvent.NavigateBackToLandingScreen -> navController.popBackStack(
+                        Destination.Landing, false
+                    )
                 }
             }
 
@@ -183,8 +186,9 @@ fun NavGraph(startDestination: Destination) {
             val state by viewModel.state.collectAsStateWithLifecycle()
             ObserveAsEvents(events = viewModel.events) { event ->
                 when (event) {
-                    IncompleteSessionEvent.NavigateToSurveillanceForm ->
-                        navController.navigate(Destination.SurveillanceForm)
+                    IncompleteSessionEvent.NavigateToSurveillanceForm -> navController.navigate(
+                        Destination.SurveillanceForm
+                    )
                 }
             }
             Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
@@ -200,14 +204,13 @@ fun NavGraph(startDestination: Destination) {
             val state by viewModel.state.collectAsStateWithLifecycle()
             ObserveAsEvents(events = viewModel.events) { event ->
                 when (event) {
-                    is CompleteSessionListEvent.NavigateToCompleteSessionDetails -> {
-                        navController.navigate(Destination.CompleteSessionDetails(event.sessionId.toString()))
-                    }
+                    is CompleteSessionListEvent.NavigateToCompleteSessionDetails -> navController.navigate(
+                        Destination.CompleteSessionDetails(event.sessionId.toString())
+                    )
                 }
             }
             CompleteSessionListScreen(
-                state = state,
-                onAction = viewModel::onAction
+                state = state, onAction = viewModel::onAction
             )
         }
         composable<Destination.CompleteSessionDetails> {
@@ -239,13 +242,11 @@ fun NavGraph(startDestination: Destination) {
                         Tab(
                             selected = selectedTab.intValue == TAB_SESSION_FORM,
                             onClick = { selectedTab.intValue = TAB_SESSION_FORM },
-                            text = { Text("Details") }
-                        )
+                            text = { Text("Details") })
                         Tab(
                             selected = selectedTab.intValue == TAB_SESSION_SPECIMENS,
                             onClick = { selectedTab.intValue = TAB_SESSION_SPECIMENS },
-                            text = { Text("Specimens") }
-                        )
+                            text = { Text("Specimens") })
                     }
 
                     when (selectedTab.intValue) {
