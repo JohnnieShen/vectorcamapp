@@ -3,6 +3,7 @@ package com.vci.vectorcamapp.core.data.room
 import androidx.room.Database
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
+import com.vci.vectorcamapp.core.data.room.converters.UploadStatusConverter
 import com.vci.vectorcamapp.core.data.room.converters.UriConverter
 import com.vci.vectorcamapp.core.data.room.converters.UuidConverter
 import com.vci.vectorcamapp.core.data.room.dao.BoundingBoxDao
@@ -26,9 +27,9 @@ import com.vci.vectorcamapp.core.data.room.entities.SurveillanceFormEntity
         SpecimenEntity::class,
         BoundingBoxEntity::class,
         SurveillanceFormEntity::class],
-    version = 5,
+    version = 6,
 )
-@TypeConverters(UuidConverter::class, UriConverter::class)
+@TypeConverters(UuidConverter::class, UriConverter::class, UploadStatusConverter::class)
 abstract class VectorCamDatabase : RoomDatabase() {
     abstract val sessionDao: SessionDao
     abstract val specimenDao: SpecimenDao

@@ -18,6 +18,7 @@ import com.vci.vectorcamapp.core.data.upload.image.ImageUploadWorker
 import com.vci.vectorcamapp.core.data.upload.metadata.MetadataUploadWorker
 import com.vci.vectorcamapp.core.domain.cache.CurrentSessionCache
 import com.vci.vectorcamapp.core.domain.model.Specimen
+import com.vci.vectorcamapp.core.domain.model.UploadStatus
 import com.vci.vectorcamapp.core.domain.repository.BoundingBoxRepository
 import com.vci.vectorcamapp.core.domain.repository.SessionRepository
 import com.vci.vectorcamapp.core.domain.repository.SpecimenRepository
@@ -290,6 +291,7 @@ class ImagingViewModel @Inject constructor(
                             sex = _state.value.currentSpecimen.sex,
                             abdomenStatus = _state.value.currentSpecimen.abdomenStatus,
                             imageUri = imageUri,
+                            uploadStatus = UploadStatus.NOT_STARTED,
                             capturedAt = timestamp,
                             submittedAt = null
                         )

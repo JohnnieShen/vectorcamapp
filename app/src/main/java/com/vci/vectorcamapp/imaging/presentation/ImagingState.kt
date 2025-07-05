@@ -3,6 +3,7 @@ package com.vci.vectorcamapp.imaging.presentation
 import android.graphics.Bitmap
 import android.net.Uri
 import com.vci.vectorcamapp.core.domain.model.Specimen
+import com.vci.vectorcamapp.core.domain.model.UploadStatus
 import com.vci.vectorcamapp.imaging.presentation.model.BoundingBoxUi
 import com.vci.vectorcamapp.imaging.presentation.model.composites.SpecimenAndBoundingBoxUi
 
@@ -14,6 +15,7 @@ data class ImagingState(
         sex = null,
         abdomenStatus = null,
         imageUri = Uri.EMPTY,
+        uploadStatus = UploadStatus.NOT_STARTED,
         capturedAt = 0L,
         submittedAt = null
     ),

@@ -63,6 +63,11 @@ fun CompleteSessionSpecimensCard(
             )
             Spacer(modifier = Modifier.height(4.dp))
             Text(
+                text = "Upload Status: ${specimen.uploadStatus}",
+                style = MaterialTheme.typography.bodySmall
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
                 text = "Species: ${specimen.species}",
                 style = MaterialTheme.typography.bodySmall
             )
