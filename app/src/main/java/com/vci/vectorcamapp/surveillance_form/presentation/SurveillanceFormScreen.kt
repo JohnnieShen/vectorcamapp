@@ -17,16 +17,14 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
-import com.vci.vectorcamapp.core.domain.util.onError
-import com.vci.vectorcamapp.core.domain.util.onSuccess
-import com.vci.vectorcamapp.surveillance_form.location.data.toString
+import com.vci.vectorcamapp.core.presentation.util.error.toString
 import com.vci.vectorcamapp.surveillance_form.domain.enums.CollectionMethodOption
 import com.vci.vectorcamapp.surveillance_form.domain.enums.DistrictOption
 import com.vci.vectorcamapp.surveillance_form.domain.enums.LlinBrandOption
 import com.vci.vectorcamapp.surveillance_form.domain.enums.LlinTypeOption
 import com.vci.vectorcamapp.surveillance_form.domain.enums.SentinelSiteOption
 import com.vci.vectorcamapp.surveillance_form.domain.enums.SpecimenConditionOption
-import com.vci.vectorcamapp.surveillance_form.location.data.LocationError
+import com.vci.vectorcamapp.surveillance_form.domain.util.SurveillanceFormError
 import com.vci.vectorcamapp.surveillance_form.presentation.components.DatePickerField
 import com.vci.vectorcamapp.surveillance_form.presentation.components.DropdownField
 import com.vci.vectorcamapp.surveillance_form.presentation.components.TextEntryField
@@ -213,7 +211,7 @@ fun SurveillanceFormScreen(
                 "Could not get location: ${state.locationError.toString(context)}",
                 Modifier.padding(vertical = 4.dp)
             )
-            if(state.locationError == LocationError.GPS_TIMEOUT) {
+            if(state.locationError == SurveillanceFormError.LOCATION_GPS_TIMEOUT) {
                 Button(onClick = {
                     onAction(SurveillanceFormAction.RetryLocation ) },
                     modifier = Modifier

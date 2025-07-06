@@ -19,10 +19,10 @@ suspend inline fun <reified T> safeCall(
     } catch (e: UnknownHostException) {
         return Result.Error(NetworkError.NO_INTERNET)
     } catch (e: SerializationException) {
-        return Result.Error(NetworkError.SERIALIZATION)
+        return Result.Error(NetworkError.SERIALIZATION_ERROR)
     } catch (e: Exception) {
         coroutineContext.ensureActive()
-        return Result.Error(NetworkError.UNKNOWN)
+        return Result.Error(NetworkError.UNKNOWN_ERROR)
     }
 
     return responseToResult(response)

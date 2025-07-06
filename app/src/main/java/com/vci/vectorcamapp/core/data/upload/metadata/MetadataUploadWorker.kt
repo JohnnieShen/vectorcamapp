@@ -33,7 +33,7 @@ import com.vci.vectorcamapp.core.domain.repository.SurveillanceFormRepository
 import com.vci.vectorcamapp.core.domain.util.network.NetworkError
 import com.vci.vectorcamapp.core.domain.util.onError
 import com.vci.vectorcamapp.core.domain.util.onSuccess
-import com.vci.vectorcamapp.core.presentation.util.network.toString
+import com.vci.vectorcamapp.core.presentation.util.error.toString
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import kotlinx.io.IOException
@@ -194,7 +194,7 @@ class MetadataUploadWorker @AssistedInject constructor(
         } catch (e: IOException) {
             DomainResult.Error(NetworkError.NO_INTERNET)
         } catch (e: Exception) {
-            DomainResult.Error(NetworkError.UNKNOWN)
+            DomainResult.Error(NetworkError.UNKNOWN_ERROR)
         }
     }
 
@@ -264,7 +264,7 @@ class MetadataUploadWorker @AssistedInject constructor(
         } catch (e: IOException) {
             DomainResult.Error(NetworkError.NO_INTERNET)
         } catch (e: Exception) {
-            DomainResult.Error(NetworkError.UNKNOWN)
+            DomainResult.Error(NetworkError.UNKNOWN_ERROR)
         }
     }
 
@@ -332,7 +332,7 @@ class MetadataUploadWorker @AssistedInject constructor(
         } catch (e: IOException) {
             DomainResult.Error(NetworkError.NO_INTERNET)
         } catch (e: Exception) {
-            DomainResult.Error(NetworkError.UNKNOWN)
+            DomainResult.Error(NetworkError.UNKNOWN_ERROR)
         }
     }
 
@@ -421,7 +421,7 @@ class MetadataUploadWorker @AssistedInject constructor(
         } catch (e: IOException) {
             DomainResult.Error(NetworkError.NO_INTERNET)
         } catch (e: Exception) {
-            DomainResult.Error(NetworkError.UNKNOWN)
+            DomainResult.Error(NetworkError.UNKNOWN_ERROR)
         }
     }
 

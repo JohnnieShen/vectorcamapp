@@ -1,7 +1,6 @@
 package com.vci.vectorcamapp.surveillance_form.presentation
 
 import android.util.Log
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.vci.vectorcamapp.core.data.room.TransactionHelper
 import com.vci.vectorcamapp.core.domain.cache.CurrentSessionCache
@@ -14,8 +13,9 @@ import com.vci.vectorcamapp.core.domain.util.Result
 import com.vci.vectorcamapp.core.domain.util.errorOrNull
 import com.vci.vectorcamapp.core.domain.util.onError
 import com.vci.vectorcamapp.core.domain.util.onSuccess
+import com.vci.vectorcamapp.core.presentation.CoreViewModel
 import com.vci.vectorcamapp.surveillance_form.domain.use_cases.ValidationUseCases
-import com.vci.vectorcamapp.surveillance_form.location.data.LocationError
+import com.vci.vectorcamapp.surveillance_form.domain.util.SurveillanceFormError
 import com.vci.vectorcamapp.surveillance_form.location.domain.repository.LocationRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.TimeoutCancellationException
@@ -40,7 +40,7 @@ class SurveillanceFormViewModel @Inject constructor(
     private val surveillanceFormRepository: SurveillanceFormRepository,
     private val sessionRepository: SessionRepository,
     private val locationRepository: LocationRepository,
-) : ViewModel() {
+) : CoreViewModel() {
 
     companion object {
         private const val MAX_ATTEMPTS = 2
@@ -128,30 +128,27 @@ class SurveillanceFormViewModel @Inject constructor(
                             it.district == _state.value.selectedDistrict && it.sentinelSite == _state.value.selectedSentinelSite
                         }
                         if (selectedSite == null) {
-                            Log.e(
-                                "SUBMIT_ERROR",
-                                "Site not found for district=${_state.value.selectedDistrict} and sentinel=${_state.value.selectedSentinelSite}"
-                            )
+                            emitError(SurveillanceFormError.SITE_NOT_FOUND)
                             return@launch
                         }
 
                         val success = transactionHelper.runAsTransaction {
                             val sessionResult =
                                 sessionRepository.upsertSession(session, selectedSite.id)
+                            sessionResult.onError { error ->
+                                emitError(error)
+                                return@runAsTransaction false
+                            }
+
                             val surveillanceFormResult =
                                 surveillanceFormRepository.upsertSurveillanceForm(
                                     surveillanceForm, session.localId
                                 )
-
-                            sessionResult.onError { error ->
-                                Log.e("ROOM DB ERROR", "Session Error: $error")
-                            }
-
                             surveillanceFormResult.onError { error ->
-                                Log.e("ROOM DB ERROR", "Surveillance Form Error: $error")
+                                emitError(error)
+                                return@runAsTransaction false
                             }
-
-                            (sessionResult !is Result.Error) && (surveillanceFormResult !is Result.Error)
+                            true
                         }
 
                         if (success) {
@@ -369,6 +366,7 @@ class SurveillanceFormViewModel @Inject constructor(
 
             val programId = deviceCache.getProgramId()
             if (programId == null) {
+                emitError(SurveillanceFormError.MISSING_PROGRAM_ID)
                 _events.send(SurveillanceFormEvent.NavigateBackToRegistrationScreen)
                 _state.update { it.copy(isLoading = false) }
                 return@launch
@@ -382,7 +380,8 @@ class SurveillanceFormViewModel @Inject constructor(
             var sentinelSite = ""
 
             if (currentSession != null) {
-                savedForm = surveillanceFormRepository.getSurveillanceFormBySessionId(currentSession.localId)
+                savedForm =
+                    surveillanceFormRepository.getSurveillanceFormBySessionId(currentSession.localId)
                 Log.d("SAVED FORM", "Saved form: ${savedForm?.wasIrsConducted}")
 
                 val siteId = currentSessionCache.getSiteId()
@@ -409,27 +408,35 @@ class SurveillanceFormViewModel @Inject constructor(
     }
 
     private suspend fun getLocation() {
-        repeat(MAX_ATTEMPTS) { attempt ->
-            val result: Result<Pair<Float, Float>, LocationError> = try {
-                val loc = withTimeout(LOCATION_TIMEOUT_MS) {
-                    locationRepository.getCurrentLocation()
+        repeat(MAX_ATTEMPTS) {
+            if (_state.value.latitude == null || _state.value.longitude == null) {
+                val result: Result<Pair<Float, Float>, SurveillanceFormError> = try {
+                    val loc = withTimeout(LOCATION_TIMEOUT_MS) {
+                        locationRepository.getCurrentLocation()
+                    }
+                    Result.Success(loc.latitude.toFloat() to loc.longitude.toFloat())
+                } catch (e: Exception) {
+                    val error = when (e) {
+                        is SecurityException -> SurveillanceFormError.LOCATION_GPS_TIMEOUT
+                        is TimeoutCancellationException -> SurveillanceFormError.LOCATION_GPS_TIMEOUT
+                        else -> SurveillanceFormError.UNKNOWN_ERROR
+                    }
+                    Result.Error(error)
                 }
-                Result.Success(loc.latitude.toFloat() to loc.longitude.toFloat())
-            } catch (e: Exception) {
-                val error = when (e) {
-                    is SecurityException -> LocationError.PERMISSION_DENIED
-                    is TimeoutCancellationException -> LocationError.GPS_TIMEOUT
-                    else -> LocationError.UNKNOWN
-                }
-                Result.Error(error)
-            }
 
-            result.onSuccess { (latitude, longitude) ->
-                _state.update {
-                    it.copy(latitude = latitude, longitude = longitude)
+                result.onSuccess { (latitude, longitude) ->
+                    _state.update {
+                        it.copy(latitude = latitude, longitude = longitude)
+                    }
+                }.onError { error ->
+                    if (error == SurveillanceFormError.LOCATION_GPS_TIMEOUT) {
+                        _state.update {
+                            it.copy(locationError = error)
+                        }
+                    } else {
+                        emitError(error)
+                    }
                 }
-            }.onError { error ->
-                _state.update { it.copy(locationError = error) }
             }
         }
     }

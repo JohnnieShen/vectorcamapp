@@ -20,5 +20,4 @@ data class CompleteSessionSpecimensState (
         notes = ""
     ),
     val specimens: List<Specimen> = emptyList(),
-    val error: String? = null
 )

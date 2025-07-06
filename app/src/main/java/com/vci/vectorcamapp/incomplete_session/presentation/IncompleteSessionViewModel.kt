@@ -1,9 +1,10 @@
 package com.vci.vectorcamapp.incomplete_session.presentation
 
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.vci.vectorcamapp.core.domain.cache.CurrentSessionCache
 import com.vci.vectorcamapp.core.domain.repository.SessionRepository
+import com.vci.vectorcamapp.core.presentation.CoreViewModel
+import com.vci.vectorcamapp.incomplete_session.domain.util.IncompleteSessionError
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -18,7 +19,7 @@ import javax.inject.Inject
 class IncompleteSessionViewModel @Inject constructor(
     private val sessionRepository: SessionRepository,
     private val currentSessionCache: CurrentSessionCache
-) : ViewModel() {
+) : CoreViewModel() {
 
     private val _incompleteSessions = sessionRepository.observeIncompleteSessions()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), emptyList())
@@ -36,13 +37,16 @@ class IncompleteSessionViewModel @Inject constructor(
         viewModelScope.launch {
             when (action) {
                 is IncompleteSessionAction.ResumeSession -> {
-                    val relation = sessionRepository.getSessionAndSiteById(action.sessionId)
-                    if (relation != null) {
-                        currentSessionCache.saveSession(
-                            relation.session,
-                            relation.site.id
-                        )
-                        _events.send(IncompleteSessionEvent.NavigateToSurveillanceForm)
+                    try {
+                        val relation = sessionRepository.getSessionAndSiteById(action.sessionId)
+                        if (relation != null) {
+                            currentSessionCache.saveSession(relation.session, relation.site.id)
+                            _events.send(IncompleteSessionEvent.NavigateToSurveillanceForm)
+                        } else {
+                            emitError(IncompleteSessionError.SESSION_NOT_FOUND)
+                        }
+                    } catch (e: Exception) {
+                        emitError(IncompleteSessionError.SESSION_RETRIEVAL_FAILED)
                     }
                 }
             }

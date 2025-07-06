@@ -1,8 +1,9 @@
 package com.vci.vectorcamapp.complete_session.form.presentation
 
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.vci.vectorcamapp.complete_session.domain.util.CompleteSessionError
 import com.vci.vectorcamapp.core.domain.repository.SessionRepository
+import com.vci.vectorcamapp.core.presentation.CoreViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -14,7 +15,7 @@ import javax.inject.Inject
 @HiltViewModel
 class CompleteSessionFormViewModel @Inject constructor(
     private val sessionRepository: SessionRepository
-) : ViewModel() {
+) : CoreViewModel() {
 
     private val _state = MutableStateFlow(CompleteSessionFormState())
     val state: StateFlow<CompleteSessionFormState> = _state
@@ -28,36 +29,25 @@ class CompleteSessionFormViewModel @Inject constructor(
     private fun loadSession(sessionId: UUID) {
         viewModelScope.launch {
             val sessionAndSite = sessionRepository.getSessionAndSiteById(sessionId)
-            val sessionAndSurveillanceForm = sessionRepository.getSessionAndSurveillanceForm(sessionId)
+            if (sessionAndSite == null) {
+                emitError(CompleteSessionError.SESSION_OR_SITE_NOT_FOUND)
+                return@launch
+            }
 
-            when {
-                sessionAndSite == null -> {
-                    _state.update {
-                        it.copy(error = "No site data found for session")
-                    }
-                }
+            // TODO: Surveillance form will be optional
+            val sessionAndSurveillanceForm =
+                sessionRepository.getSessionAndSurveillanceForm(sessionId)
+            if (sessionAndSurveillanceForm == null) {
+                emitError(CompleteSessionError.SESSION_OR_SURVEILLANCE_FORM_NOT_FOUND)
+                return@launch
+            }
 
-                sessionAndSurveillanceForm == null -> {
-                    _state.update {
-                        it.copy(
-                            session = sessionAndSite.session,
-                            site = sessionAndSite.site,
-                            surveillanceForm = null,
-                            error = null
-                        )
-                    }
-                }
-
-                else -> {
-                    _state.update {
-                        it.copy(
-                            session = sessionAndSite.session,
-                            site = sessionAndSite.site,
-                            surveillanceForm = sessionAndSurveillanceForm.surveillanceForm,
-                            error = null
-                        )
-                    }
-                }
+            _state.update {
+                it.copy(
+                    session = sessionAndSite.session,
+                    site = sessionAndSite.site,
+                    surveillanceForm = sessionAndSurveillanceForm.surveillanceForm
+                )
             }
         }
     }

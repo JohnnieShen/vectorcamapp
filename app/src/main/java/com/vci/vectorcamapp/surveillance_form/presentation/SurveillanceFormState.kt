@@ -3,9 +3,9 @@ package com.vci.vectorcamapp.surveillance_form.presentation
 import com.vci.vectorcamapp.core.domain.model.Session
 import com.vci.vectorcamapp.core.domain.model.Site
 import com.vci.vectorcamapp.core.domain.model.SurveillanceForm
-import com.vci.vectorcamapp.surveillance_form.location.data.LocationError
 import com.vci.vectorcamapp.surveillance_form.presentation.model.SurveillanceFormErrors
 import com.vci.vectorcamapp.core.domain.util.Result
+import com.vci.vectorcamapp.surveillance_form.domain.util.SurveillanceFormError
 
 import java.util.UUID
 
@@ -13,7 +13,7 @@ data class SurveillanceFormState(
     val isLoading: Boolean = false,
     val latitude: Float? = null,
     val longitude: Float? = null,
-    val locationError: LocationError? = null,
+    val locationError: SurveillanceFormError? = null,
     val allSitesInProgram: List<Site> = emptyList(),
     val selectedDistrict: String = "",
     val selectedSentinelSite: String = "",

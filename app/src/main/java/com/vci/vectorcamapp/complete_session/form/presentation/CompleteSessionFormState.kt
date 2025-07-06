@@ -29,5 +29,4 @@ data class CompleteSessionFormState (
         healthCenter = ""
     ),
     val surveillanceForm: SurveillanceForm? = null,
-    val error: String? = null
 )

@@ -11,8 +11,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
+import com.vci.vectorcamapp.core.presentation.util.error.toString
 import com.vci.vectorcamapp.surveillance_form.domain.util.FormValidationError
-import com.vci.vectorcamapp.surveillance_form.presentation.util.toString
 
 @Composable
 fun TextEntryField(
