@@ -192,9 +192,9 @@ fun NavGraph(startDestination: Destination) {
             val state by viewModel.state.collectAsStateWithLifecycle()
             ObserveAsEvents(events = viewModel.events) { event ->
                 when (event) {
-                    IncompleteSessionEvent.NavigateToSurveillanceForm -> navController.navigate(
-                        Destination.SurveillanceForm
-                    )
+                    IncompleteSessionEvent.NavigateToSurveillanceForm ->
+                        navController.navigate(Destination.SurveillanceForm)
+                    IncompleteSessionEvent.NavigateToLandingScreen -> navController.popBackStack()
                 }
             }
 

@@ -49,6 +49,10 @@ class IncompleteSessionViewModel @Inject constructor(
                         emitError(IncompleteSessionError.SESSION_RETRIEVAL_FAILED)
                     }
                 }
+
+                is IncompleteSessionAction.ReturnToLandingScreen -> {
+                    _events.send(IncompleteSessionEvent.NavigateToLandingScreen)
+                }
             }
         }
     }
