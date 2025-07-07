@@ -15,6 +15,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import com.vci.vectorcamapp.R
 import com.vci.vectorcamapp.core.presentation.util.error.toString
@@ -39,10 +40,14 @@ fun DatePickerField(
     }
 
     Column(modifier = modifier.fillMaxWidth()) {
+        Text(
+            text  = label,
+            style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium)
+        )
+
         OutlinedTextField(
             value = formattedDate,
             onValueChange = { },
-            label = { Text(label) },
             isError = error != null,
             enabled = false,
             singleLine = true,

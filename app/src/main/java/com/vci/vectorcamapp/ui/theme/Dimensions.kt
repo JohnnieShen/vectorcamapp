@@ -25,6 +25,7 @@ data class Dimensions(
     val componentHeightMedium: Dp = 48.dp,
     val componentHeightLarge: Dp = 60.dp,
     val componentHeightExtraLarge: Dp = 72.dp,
+    val componentHeightExtraExtraLarge: Dp = 84.dp,
 
     // Icon Sizes
     val iconSizeSmall: Dp = 16.dp,

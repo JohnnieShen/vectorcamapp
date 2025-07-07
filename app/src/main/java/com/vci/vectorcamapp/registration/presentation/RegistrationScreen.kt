@@ -94,7 +94,9 @@ fun RegistrationScreen(
                     }
 
                     DropdownField(
-                        label = "Program",
+                        label = "",
+                        highlightBorder = true,
+                        arrowAlwaysDown = false,
                         options = state.programs.map { ProgramOption(it.name) },
                         selectedOption = ProgramOption(state.selectedProgramName),
                         onOptionSelected = { onAction(RegistrationAction.SelectProgram(it)) },
@@ -105,7 +107,7 @@ fun RegistrationScreen(
                                 spread = MaterialTheme.dimensions.shadowBlurSmall,
                                 cornerRadius = MaterialTheme.dimensions.cornerRadiusSmall,
                             )
-                            .height(MaterialTheme.dimensions.componentHeightExtraLarge),
+                            .height(MaterialTheme.dimensions.componentHeightExtraExtraLarge),
                     )
 
                     ActionButton(
