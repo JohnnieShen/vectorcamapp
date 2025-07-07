@@ -83,6 +83,8 @@ fun ImagingScreen(
                     },
                     onSaveSessionProgress = { onAction(ImagingAction.SaveSessionProgress) },
                     onSubmitSession = { onAction(ImagingAction.SubmitSession) },
+                    manualFocusPoint = state.manualFocusPoint,
+                    onAction = onAction,
                     modifier = modifier
                 )
             }

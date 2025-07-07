@@ -26,6 +26,7 @@ import com.vci.vectorcamapp.core.domain.util.onSuccess
 import com.vci.vectorcamapp.core.presentation.CoreViewModel
 import com.vci.vectorcamapp.imaging.domain.repository.CameraRepository
 import com.vci.vectorcamapp.imaging.domain.repository.InferenceRepository
+import com.vci.vectorcamapp.imaging.domain.use_cases.CameraFocusManager
 import com.vci.vectorcamapp.imaging.domain.util.ImagingError
 import com.vci.vectorcamapp.imaging.presentation.extensions.cropToBoundingBoxAndPad
 import com.vci.vectorcamapp.imaging.presentation.extensions.toUprightBitmap
@@ -121,6 +122,14 @@ class ImagingViewModel @Inject constructor(
     fun onAction(action: ImagingAction) {
         viewModelScope.launch {
             when (action) {
+                is ImagingAction.ManualFocusAt -> {
+                    _state.update { it.copy(manualFocusPoint = action.offset) }
+                }
+
+                is ImagingAction.CancelManualFocus -> {
+                    _state.update { it.copy(manualFocusPoint = null) }
+                }
+
                 is ImagingAction.CorrectSpecimenId -> {
                     _state.update {
                         it.copy(
