@@ -8,7 +8,8 @@ data class Specimen(
     val sex: String?,
     val abdomenStatus: String?,
     val imageUri: Uri,
-    val uploadStatus: UploadStatus,
+    val textUploadStatus: UploadStatus,
+    val imageUploadStatus: UploadStatus,
     val capturedAt: Long,
     val submittedAt: Long?
 )

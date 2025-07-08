@@ -390,7 +390,8 @@ class MetadataUploadWorker @AssistedInject constructor(
                 sex = remoteSpecimenDto.sex,
                 abdomenStatus = remoteSpecimenDto.abdomenStatus,
                 imageUri = localSpecimen.imageUri,
-                uploadStatus = localSpecimen.uploadStatus,
+                textUploadStatus = localSpecimen.textUploadStatus,
+                imageUploadStatus = localSpecimen.imageUploadStatus,
                 capturedAt = remoteSpecimenDto.capturedAt,
                 submittedAt = remoteSpecimenDto.submittedAt,
             )
