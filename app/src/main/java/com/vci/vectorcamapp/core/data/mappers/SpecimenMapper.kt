@@ -11,6 +11,8 @@ fun SpecimenEntity.toDomain(): Specimen {
         sex = this.sex,
         abdomenStatus = this.abdomenStatus,
         imageUri = this.imageUri,
+        metadataUploadStatus = this.metadataUploadStatus,
+        imageUploadStatus = this.imageUploadStatus,
         capturedAt = this.capturedAt,
         submittedAt = this.submittedAt
     )
@@ -24,6 +26,8 @@ fun Specimen.toEntity(sessionId: UUID): SpecimenEntity {
         sex = this.sex,
         abdomenStatus = this.abdomenStatus,
         imageUri = this.imageUri,
+        metadataUploadStatus = this.metadataUploadStatus,
+        imageUploadStatus = this.imageUploadStatus,
         capturedAt = this.capturedAt,
         submittedAt = this.submittedAt
     )

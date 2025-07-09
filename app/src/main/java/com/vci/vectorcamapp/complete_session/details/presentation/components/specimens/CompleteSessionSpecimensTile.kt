@@ -19,14 +19,19 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.withStyle
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
 import com.vci.vectorcamapp.R
 import com.vci.vectorcamapp.core.domain.model.Session
 import com.vci.vectorcamapp.core.domain.model.Specimen
 import com.vci.vectorcamapp.core.presentation.components.ui.InfoTile
+import com.vci.vectorcamapp.ui.extensions.color
 import com.vci.vectorcamapp.ui.extensions.colors
 import com.vci.vectorcamapp.ui.extensions.dimensions
+import com.vci.vectorcamapp.ui.extensions.displayName
 import java.text.SimpleDateFormat
 import java.util.Locale
 
@@ -73,6 +78,30 @@ fun CompleteSessionSpecimensTile(
                     text = "Specimen ${specimen.id}",
                     style = MaterialTheme.typography.headlineMedium,
                     color = MaterialTheme.colors.textPrimary
+                )
+            }
+
+            specimen.metadataUploadStatus.let { status ->
+                Text(
+                    text = buildAnnotatedString {
+                        append("Metadata Upload Status: ")
+                        withStyle(SpanStyle(color = status.color())) {
+                            append(status.displayName())
+                        }
+                    },
+                    style = MaterialTheme.typography.bodySmall
+                )
+            }
+
+            specimen.imageUploadStatus.let { status ->
+                Text(
+                    text = buildAnnotatedString {
+                        append("Image Upload Status: ")
+                        withStyle(SpanStyle(color = status.color())) {
+                            append(status.displayName())
+                        }
+                    },
+                    style = MaterialTheme.typography.bodySmall
                 )
             }
 
