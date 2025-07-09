@@ -14,8 +14,8 @@ interface SessionRepository {
     suspend fun getSessionById(sessionId: UUID): Session?
     suspend fun deleteSession(session: Session, siteId: Int): Boolean
     suspend fun markSessionAsComplete(sessionId: UUID): Boolean
-    suspend fun getSessionWithSpecimens(sessionId: UUID): SessionWithSpecimens?
-    suspend fun getSessionAndSurveillanceForm(sessionId: UUID): SessionAndSurveillanceForm?
+    suspend fun getSessionWithSpecimensById(sessionId: UUID): SessionWithSpecimens?
+    suspend fun getSessionAndSurveillanceFormById(sessionId: UUID): SessionAndSurveillanceForm?
     suspend fun getSessionAndSiteById(sessionId: UUID): SessionAndSite?
     fun observeIncompleteSessions(): Flow<List<Session>>
     fun observeCompleteSessionsAndSites(): Flow<List<SessionAndSite>>

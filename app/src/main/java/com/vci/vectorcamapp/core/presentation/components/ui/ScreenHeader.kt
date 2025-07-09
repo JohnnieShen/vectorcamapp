@@ -79,7 +79,7 @@ fun ScreenHeader(
                         )
                         Text(
                             text = subtitle,
-                            style = MaterialTheme.typography.titleMedium,
+                            style = MaterialTheme.typography.titleSmall,
                             color = MaterialTheme.colors.textPrimary,
                         )
                     }

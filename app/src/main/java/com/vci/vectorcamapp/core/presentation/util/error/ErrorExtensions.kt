@@ -33,8 +33,9 @@ fun Error.toString(context: Context): String {
         }
         is CompleteSessionError -> when (this) {
             CompleteSessionError.SESSION_NOT_FOUND -> R.string.complete_session_error_session_not_found
-            CompleteSessionError.SESSION_OR_SURVEILLANCE_FORM_NOT_FOUND -> R.string.complete_session_error_session_or_surveillance_form_not_found
-            CompleteSessionError.SESSION_OR_SITE_NOT_FOUND -> R.string.complete_session_error_session_or_site_not_found
+            CompleteSessionError.SITE_NOT_FOUND -> R.string.complete_session_error_site_not_found
+            CompleteSessionError.SURVEILLANCE_FORM_NOT_FOUND -> R.string.complete_session_error_surveillance_form_not_found
+            CompleteSessionError.SPECIMENS_NOT_FOUND -> R.string.complete_session_error_specimens_not_found
             CompleteSessionError.UNKNOWN_ERROR -> R.string.complete_session_error_unknown_error
         }
         is ImagingError -> when(this) {

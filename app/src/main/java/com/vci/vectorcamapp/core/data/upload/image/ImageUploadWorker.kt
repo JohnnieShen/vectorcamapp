@@ -58,7 +58,7 @@ class ImageUploadWorker @AssistedInject constructor(
             .setContentTitle("Image Upload in Progress")
             .setContentText("Uploading image 0 of $TOTAL_IMAGES")
             .setProgress(TOTAL_IMAGES, 0, false)
-            .setSmallIcon(R.drawable.ic_upload)
+            .setSmallIcon(R.drawable.ic_cloud_upload)
             .setOngoing(true).build()
 
         return ForegroundInfo(
@@ -71,7 +71,7 @@ class ImageUploadWorker @AssistedInject constructor(
             .setContentTitle("Image Upload in Progress")
             .setContentText("Uploading image $counter of $TOTAL_IMAGES")
             .setProgress(TOTAL_IMAGES, counter, false)
-            .setSmallIcon(R.drawable.ic_upload)
+            .setSmallIcon(R.drawable.ic_cloud_upload)
             .setOngoing(true).build()
 
         notificationManager.notify(NOTIFICATION_ID, updatedNotification)

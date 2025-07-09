@@ -1,11 +1,14 @@
-package com.vci.vectorcamapp.complete_session.form.presentation
+package com.vci.vectorcamapp.complete_session.details.presentation
 
+import com.vci.vectorcamapp.complete_session.details.presentation.enums.CompleteSessionDetailsTab
 import com.vci.vectorcamapp.core.domain.model.Session
 import com.vci.vectorcamapp.core.domain.model.Site
+import com.vci.vectorcamapp.core.domain.model.Specimen
 import com.vci.vectorcamapp.core.domain.model.SurveillanceForm
 import java.util.UUID
 
-data class CompleteSessionFormState (
+data class CompleteSessionDetailsState(
+    val selectedTab: CompleteSessionDetailsTab = CompleteSessionDetailsTab.SESSION_FORM,
     val session: Session = Session(
         localId = UUID(0, 0),
         remoteId = null,
@@ -28,5 +31,15 @@ data class CompleteSessionFormState (
         sentinelSite = "",
         healthCenter = ""
     ),
-    val surveillanceForm: SurveillanceForm? = null,
+    val surveillanceForm: SurveillanceForm = SurveillanceForm(
+        numPeopleSleptInHouse = 0,
+        wasIrsConducted = false,
+        monthsSinceIrs = null,
+        numLlinsAvailable = 0,
+        llinType = null,
+        llinBrand = null,
+        numPeopleSleptUnderLlin = null,
+        submittedAt = null
+    ),
+    val specimens: List<Specimen> = emptyList(),
 )

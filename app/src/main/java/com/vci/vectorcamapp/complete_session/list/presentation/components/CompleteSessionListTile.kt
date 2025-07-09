@@ -94,37 +94,37 @@ fun CompleteSessionListTile(
             ) {
                 CompleteSessionListDetailRow(
                     iconPainter = painterResource(R.drawable.ic_person),
-                    iconDescription = "Arrow Right",
+                    iconDescription = "Person",
                     text = "Collector: ${session.collectorName}, ${session.collectorTitle}",
                 )
 
                 CompleteSessionListDetailRow(
                     iconPainter = painterResource(R.drawable.ic_pin),
-                    iconDescription = "Arrow Right",
+                    iconDescription = "Pin",
                     text = "District: ${site.district}",
                 )
 
                 CompleteSessionListDetailRow(
                     iconPainter = painterResource(R.drawable.ic_map),
-                    iconDescription = "Arrow Right",
+                    iconDescription = "Map",
                     text = "Sub-County: ${site.subCounty}",
                 )
 
                 CompleteSessionListDetailRow(
                     iconPainter = painterResource(R.drawable.ic_navigation),
-                    iconDescription = "Arrow Right",
+                    iconDescription = "Navigation",
                     text = "Parish: ${site.parish}",
                 )
 
                 CompleteSessionListDetailRow(
                     iconPainter = painterResource(R.drawable.ic_clipboard),
-                    iconDescription = "Arrow Right",
+                    iconDescription = "Clipboard",
                     text = "Sentinel Site: ${site.sentinelSite}",
                 )
 
                 CompleteSessionListDetailRow(
                     iconPainter = painterResource(R.drawable.ic_house),
-                    iconDescription = "Arrow Right",
+                    iconDescription = "House",
                     text = "House Number: ${session.houseNumber}",
                 )
             }
@@ -136,13 +136,13 @@ fun CompleteSessionListTile(
                 modifier = Modifier.padding(MaterialTheme.dimensions.paddingLarge)
             ) {
                 Text(
-                    text = "Created: ${dateTimeFormatter.format(session.createdAt)}",
+                    text = "Created At: ${dateTimeFormatter.format(session.createdAt)}",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colors.textSecondary
                 )
 
                 Text(
-                    text = "Completed: ${dateTimeFormatter.format(session.completedAt)}",
+                    text = "Completed At: ${dateTimeFormatter.format(session.completedAt)}",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colors.textSecondary
                 )

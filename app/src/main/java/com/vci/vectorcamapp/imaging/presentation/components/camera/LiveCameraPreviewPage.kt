@@ -163,7 +163,7 @@ fun LiveCameraPreviewPage(
                 .align(Alignment.TopEnd)
         ) {
             Icon(
-                painter = painterResource(id = R.drawable.ic_upload),
+                painter = painterResource(id = R.drawable.ic_cloud_upload),
                 contentDescription = "Submit Session",
                 modifier = Modifier.size(32.dp),
                 tint = MaterialTheme.colorScheme.onTertiary

@@ -18,8 +18,8 @@ import kotlinx.coroutines.flow.SharedFlow
 
 @Composable
 fun BaseScaffold(
+    modifier: Modifier = Modifier,
     content: @Composable (PaddingValues) -> Unit,
-    modifier: Modifier
 ) {
     val errorFlow = ErrorMessageBus.errors
     CompositionLocalProvider(LocalErrorDataFlow provides errorFlow) {

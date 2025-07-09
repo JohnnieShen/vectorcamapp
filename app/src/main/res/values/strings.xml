@@ -152,13 +152,16 @@
     <string name="incomplete_session_error_unknown_error">An unknown error occurred. Please try again or contact support if the issue persists.</string>
 
     <!-- Complete session error: Session not found -->
-    <string name="complete_session_error_session_not_found">Session not found. Please try again.</string>
+    <string name="complete_session_error_session_not_found">Could not load session details. Please try again.</string>
 
-    <!-- Complete session error: Session or surveillance form not found -->
-    <string name="complete_session_error_session_or_surveillance_form_not_found">Session or surveillance form not found. Please try again.</string>
+    <!-- Complete session error: Site not found -->
+    <string name="complete_session_error_site_not_found">Could not load site details. Please try again.</string>
 
-    <!-- Complete session error: Session or site not found -->
-    <string name="complete_session_error_session_or_site_not_found">Session or site not found. Please try again.</string>
+    <!-- Complete session error: Surveillance form not found -->
+    <string name="complete_session_error_surveillance_form_not_found">Could not load surveillance form details. Please try again.</string>
+
+    <!-- Complete session error: Specimens not found -->
+    <string name="complete_session_error_specimens_not_found">Could not load specimens. Please try again.</string>
 
     <!-- Complete session error: Unknown error -->
     <string name="complete_session_error_unknown_error">An unknown error occurred. Please try again or contact support if the issue persists.</string>
