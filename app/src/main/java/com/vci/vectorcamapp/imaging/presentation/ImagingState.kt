@@ -15,7 +15,7 @@ data class ImagingState(
         sex = null,
         abdomenStatus = null,
         imageUri = Uri.EMPTY,
-        textUploadStatus = UploadStatus.NOT_STARTED,
+        metaUploadStatus = UploadStatus.NOT_STARTED,
         imageUploadStatus = UploadStatus.NOT_STARTED,
         capturedAt = 0L,
         submittedAt = null
