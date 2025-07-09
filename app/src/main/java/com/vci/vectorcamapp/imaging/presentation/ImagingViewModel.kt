@@ -301,7 +301,7 @@ class ImagingViewModel @Inject constructor(
                             abdomenStatus = _state.value.currentSpecimen.abdomenStatus,
                             imageUri = imageUri,
                             imageUploadStatus = UploadStatus.NOT_STARTED,
-                            metaUploadStatus = UploadStatus.NOT_STARTED,
+                            metadataUploadStatus = UploadStatus.NOT_STARTED,
                             capturedAt = timestamp,
                             submittedAt = null
                         )

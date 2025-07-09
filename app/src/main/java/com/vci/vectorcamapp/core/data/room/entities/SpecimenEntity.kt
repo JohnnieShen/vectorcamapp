@@ -24,7 +24,7 @@ data class SpecimenEntity(
     val sex: String? = null,
     val abdomenStatus: String? = null,
     val imageUri: Uri = Uri.EMPTY,
-    val metaUploadStatus: UploadStatus = UploadStatus.NOT_STARTED,
+    val metadataUploadStatus: UploadStatus = UploadStatus.NOT_STARTED,
     val imageUploadStatus: UploadStatus = UploadStatus.NOT_STARTED,
     val capturedAt: Long = 0L,
     val submittedAt: Long?

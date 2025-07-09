@@ -81,7 +81,7 @@ fun CompleteSessionSpecimensTile(
                 )
             }
 
-            specimen.metaUploadStatus.let { status ->
+            specimen.metadataUploadStatus.let { status ->
                 Text(
                     text = buildAnnotatedString {
                         append("Metadata Upload Status: ")

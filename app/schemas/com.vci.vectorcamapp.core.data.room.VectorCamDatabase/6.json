@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 6,
-    "identityHash": "6fdce1796e8ed6f96492daa0346edb84",
+    "identityHash": "bcfc35cfee008fc5197fc0e743bcc083",
     "entities": [
       {
         "tableName": "program",
@@ -245,7 +245,7 @@
       },
       {
         "tableName": "specimen",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `sessionId` TEXT NOT NULL, `species` TEXT, `sex` TEXT, `abdomenStatus` TEXT, `imageUri` TEXT NOT NULL, `metaUploadStatus` TEXT NOT NULL, `imageUploadStatus` TEXT NOT NULL, `capturedAt` INTEGER NOT NULL, `submittedAt` INTEGER, PRIMARY KEY(`id`), FOREIGN KEY(`sessionId`) REFERENCES `session`(`localId`) ON UPDATE CASCADE ON DELETE CASCADE )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `sessionId` TEXT NOT NULL, `species` TEXT, `sex` TEXT, `abdomenStatus` TEXT, `imageUri` TEXT NOT NULL, `metadataUploadStatus` TEXT NOT NULL, `imageUploadStatus` TEXT NOT NULL, `capturedAt` INTEGER NOT NULL, `submittedAt` INTEGER, PRIMARY KEY(`id`), FOREIGN KEY(`sessionId`) REFERENCES `session`(`localId`) ON UPDATE CASCADE ON DELETE CASCADE )",
         "fields": [
           {
             "fieldPath": "id",
@@ -281,8 +281,8 @@
             "notNull": true
           },
           {
-            "fieldPath": "metaUploadStatus",
-            "columnName": "metaUploadStatus",
+            "fieldPath": "metadataUploadStatus",
+            "columnName": "metadataUploadStatus",
             "affinity": "TEXT",
             "notNull": true
           },
@@ -479,7 +479,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '6fdce1796e8ed6f96492daa0346edb84')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'bcfc35cfee008fc5197fc0e743bcc083')"
     ]
   }
 }
