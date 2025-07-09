@@ -159,10 +159,11 @@ fun SurveillanceFormScreen(
 
                 TextEntryField(
                     label = "Number of House Occupants",
-                    value = state.surveillanceForm.numPeopleSleptInHouse.toString(),
+                    value = if (state.surveillanceForm.numPeopleSleptInHouse == 0) "" else state.surveillanceForm.numPeopleSleptInHouse.toString(),
                     onValueChange = {
-                        onAction(SurveillanceFormAction.EnterNumPeopleSleptInHouse(it))
+                        onAction(SurveillanceFormAction.EnterNumPeopleSleptInHouse(it.filter { character -> character.isDigit() }))
                     },
+                    placeholder = "0",
                     singleLine = true,
                     keyboardType = KeyboardType.Number,
                 )
@@ -231,14 +232,11 @@ fun SurveillanceFormScreen(
             SectionCard(sectionTitle = "Surveillance Form") {
                 TextEntryField(
                     label = "Number of LLINs Available",
-                    value = state.surveillanceForm.numLlinsAvailable.toString(),
+                    value = if (state.surveillanceForm.numLlinsAvailable == 0) "" else state.surveillanceForm.numLlinsAvailable.toString(),
                     onValueChange = {
-                        onAction(
-                            SurveillanceFormAction.EnterNumLlinsAvailable(
-                                it
-                            )
-                        )
+                        onAction(SurveillanceFormAction.EnterNumLlinsAvailable(it.filter { character -> character.isDigit() }))
                     },
+                    placeholder = "0",
                     singleLine = true,
                     keyboardType = KeyboardType.Number
                 )
@@ -273,10 +271,11 @@ fun SurveillanceFormScreen(
                 state.surveillanceForm.numPeopleSleptUnderLlin?.let { current ->
                     TextEntryField(
                         label = "Number of People who Slept Under LLIN",
-                        value = current.toString(),
+                        value = if (current == 0) "" else current.toString(),
                         onValueChange = {
-                            onAction(SurveillanceFormAction.EnterNumPeopleSleptUnderLlin(it))
+                            onAction(SurveillanceFormAction.EnterNumPeopleSleptUnderLlin(it.filter { character -> character.isDigit() }))
                         },
+                        placeholder = "0",
                         singleLine = true,
                         keyboardType = KeyboardType.Number
                     )
@@ -299,14 +298,11 @@ fun SurveillanceFormScreen(
                 if (state.surveillanceForm.wasIrsConducted) {
                     TextEntryField(
                         label = "Months Since IRS",
-                        value = state.surveillanceForm.monthsSinceIrs?.toString().orEmpty(),
+                        value = state.surveillanceForm.monthsSinceIrs?.let { if (it == 0) "" else it.toString() }.orEmpty(),
                         onValueChange = {
-                            onAction(
-                                SurveillanceFormAction.EnterMonthsSinceIrs(
-                                    it
-                                )
-                            )
+                            onAction(SurveillanceFormAction.EnterMonthsSinceIrs(it.filter { character -> character.isDigit() }))
                         },
+                        placeholder = "0",
                         singleLine = true,
                         keyboardType = KeyboardType.Number,
                     )

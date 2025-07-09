@@ -23,7 +23,8 @@ fun TextEntryField(
     modifier: Modifier = Modifier,
     singleLine: Boolean = false,
     keyboardType: KeyboardType = KeyboardType.Text,
-    error: FormValidationError? = null
+    error: FormValidationError? = null,
+    placeholder: String? = null
 ) {
     val context = LocalContext.current
 
@@ -42,6 +43,11 @@ fun TextEntryField(
             isError = error != null,
             singleLine = singleLine,
             keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
+            placeholder = {
+                if (placeholder != null) {
+                    Text(text = placeholder)
+                }
+            },
             modifier = Modifier.fillMaxWidth()
         )
 
