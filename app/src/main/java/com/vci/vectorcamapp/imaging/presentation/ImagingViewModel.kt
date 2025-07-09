@@ -1,9 +1,8 @@
 package com.vci.vectorcamapp.imaging.presentation
 
 import android.content.Context
-import android.util.Log
 import android.view.OrientationEventListener
-import androidx.lifecycle.ViewModel
+import androidx.compose.material3.SnackbarDuration
 import androidx.lifecycle.viewModelScope
 import androidx.work.BackoffPolicy
 import androidx.work.Constraints
@@ -25,8 +24,10 @@ import com.vci.vectorcamapp.core.domain.repository.SpecimenRepository
 import com.vci.vectorcamapp.core.domain.util.Result
 import com.vci.vectorcamapp.core.domain.util.onError
 import com.vci.vectorcamapp.core.domain.util.onSuccess
+import com.vci.vectorcamapp.core.presentation.CoreViewModel
 import com.vci.vectorcamapp.imaging.domain.repository.CameraRepository
 import com.vci.vectorcamapp.imaging.domain.repository.InferenceRepository
+import com.vci.vectorcamapp.imaging.domain.use_cases.CameraFocusManager
 import com.vci.vectorcamapp.imaging.domain.util.ImagingError
 import com.vci.vectorcamapp.imaging.presentation.extensions.cropToBoundingBoxAndPad
 import com.vci.vectorcamapp.imaging.presentation.extensions.toUprightBitmap
@@ -60,7 +61,7 @@ class ImagingViewModel @Inject constructor(
     private val boundingBoxRepository: BoundingBoxRepository,
     private val cameraRepository: CameraRepository,
     private val inferenceRepository: InferenceRepository
-) : ViewModel() {
+) : CoreViewModel() {
 
     @Inject
     lateinit var transactionHelper: TransactionHelper
@@ -114,7 +115,7 @@ class ImagingViewModel @Inject constructor(
         viewModelScope.launch {
             if (currentSessionCache.getSession() == null) {
                 _events.send(ImagingEvent.NavigateBackToLandingScreen)
-                _events.send(ImagingEvent.DisplayImagingError(ImagingError.NO_ACTIVE_SESSION))
+                emitError(ImagingError.NO_ACTIVE_SESSION)
             }
         }
     }
@@ -122,6 +123,14 @@ class ImagingViewModel @Inject constructor(
     fun onAction(action: ImagingAction) {
         viewModelScope.launch {
             when (action) {
+                is ImagingAction.ManualFocusAt -> {
+                    _state.update { it.copy(manualFocusPoint = action.offset) }
+                }
+
+                is ImagingAction.CancelManualFocus -> {
+                    _state.update { it.copy(manualFocusPoint = null) }
+                }
+
                 is ImagingAction.CorrectSpecimenId -> {
                     _state.update {
                         it.copy(
@@ -150,7 +159,7 @@ class ImagingViewModel @Inject constructor(
                                 })
                         }
                     } catch (e: Exception) {
-                        Log.e("ViewModel", "Image processing setup failed: ${e.message}")
+                        emitError(ImagingError.PROCESSING_ERROR)
                     } finally {
                         action.frame.close()
                     }
@@ -211,7 +220,6 @@ class ImagingViewModel @Inject constructor(
                     _state.update { it.copy(isCapturing = true) }
 
                     val captureResult = cameraRepository.captureImage(action.controller)
-
                     _state.update { it.copy(isCapturing = false) }
 
                     captureResult.onSuccess { image ->
@@ -219,13 +227,13 @@ class ImagingViewModel @Inject constructor(
                         val bitmap = image.toUprightBitmap(displayOrientation)
                         image.close()
 
+                        // Avoid issuing error if preview bounding boxes are not yet ready
                         val boundingBoxesList = inferenceRepository.detectSpecimen(bitmap)
 
                         when (boundingBoxesList.size) {
                             0 -> {
-                                _events.send(ImagingEvent.DisplayImagingError(ImagingError.NO_SPECIMEN_FOUND))
+                                emitError(ImagingError.NO_SPECIMEN_FOUND, SnackbarDuration.Short)
                             }
-
                             1 -> {
                                 val boundingBox = boundingBoxesList[0]
                                 val croppedAndPadded = bitmap.cropToBoundingBoxAndPad(boundingBox)
@@ -248,16 +256,17 @@ class ImagingViewModel @Inject constructor(
                                     )
                                 }
                             }
-
                             else -> {
-                                _events.send(ImagingEvent.DisplayImagingError(ImagingError.MULTIPLE_SPECIMENS_FOUND))
+                                emitError(
+                                    ImagingError.MULTIPLE_SPECIMENS_FOUND, SnackbarDuration.Short
+                                )
                             }
                         }
                     }.onError { error ->
                         if (error == ImagingError.NO_ACTIVE_SESSION) {
                             _events.send(ImagingEvent.NavigateBackToLandingScreen)
                         }
-                        _events.send(ImagingEvent.DisplayImagingError(error))
+                        emitError(error)
                     }
                 }
 
@@ -310,11 +319,11 @@ class ImagingViewModel @Inject constructor(
                                 boundingBoxRepository.insertBoundingBox(boundingBox, specimen.id)
 
                             specimenResult.onError { error ->
-                                Log.d("ROOM ERROR", "Specimen error: $error")
+                                emitError(error)
                             }
 
                             boundingBoxResult.onError { error ->
-                                Log.d("ROOM ERROR", "Bounding box error: $error")
+                                emitError(error)
                             }
 
                             (specimenResult !is Result.Error) && (boundingBoxResult !is Result.Error)
@@ -323,10 +332,11 @@ class ImagingViewModel @Inject constructor(
                         if (success) {
                             clearCurrentSpecimenStateFields()
                         } else {
+                            emitError(ImagingError.SAVE_ERROR)
                             cameraRepository.deleteSavedImage(imageUri)
                         }
                     }.onError { error ->
-                        _events.send(ImagingEvent.DisplayImagingError(error))
+                        emitError(error)
                     }
                 }
             }

@@ -20,9 +20,9 @@ val titleSmallSize = 14.sp
 val bodyLargeSize = 16.sp
 val bodyMediumSize = 14.sp
 val bodySmallSize = 12.sp
-val labelLargeSize = 13.sp
-val labelMediumSize = 12.sp
-val labelSmallSize = 11.sp
+val labelLargeSize = 12.sp
+val labelMediumSize = 11.sp
+val labelSmallSize = 9.sp
 
 val provider = GoogleFont.Provider(
     providerAuthority = "com.google.android.gms.fonts",

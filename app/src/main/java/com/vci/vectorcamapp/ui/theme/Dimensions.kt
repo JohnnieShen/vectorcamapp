@@ -18,12 +18,14 @@ data class Dimensions(
     val spacingSmall: Dp = 8.dp,
     val spacingMedium: Dp = 16.dp,
     val spacingLarge: Dp = 32.dp,
+    val spacingExtraLarge: Dp = 48.dp,
 
     // Component Heights
     val componentHeightSmall: Dp = 36.dp,
     val componentHeightMedium: Dp = 48.dp,
     val componentHeightLarge: Dp = 60.dp,
     val componentHeightExtraLarge: Dp = 72.dp,
+    val componentHeightExtraExtraLarge: Dp = 84.dp,
 
     // Icon Sizes
     val iconSizeSmall: Dp = 16.dp,

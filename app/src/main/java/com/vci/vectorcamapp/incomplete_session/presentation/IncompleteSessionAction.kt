@@ -4,4 +4,5 @@ import java.util.UUID
 
 sealed interface IncompleteSessionAction {
     data class ResumeSession(val sessionId: UUID) : IncompleteSessionAction
+    data object ReturnToLandingScreen : IncompleteSessionAction
 }

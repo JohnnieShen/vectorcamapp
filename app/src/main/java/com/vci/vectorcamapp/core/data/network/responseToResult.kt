@@ -14,7 +14,7 @@ suspend inline fun <reified T> responseToResult(
             try {
                 Result.Success(response.body<T>())
             } catch (e: NoTransformationFoundException) {
-                Result.Error(NetworkError.SERIALIZATION)
+                Result.Error(NetworkError.SERIALIZATION_ERROR)
             }
         }
 
@@ -24,6 +24,6 @@ suspend inline fun <reified T> responseToResult(
         429 -> Result.Error(NetworkError.TOO_MANY_REQUESTS)
         in 400..499 -> Result.Error(NetworkError.CLIENT_ERROR)
         in 500..599 -> Result.Error(NetworkError.SERVER_ERROR)
-        else -> Result.Error(NetworkError.UNKNOWN)
+        else -> Result.Error(NetworkError.UNKNOWN_ERROR)
     }
 }

@@ -30,11 +30,13 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import com.vci.vectorcamapp.core.presentation.util.error.toString
 import com.vci.vectorcamapp.surveillance_form.domain.enums.DropdownOption
 import com.vci.vectorcamapp.surveillance_form.domain.util.FormValidationError
-import com.vci.vectorcamapp.surveillance_form.presentation.util.toString
 import com.vci.vectorcamapp.ui.extensions.colors
 import com.vci.vectorcamapp.ui.extensions.dimensions
 import com.vci.vectorcamapp.ui.theme.screenHeightFraction
@@ -46,6 +48,8 @@ fun <T : DropdownOption> DropdownField(
     selectedOption: T?,
     onOptionSelected: (T) -> Unit,
     modifier: Modifier = Modifier,
+    highlightBorder: Boolean = false,
+    arrowAlwaysDown: Boolean = true,
     menuItemContent: @Composable (T) -> Unit = { Text(text = it.label) },
     error: FormValidationError? = null
 ) {
@@ -53,12 +57,28 @@ fun <T : DropdownOption> DropdownField(
     var expanded by remember { mutableStateOf(false) }
 
     Column(modifier = modifier.fillMaxWidth()) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium)
+        )
+
         BoxWithConstraints(
             modifier = modifier
 
         ) {
             val parentWidth = maxWidth
             val parentHeight = maxHeight
+
+            val borderColor = when {
+                error != null -> MaterialTheme.colors.error
+                highlightBorder -> MaterialTheme.colors.primary
+                else -> Color.Black
+            }
+
+            val borderThickness = if (error != null || highlightBorder)
+                MaterialTheme.dimensions.borderThicknessThick
+            else
+                MaterialTheme.dimensions.borderThicknessThin
 
             OutlinedTextField(
                 value = selectedOption?.label ?: "",
@@ -81,8 +101,9 @@ fun <T : DropdownOption> DropdownField(
                 ),
                 trailingIcon = {
                     Box(modifier = Modifier.padding(end = MaterialTheme.dimensions.paddingLarge)) {
+                        val showDown = if (arrowAlwaysDown) true else expanded
                         Icon(
-                            imageVector = if (expanded) Icons.Default.KeyboardArrowDown else Icons.Default.KeyboardArrowUp,
+                            imageVector = if (showDown) Icons.Default.KeyboardArrowDown else Icons.Default.KeyboardArrowUp,
                             contentDescription = "Expand dropdown",
                             modifier = Modifier.size(MaterialTheme.dimensions.iconSizeLarge)
                         )
@@ -91,8 +112,8 @@ fun <T : DropdownOption> DropdownField(
                 modifier = modifier
                     .fillMaxWidth()
                     .border(
-                        width = MaterialTheme.dimensions.borderThicknessThick,
-                        color = if (error != null) MaterialTheme.colors.error else MaterialTheme.colors.primary,
+                        width = borderThickness,
+                        color = borderColor,
                         shape = RoundedCornerShape(
                             topStart = MaterialTheme.dimensions.cornerRadiusSmall,
                             topEnd = MaterialTheme.dimensions.cornerRadiusSmall,

@@ -2,6 +2,7 @@ package com.vci.vectorcamapp.imaging.presentation
 
 import android.graphics.Bitmap
 import android.net.Uri
+import androidx.compose.ui.geometry.Offset
 import com.vci.vectorcamapp.core.domain.model.Specimen
 import com.vci.vectorcamapp.core.domain.model.UploadStatus
 import com.vci.vectorcamapp.imaging.presentation.model.BoundingBoxUi
@@ -24,5 +25,6 @@ data class ImagingState(
     val captureBoundingBoxUi: BoundingBoxUi? = null,
     val previewBoundingBoxesUiList: List<BoundingBoxUi> = emptyList(),
     val capturedSpecimensAndBoundingBoxesUi: List<SpecimenAndBoundingBoxUi> = emptyList(),
-    val displayOrientation: Int = 0
+    val displayOrientation: Int = 0,
+    val manualFocusPoint: Offset? = null
 )

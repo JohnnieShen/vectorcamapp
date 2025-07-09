@@ -1,6 +1,9 @@
 <resources>
     <string name="app_name">vectorcamapp</string>
 
+    <!-- Error fallback -->
+    <string name="error_fallback">An unknown error occurred. Please try again or contact support if the issue persists.</string>
+
     <!-- Network error: Request timeout -->
     <string name="network_error_request_timeout">The request timed out. Please check your connection and try again.</string>
 
@@ -14,10 +17,7 @@
     <string name="network_error_server_error">An error occurred on the server. Please try again later.</string>
 
     <!-- Network error: Serialization error -->
-    <string name="network_error_serialization">There was an issue processing the response. Please contact support if this continues.</string>
-
-    <!-- Network error: Unknown error -->
-    <string name="network_error_unknown">An unknown error occurred. Please try again or contact support if the issue persists.</string>
+    <string name="network_error_serialization_error">There was an issue processing the response. Please contact support if this continues.</string>
 
     <!-- Network error: Session not completed-->
     <string name="network_error_session_not_completed">This session hasn\'t been marked as complete yet.</string>
@@ -30,6 +30,9 @@
 
     <!-- Network error: Client Error -->
     <string name="network_error_client_error">The request was invalid. Please check your input and try again.</string>
+
+    <!-- Network error: Unknown error -->
+    <string name="network_error_unknown_error">An unknown error occurred. Please try again or contact support if the issue persists.</string>
 
     <!-- Form validation error: Blank collector title -->
     <string name="form_validation_error_blank_collector_title">Collector title is required.</string>
@@ -67,11 +70,14 @@
     <!-- Imaging error: Save error -->
     <string name="imaging_error_save_error">Couldn’t save the photo. Please try again.</string>
 
+    <!-- Imaging error: Processing error -->
+    <string name="imaging_error_processing_error">Couldn’t process the photo. Please try again.</string>
+
     <!-- Imaging error: No specimen found -->
     <string name="imaging_error_no_specimen_found">No specimen found in the photo. Please try again with a clearer image.</string>
 
     <!-- Imaging error: No specimen found -->
-    <string name="imaging_error_multiple_specimens_found">Multiple Specimens Detected. Please make sure exactly one specimen is in frame.</string>
+    <string name="imaging_error_multiple_specimens_found">Multiple specimens detected. Please make sure exactly one specimen is in frame.</string>
 
     <!-- Imaging error: No active session -->
     <string name="imaging_error_no_active_session">No active session found. Please start a new session before capturing images.</string>
@@ -93,28 +99,70 @@
 
     <!-- Imaging error: Specimen detection failed -->
     <string name="imaging_error_specimen_detection_failed">Couldn’t detect a specimen in the image. Try taking a clearer photo.</string>
-
-    <!-- Imaging error: Specimen classification failed -->
-    <string name="imaging_error_specimen_classification_failed">Couldn’t identify the specimen. Please retake the photo.</string>
-
+    
     <!-- Imaging error: Unknown inference error -->
     <string name="imaging_error_unknown_inference_error">An unknown error occurred during analysis. Please try again.</string>
 
     <!-- Imaging error: Unknown error -->
-    <string name="imaging_error_unknown">An unknown error occurred. Please contact support if this issue persists.</string>
+    <string name="imaging_error_unknown_error">An unknown error occurred. Please contact support if this issue persists.</string>
 
     <!-- RoomDb error: Constraint Violation -->
     <string name="roomdb_error_constraint_violation">Some of the information you entered was invalid or already exists. Please check and try again.</string>
 
     <!-- RoomDb error: Unknown error -->
     <string name="roomdb_error_unknown_error">An unknown error occurred while saving data. Please contact support if this issue persists.</string>
-  
-    <!-- Location error: Permission error -->
-    <string name="location_error_permission_denied">Permission error. Please enable location access in settings.</string>
-  
-    <!-- Location error: GPS timeout error -->
-    <string name="location_error_gps_timeout">GPS Timeout. Please move to a different location and try again.</string>
-  
-    <!-- Location error: Unknown error -->
-    <string name="location_error_unknown">An unknown error occurred. Please try again or contact support if the issue persists.</string>
+
+    <!-- Main error: Device fetch failed -->
+    <string name="main_error_device_fetch_failed">Unable to load device information. Please try again.</string>
+
+    <!-- Main error: Unknown error -->
+    <string name="main_error_unknown_error">An unknown error occurred. Please try again or contact support if the issue persists.</string>
+
+    <!-- Surveillance form error: Site fetch failed -->
+    <string name="surveillance_form_error_site_not_found">Site not found for selected district and sentinel site.</string>
+
+    <!-- Surveillance form error: Missing program id -->
+    <string name="surveillance_form_error_missing_program_id">Program ID is missing. Please contact support.</string>
+
+    <!-- Surveillance form error: Missing session -->
+    <string name="surveillance_form_error_missing_session">Session is missing. Please try again.</string>
+
+    <!-- Surveillance form error: Permission denied -->
+    <string name="surveillance_form_error_location_permission_denied">Permission error. Please enable location access in settings.</string>
+
+    <!-- Surveillance form error: GPS timeout -->
+    <string name="surveillance_form_error_location_gps_timeout">GPS Timeout. Please move to a different location and try again.</string>
+
+    <!-- Surveillance form error: Unknown error -->
+    <string name="surveillance_form_error_unknown_error">An unknown error occurred. Please try again or contact support if the issue persists.</string>
+
+    <!-- Registration error: Program not found -->
+    <string name="registration_error_program_not_found">Program not found. Please contact support.</string>
+
+    <!-- Registration error: Unknown error -->
+    <string name="registration_error_unknown_error">An unknown error occurred. Please try again or contact support if the issue persists.</string>
+
+    <!-- Incomplete session error: Session not found -->
+    <string name="incomplete_session_error_session_not_found">Session not found. Please try again.</string>"
+
+    <!-- Incomplete session error: Session retrieval failed -->
+    <string name="incomplete_session_error_session_retrieval_failed">Unable to retrieve session. Please try again.</string>
+
+    <!-- Incomplete session error: Unknown error -->
+    <string name="incomplete_session_error_unknown_error">An unknown error occurred. Please try again or contact support if the issue persists.</string>
+
+    <!-- Complete session error: Session not found -->
+    <string name="complete_session_error_session_not_found">Could not load session details. Please try again.</string>
+
+    <!-- Complete session error: Site not found -->
+    <string name="complete_session_error_site_not_found">Could not load site details. Please try again.</string>
+
+    <!-- Complete session error: Surveillance form not found -->
+    <string name="complete_session_error_surveillance_form_not_found">Could not load surveillance form details. Please try again.</string>
+
+    <!-- Complete session error: Specimens not found -->
+    <string name="complete_session_error_specimens_not_found">Could not load specimens. Please try again.</string>
+
+    <!-- Complete session error: Unknown error -->
+    <string name="complete_session_error_unknown_error">An unknown error occurred. Please try again or contact support if the issue persists.</string>
 </resources>
