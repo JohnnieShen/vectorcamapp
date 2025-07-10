@@ -1,3 +1,11 @@
+import java.util.Properties
+
+val secretsProperties = Properties()
+val secretsFile = rootProject.file("secrets.properties")
+if (secretsFile.exists()) {
+    secretsFile.inputStream().use { secretsProperties.load(it) }
+}
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -21,6 +29,9 @@ android {
         versionName = "1.0.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        buildConfigField("String", "POSTHOG_API_KEY", "\"${secretsProperties["POSTHOG_API_KEY"]}\"")
+        buildConfigField("String", "POSTHOG_HOST", "\"${secretsProperties["POSTHOG_HOST"]}\"")
     }
 
     buildTypes {
@@ -141,6 +152,9 @@ dependencies {
 
     // Work Manager Library
     implementation(libs.androidx.work.runtime.ktx)
+
+    // PostHog AnalyticsLibrary
+    implementation(libs.posthog.android)
 
     // JSON Serialization Library
     implementation(libs.kotlinx.serialization.json) // Kotlinx JSON serialization library

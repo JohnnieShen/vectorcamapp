@@ -38,3 +38,6 @@ obj/
 
 # Sentry Config File
 sentry.properties
+
+# Secrets Config File
+secrets.properties
