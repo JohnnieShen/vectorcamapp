@@ -1,26 +1,23 @@
 package com.vci.vectorcamapp.imaging.data.repository
 
-import android.content.res.Resources
 import android.graphics.Bitmap
 import android.util.Log
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.text.TextRecognizer
+import com.vci.vectorcamapp.core.domain.model.BoundingBox
 import com.vci.vectorcamapp.imaging.data.GpuDelegateManager
 import com.vci.vectorcamapp.imaging.di.AbdomenStatusClassifier
 import com.vci.vectorcamapp.imaging.di.Detector
 import com.vci.vectorcamapp.imaging.di.SexClassifier
 import com.vci.vectorcamapp.imaging.di.SpeciesClassifier
 import com.vci.vectorcamapp.imaging.di.SpecimenIdRecognizer
-import com.vci.vectorcamapp.imaging.domain.enums.AbdomenStatusLabel
-import com.vci.vectorcamapp.core.domain.model.BoundingBox
-import com.vci.vectorcamapp.imaging.domain.enums.SexLabel
-import com.vci.vectorcamapp.imaging.domain.enums.SpeciesLabel
 import com.vci.vectorcamapp.imaging.domain.SpecimenClassifier
 import com.vci.vectorcamapp.imaging.domain.SpecimenDetector
+import com.vci.vectorcamapp.imaging.domain.enums.AbdomenStatusLabel
+import com.vci.vectorcamapp.imaging.domain.enums.SexLabel
+import com.vci.vectorcamapp.imaging.domain.enums.SpeciesLabel
 import com.vci.vectorcamapp.imaging.domain.repository.InferenceRepository
-import com.vci.vectorcamapp.imaging.presentation.extensions.cropToBoundingBoxAndPad
 import com.vci.vectorcamapp.imaging.presentation.extensions.resizeTo
-import com.vci.vectorcamapp.imaging.presentation.model.BoundingBoxUi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.withContext
@@ -87,64 +84,6 @@ class InferenceRepositoryImplementation @Inject constructor(
             } ?: Triple(null, null, null)
         }
 
-    override fun convertToBoundingBox(boundingBoxUi: BoundingBoxUi): BoundingBox {
-        val (tensorHeight, tensorWidth) = specimenDetector.getInputTensorShape()
-
-        val screenWidth = Resources.getSystem().displayMetrics.widthPixels.toFloat()
-        val screenHeight = Resources.getSystem().displayMetrics.heightPixels.toFloat()
-
-        val previewWidth = screenWidth
-        val previewHeight = HEIGHT_TO_WIDTH_ASPECT_RATIO * previewWidth
-
-        val verticalPadding = (screenHeight - previewHeight) / 2
-
-        val scaleX = previewWidth / tensorWidth
-        val scaleY = previewHeight / tensorHeight
-
-        val scaledX = boundingBoxUi.topLeftX / (scaleX * tensorWidth)
-        val scaledY = (boundingBoxUi.topLeftY - verticalPadding) / (scaleY * tensorHeight)
-        val scaledWidth = boundingBoxUi.width / (scaleX * tensorWidth)
-        val scaledHeight = boundingBoxUi.height / (scaleY * tensorHeight)
-
-        return BoundingBox(
-            topLeftX = scaledX,
-            topLeftY = scaledY,
-            width = scaledWidth,
-            height = scaledHeight,
-            confidence = boundingBoxUi.confidence,
-            classId = boundingBoxUi.classId,
-        )
-    }
-
-    override fun convertToBoundingBoxUi(boundingBox: BoundingBox): BoundingBoxUi {
-        val (tensorHeight, tensorWidth) = specimenDetector.getInputTensorShape()
-
-        val screenWidth = Resources.getSystem().displayMetrics.widthPixels.toFloat()
-        val screenHeight = Resources.getSystem().displayMetrics.heightPixels.toFloat()
-
-        val previewWidth = screenWidth
-        val previewHeight = HEIGHT_TO_WIDTH_ASPECT_RATIO * previewWidth
-
-        val verticalPadding = (screenHeight - previewHeight) / 2
-
-        val scaleX = previewWidth / tensorWidth
-        val scaleY = previewHeight / tensorHeight
-
-        val scaledX = boundingBox.topLeftX * tensorWidth * scaleX
-        val scaledY = boundingBox.topLeftY * tensorHeight * scaleY + verticalPadding
-        val scaledWidth = boundingBox.width * tensorWidth * scaleX
-        val scaledHeight = boundingBox.height * tensorHeight * scaleY
-
-        return BoundingBoxUi(
-            topLeftX = scaledX,
-            topLeftY = scaledY,
-            width = scaledWidth,
-            height = scaledHeight,
-            confidence = boundingBox.confidence,
-            classId = boundingBox.classId,
-        )
-    }
-
     override fun closeResources() {
         specimenIdRecognizer.close()
         specimenDetector.close()
@@ -158,9 +97,5 @@ class InferenceRepositoryImplementation @Inject constructor(
         val (tensorHeight, tensorWidth) = classifier.getInputTensorShape()
 
         return classifier.classify(bitmap.resizeTo(tensorWidth, tensorHeight))
-    }
-
-    companion object {
-        private const val HEIGHT_TO_WIDTH_ASPECT_RATIO = 4f / 3f
     }
 }

@@ -47,25 +47,25 @@ fun ImagingScreen(
 
     val pagerState = rememberPagerState(
         initialPage = 0,
-        pageCount = { state.capturedSpecimensAndBoundingBoxesUi.size + 1 }
+        pageCount = { state.capturedSpecimensAndBoundingBoxes.size + 1 }
     )
 
     HorizontalPager(
         state = pagerState, modifier = modifier.fillMaxSize()
     ) { page ->
         when {
-            page < state.capturedSpecimensAndBoundingBoxesUi.size -> {
+            page < state.capturedSpecimensAndBoundingBoxes.size -> {
                 CapturedSpecimenOverlay(
-                    specimen = state.capturedSpecimensAndBoundingBoxesUi[page].specimen,
-                    boundingBoxUi = state.capturedSpecimensAndBoundingBoxesUi[page].boundingBoxUi,
+                    specimen = state.capturedSpecimensAndBoundingBoxes[page].specimen,
+                    boundingBox = state.capturedSpecimensAndBoundingBoxes[page].boundingBox,
                     modifier = modifier
                 )
             }
 
-            (state.currentImage != null && state.captureBoundingBoxUi != null) -> {
+            (state.currentImage != null && state.captureBoundingBox != null) -> {
                 CapturedSpecimenOverlay(
                     specimen = state.currentSpecimen,
-                    boundingBoxUi = state.captureBoundingBoxUi,
+                    boundingBox = state.captureBoundingBox,
                     modifier = modifier,
                     specimenBitmap = state.currentImage,
                     onSpecimenIdCorrected = { onAction(ImagingAction.CorrectSpecimenId(it)) },
@@ -77,7 +77,7 @@ fun ImagingScreen(
             else -> {
                 LiveCameraPreviewPage(
                     controller = controller,
-                    boundingBoxesUiList = state.previewBoundingBoxesUiList,
+                    boundingBoxes = state.previewBoundingBoxes,
                     onImageCaptured = {
                         onAction(ImagingAction.CaptureImage(controller))
                     },

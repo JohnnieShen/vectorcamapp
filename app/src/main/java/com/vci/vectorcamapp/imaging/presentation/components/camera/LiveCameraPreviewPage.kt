@@ -38,14 +38,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.vci.vectorcamapp.R
+import com.vci.vectorcamapp.core.domain.model.BoundingBox
 import com.vci.vectorcamapp.imaging.data.CameraFocusManagerImplementation
 import com.vci.vectorcamapp.imaging.presentation.ImagingAction
-import com.vci.vectorcamapp.imaging.presentation.model.BoundingBoxUi
 
 @Composable
 fun LiveCameraPreviewPage(
     controller: LifecycleCameraController,
-    boundingBoxesUiList: List<BoundingBoxUi>,
+    boundingBoxes: List<BoundingBox>,
     manualFocusPoint: Offset?,
     onImageCaptured: () -> Unit,
     onSaveSessionProgress: () -> Unit,
@@ -69,6 +69,8 @@ fun LiveCameraPreviewPage(
     val aspectRatio = 4f / 3f
     var overlaySize by remember { mutableStateOf(IntSize.Zero) }
 
+    var outerOverlaySize by remember { mutableStateOf(IntSize.Zero) }
+
     DisposableEffect(lifecycleOwner) {
         cameraManager.bind(lifecycleOwner)
         onDispose {
@@ -76,10 +78,10 @@ fun LiveCameraPreviewPage(
         }
     }
 
-    LaunchedEffect(boundingBoxesUiList, manualFocusPoint) {
+    LaunchedEffect(boundingBoxes, manualFocusPoint) {
         if (manualFocusPoint == null) {
-            if (boundingBoxesUiList.isNotEmpty()) {
-                cameraManager.autoFocusOn(boundingBoxesUiList.first())
+            if (boundingBoxes.isNotEmpty()) {
+                cameraManager.autoFocusOn(boundingBoxes.first())
             } else {
                 cameraManager.cancelFocus()
             }
@@ -93,11 +95,16 @@ fun LiveCameraPreviewPage(
             modifier = Modifier
                 .fillMaxWidth()
                 .aspectRatio(1f / aspectRatio)
+                .onSizeChanged { outerOverlaySize = it }
         ) {
             AndroidView(
                 factory = { previewView },
                 modifier = Modifier.fillMaxSize()
             )
+
+            boundingBoxes.map {
+                BoundingBoxOverlay(it, overlaySize = outerOverlaySize, Modifier.fillMaxSize())
+            }
 
             Box(
                 modifier = Modifier
@@ -132,10 +139,6 @@ fun LiveCameraPreviewPage(
                     }
                 }
             }
-        }
-
-        boundingBoxesUiList.forEach {
-            BoundingBoxOverlay(it, Modifier.fillMaxSize())
         }
 
         IconButton(

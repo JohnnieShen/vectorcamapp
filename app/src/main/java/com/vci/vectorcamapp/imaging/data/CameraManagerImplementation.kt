@@ -4,13 +4,14 @@ import android.util.Log
 import androidx.camera.core.FocusMeteringAction
 import androidx.camera.view.LifecycleCameraController
 import androidx.camera.view.PreviewView
+import androidx.camera.view.PreviewView.StreamState
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntSize
 import androidx.lifecycle.LifecycleOwner
+import com.vci.vectorcamapp.core.domain.model.BoundingBox
 import com.vci.vectorcamapp.imaging.domain.use_cases.CameraFocusManager
-import com.vci.vectorcamapp.imaging.presentation.model.BoundingBoxUi
 
 class CameraFocusManagerImplementation (
     private val previewView: PreviewView,
@@ -37,13 +38,15 @@ class CameraFocusManagerImplementation (
     }
 
 
-    override fun autoFocusOn(box: BoundingBoxUi) {
-        controller.cameraControl
-            ?.startFocusAndMetering(buildAction(
-                box.topLeftX + box.width/2f,
-                box.topLeftY + box.height/2f
-            ))
-            ?: Log.w("CameraFocusManager", "autoFocusOn(): cameraControl not ready yet")
+    override fun autoFocusOn(box: BoundingBox) {
+        if (previewView.previewStreamState.value == StreamState.STREAMING) {
+            val focusX = (box.topLeftX + box.width / 2f) * previewView.width
+            val focusY = (box.topLeftY + box.height / 2f) * previewView.height
+
+            controller.cameraControl
+                ?.startFocusAndMetering(buildAction(focusX, focusY))
+                ?: Log.w("CameraFocusManager", "autoFocusOn(): cameraControl not ready yet")
+        }
     }
 
     override fun cancelFocus() {
