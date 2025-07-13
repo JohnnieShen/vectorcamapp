@@ -1,5 +1,6 @@
 package com.vci.vectorcamapp.surveillance_form.presentation
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -49,6 +50,10 @@ fun SurveillanceFormScreen(
     onAction: (SurveillanceFormAction) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    BackHandler {
+        onAction(SurveillanceFormAction.ReturnToLandingScreen)
+    }
+
     ScreenHeader(
         title = "Surveillance Form",
         subtitle = "Fill out the information below",

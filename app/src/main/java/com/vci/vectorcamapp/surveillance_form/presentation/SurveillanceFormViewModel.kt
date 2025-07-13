@@ -63,7 +63,7 @@ class SurveillanceFormViewModel @Inject constructor(
     fun onAction(action: SurveillanceFormAction) {
         viewModelScope.launch {
             when (action) {
-                SurveillanceFormAction.SaveSessionProgress -> {
+                SurveillanceFormAction.ReturnToLandingScreen -> {
                     currentSessionCache.clearSession()
                     _events.send(SurveillanceFormEvent.NavigateBackToLandingScreen)
                 }

@@ -8,7 +8,7 @@ import com.vci.vectorcamapp.surveillance_form.domain.enums.SentinelSiteOption
 import com.vci.vectorcamapp.surveillance_form.domain.enums.SpecimenConditionOption
 
 sealed interface SurveillanceFormAction {
-    data object SaveSessionProgress: SurveillanceFormAction
+    data object ReturnToLandingScreen: SurveillanceFormAction
     data object SubmitSurveillanceForm: SurveillanceFormAction
     data class EnterCollectorTitle(val text: String) : SurveillanceFormAction
     data class EnterCollectorName(val text: String) : SurveillanceFormAction
