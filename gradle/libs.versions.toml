@@ -18,6 +18,7 @@ lifecycleRuntimeKtx = "2.8.7"
 activityCompose = "1.10.1"
 composeBom = "2025.04.01"
 navigationCompose = "2.8.9"
+opencv = "4.9.0"
 playServicesLocation = "21.3.0"
 posthogAndroid = "3.19.0"
 room = "2.7.1"
@@ -79,6 +80,7 @@ ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktor" }
 ktor-client-json = { module = "io.ktor:ktor-client-json", version.ref = "ktor" }
 ktor-client-logging = { module = "io.ktor:ktor-client-logging", version.ref = "ktor" }
 ktor-serialization-kotlinx-json = { module = "io.ktor:ktor-serialization-kotlinx-json", version.ref = "ktor" }
+opencv = { module = "org.opencv:opencv", version.ref = "opencv" }
 play-services-location = { module = "com.google.android.gms:play-services-location", version.ref = "playServicesLocation" }
 posthog-android = { module = "com.posthog:posthog-android", version.ref = "posthogAndroid" }
 tensorflow-lite = { module = "org.tensorflow:tensorflow-lite", version.ref = "tensorflowLite" }

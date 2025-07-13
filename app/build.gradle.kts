@@ -126,6 +126,9 @@ dependencies {
     ksp(libs.androidx.hilt.compiler)
     ksp(libs.hilt.android.compiler)
 
+    // Open CV Library
+    implementation(libs.opencv)
+
     // TensorFlow Lite Library
     implementation(libs.tensorflow.lite)
     implementation(libs.tensorflow.lite.support)
