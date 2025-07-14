@@ -2,6 +2,7 @@ package com.vci.vectorcamapp.imaging.presentation
 
 import android.content.Context
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.view.OrientationEventListener
 import androidx.compose.material3.SnackbarDuration
 import androidx.lifecycle.viewModelScope
@@ -48,6 +49,7 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.io.ByteArrayOutputStream
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
@@ -76,8 +78,7 @@ class ImagingViewModel @Inject constructor(
                 .map { relations ->
                     relations.map { relation ->
                         SpecimenAndBoundingBox(
-                            specimen = relation.specimen,
-                            boundingBox = relation.boundingBox
+                            specimen = relation.specimen, boundingBox = relation.boundingBox
                         )
                     }
                 }
@@ -221,8 +222,16 @@ class ImagingViewModel @Inject constructor(
                         val bitmap = image.toUprightBitmap(displayOrientation)
                         image.close()
 
+                        val jpegStream = ByteArrayOutputStream()
+                        bitmap.compress(Bitmap.CompressFormat.JPEG, 100, jpegStream)
+                        val jpegByteArray = jpegStream.toByteArray()
+
+                        // Create bitmap from JPEG bytes for ML processing
+                        val jpegBitmap =
+                            BitmapFactory.decodeByteArray(jpegByteArray, 0, jpegByteArray.size)
+
                         // Avoid issuing error if preview bounding boxes are not yet ready
-                        val boundingBoxesList = inferenceRepository.detectSpecimen(bitmap)
+                        val boundingBoxesList = inferenceRepository.detectSpecimen(jpegBitmap)
 
                         when (boundingBoxesList.size) {
                             0 -> {
@@ -231,14 +240,16 @@ class ImagingViewModel @Inject constructor(
 
                             1 -> {
                                 val boundingBox = boundingBoxesList[0]
-                                val topLeftXAbsolute = (boundingBox.topLeftX * bitmap.width).toInt()
+                                val topLeftXAbsolute =
+                                    (boundingBox.topLeftX * jpegBitmap.width).toInt()
                                 val topLeftYAbsolute =
-                                    (boundingBox.topLeftY * bitmap.height).toInt()
-                                val widthAbsolute = (boundingBox.width * bitmap.width).toInt()
-                                val heightAbsolute = (boundingBox.height * bitmap.height).toInt()
+                                    (boundingBox.topLeftY * jpegBitmap.height).toInt()
+                                val widthAbsolute = (boundingBox.width * jpegBitmap.width).toInt()
+                                val heightAbsolute =
+                                    (boundingBox.height * jpegBitmap.height).toInt()
 
                                 val croppedBitmap = Bitmap.createBitmap(
-                                    bitmap,
+                                    jpegBitmap,
                                     topLeftXAbsolute,
                                     topLeftYAbsolute,
                                     widthAbsolute,
@@ -255,7 +266,8 @@ class ImagingViewModel @Inject constructor(
                                             sex = sex?.label,
                                             abdomenStatus = abdomenStatus?.label,
                                         ),
-                                        currentImage = bitmap,
+                                        currentImage = jpegBitmap,
+                                        currentImageBytes = jpegByteArray,
                                         captureBoundingBox = boundingBox,
                                         previewBoundingBoxes = emptyList()
                                     )
@@ -281,7 +293,7 @@ class ImagingViewModel @Inject constructor(
                 }
 
                 ImagingAction.SaveImageToSession -> {
-                    val bitmap = _state.value.currentImage ?: return@launch
+                    val jpegBytes = _state.value.currentImageBytes ?: return@launch
                     val specimenId = _state.value.currentSpecimen.id
                     val timestamp = System.currentTimeMillis()
                     val filename = buildString {
@@ -297,7 +309,8 @@ class ImagingViewModel @Inject constructor(
                         return@launch
                     }
 
-                    val saveResult = cameraRepository.saveImage(bitmap, filename, currentSession)
+                    val saveResult =
+                        cameraRepository.saveImage(jpegBytes, filename, currentSession)
 
                     saveResult.onSuccess { imageUri ->
                         val specimen = Specimen(
@@ -353,6 +366,7 @@ class ImagingViewModel @Inject constructor(
                     id = "", species = null, sex = null, abdomenStatus = null
                 ),
                 currentImage = null,
+                currentImageBytes = null,
                 captureBoundingBox = null,
                 previewBoundingBoxes = emptyList(),
             )
