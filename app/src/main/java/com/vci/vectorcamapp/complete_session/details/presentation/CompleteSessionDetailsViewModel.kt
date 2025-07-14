@@ -2,7 +2,7 @@ package com.vci.vectorcamapp.complete_session.details.presentation
 
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
-import com.vci.vectorcamapp.complete_session.domain.util.CompleteSessionError
+import com.vci.vectorcamapp.complete_session.details.domain.util.CompleteSessionDetailsError
 import com.vci.vectorcamapp.core.domain.repository.SessionRepository
 import com.vci.vectorcamapp.core.presentation.CoreViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -40,7 +40,7 @@ class CompleteSessionDetailsViewModel @Inject constructor(
         viewModelScope.launch {
             val sessionId = savedStateHandle.get<String>("sessionId")?.let { UUID.fromString(it) }
             if (sessionId == null) {
-                emitError(CompleteSessionError.SESSION_NOT_FOUND)
+                emitError(CompleteSessionDetailsError.SESSION_NOT_FOUND)
                 return@launch
             }
 
@@ -54,22 +54,22 @@ class CompleteSessionDetailsViewModel @Inject constructor(
             val specimens = sessionAndSpecimens?.specimens
 
             if (session == null) {
-                emitError(CompleteSessionError.SESSION_NOT_FOUND)
+                emitError(CompleteSessionDetailsError.SESSION_NOT_FOUND)
                 return@launch
             }
 
             if (site == null) {
-                emitError(CompleteSessionError.SITE_NOT_FOUND)
+                emitError(CompleteSessionDetailsError.SITE_NOT_FOUND)
                 return@launch
             }
 
             if (surveillanceForm == null) {
-                emitError(CompleteSessionError.SURVEILLANCE_FORM_NOT_FOUND)
+                emitError(CompleteSessionDetailsError.SURVEILLANCE_FORM_NOT_FOUND)
                 return@launch
             }
 
             if (specimens == null) {
-                emitError(CompleteSessionError.SPECIMENS_NOT_FOUND)
+                emitError(CompleteSessionDetailsError.SPECIMENS_NOT_FOUND)
                 return@launch
             }
 

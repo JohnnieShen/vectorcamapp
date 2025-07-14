@@ -2,7 +2,7 @@ package com.vci.vectorcamapp.core.presentation.util.error
 
 import android.content.Context
 import com.vci.vectorcamapp.R
-import com.vci.vectorcamapp.complete_session.domain.util.CompleteSessionError
+import com.vci.vectorcamapp.complete_session.details.domain.util.CompleteSessionDetailsError
 import com.vci.vectorcamapp.core.domain.util.Error
 import com.vci.vectorcamapp.core.domain.util.network.NetworkError
 import com.vci.vectorcamapp.core.domain.util.room.RoomDbError
@@ -31,12 +31,12 @@ fun Error.toString(context: Context): String {
             RoomDbError.CONSTRAINT_VIOLATION -> R.string.roomdb_error_constraint_violation
             RoomDbError.UNKNOWN_ERROR -> R.string.roomdb_error_unknown_error
         }
-        is CompleteSessionError -> when (this) {
-            CompleteSessionError.SESSION_NOT_FOUND -> R.string.complete_session_error_session_not_found
-            CompleteSessionError.SITE_NOT_FOUND -> R.string.complete_session_error_site_not_found
-            CompleteSessionError.SURVEILLANCE_FORM_NOT_FOUND -> R.string.complete_session_error_surveillance_form_not_found
-            CompleteSessionError.SPECIMENS_NOT_FOUND -> R.string.complete_session_error_specimens_not_found
-            CompleteSessionError.UNKNOWN_ERROR -> R.string.complete_session_error_unknown_error
+        is CompleteSessionDetailsError -> when (this) {
+            CompleteSessionDetailsError.SESSION_NOT_FOUND -> R.string.complete_session_error_session_not_found
+            CompleteSessionDetailsError.SITE_NOT_FOUND -> R.string.complete_session_error_site_not_found
+            CompleteSessionDetailsError.SURVEILLANCE_FORM_NOT_FOUND -> R.string.complete_session_error_surveillance_form_not_found
+            CompleteSessionDetailsError.SPECIMENS_NOT_FOUND -> R.string.complete_session_error_specimens_not_found
+            CompleteSessionDetailsError.UNKNOWN_ERROR -> R.string.complete_session_error_unknown_error
         }
         is ImagingError -> when(this) {
             ImagingError.CAPTURE_ERROR -> R.string.imaging_error_capture_error
