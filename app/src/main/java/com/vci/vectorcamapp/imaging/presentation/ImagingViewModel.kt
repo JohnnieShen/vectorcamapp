@@ -61,6 +61,10 @@ class ImagingViewModel @Inject constructor(
     private val inferenceRepository: InferenceRepository
 ) : ViewModel() {
 
+    companion object {
+        private const val SPECIMEN_IMAGE_ENDPOINT_TEMPLATE = "https://api.vectorcam.org/specimens/%s/images/tus"
+    }
+
     @Inject
     lateinit var transactionHelper: TransactionHelper
 
@@ -187,19 +191,39 @@ class ImagingViewModel @Inject constructor(
                                 TimeUnit.MILLISECONDS,
                             ).build()
 
-                        val imageUploadRequest =
-                            OneTimeWorkRequestBuilder<ImageUploadWorker>().setInputData(workDataOf("session_id" to currentSession.localId.toString()))
-                                .setConstraints(uploadConstraints).setBackoffCriteria(
-                                    BackoffPolicy.LINEAR,
-                                    WorkRequest.MIN_BACKOFF_MILLIS,
-                                    TimeUnit.MILLISECONDS,
-                                ).build()
-
-                        WorkManager.getInstance(context).beginUniqueWork(
-                            "metadata_upload_work",
+                        WorkManager.getInstance(context).enqueueUniqueWork(
+                            "metadata_upload_${currentSession.localId}",
                             ExistingWorkPolicy.REPLACE,
                             metadataUploadRequest
-                        ).then(imageUploadRequest).enqueue()
+                        )
+
+                        val sessionWithSpecimens =
+                            sessionRepository.getSessionWithSpecimens(currentSession.localId)
+
+                        sessionWithSpecimens?.specimens?.forEach { specimen ->
+                            val endpoint = SPECIMEN_IMAGE_ENDPOINT_TEMPLATE.format(specimen.id)
+
+                            val imageUploadRequest =
+                                OneTimeWorkRequestBuilder<ImageUploadWorker>().setInputData(
+                                    workDataOf(
+                                        ImageUploadWorker.KEY_URI to specimen.imageUri.toString(),
+                                        ImageUploadWorker.KEY_ENDPOINT to endpoint
+                                    )
+                                )
+                                    .setConstraints(uploadConstraints)
+                                    .setBackoffCriteria(
+                                        BackoffPolicy.EXPONENTIAL,
+                                        WorkRequest.MIN_BACKOFF_MILLIS,
+                                        TimeUnit.MILLISECONDS
+                                    )
+                                    .build()
+
+                            WorkManager.getInstance(context).enqueueUniqueWork(
+                                "image_upload_${specimen.id}",
+                                ExistingWorkPolicy.REPLACE,
+                                imageUploadRequest
+                            )
+                        }
 
                         currentSessionCache.clearSession()
                         _events.send(ImagingEvent.NavigateBackToLandingScreen)
