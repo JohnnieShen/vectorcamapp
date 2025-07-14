@@ -1,5 +1,6 @@
 package com.vci.vectorcamapp.imaging.presentation
 
+import android.graphics.BitmapFactory
 import androidx.camera.core.ImageCapture
 import androidx.camera.core.resolutionselector.ResolutionSelector
 import androidx.camera.core.resolutionselector.ResolutionStrategy
@@ -62,12 +63,16 @@ fun ImagingScreen(
                 )
             }
 
-            (state.currentImage != null && state.captureBoundingBox != null) -> {
+            (state.currentImageBytes != null && state.captureBoundingBox != null) -> {
+                val specimenBitmap = remember(state.currentImageBytes) {
+                    BitmapFactory.decodeByteArray(state.currentImageBytes, 0, state.currentImageBytes.size)
+                }
+
                 CapturedSpecimenOverlay(
                     specimen = state.currentSpecimen,
                     boundingBox = state.captureBoundingBox,
                     modifier = modifier,
-                    specimenBitmap = state.currentImage,
+                    specimenBitmap = specimenBitmap,
                     onSpecimenIdCorrected = { onAction(ImagingAction.CorrectSpecimenId(it)) },
                     onRetakeImage = { onAction(ImagingAction.RetakeImage) },
                     onSaveImageToSession = { onAction(ImagingAction.SaveImageToSession) }
