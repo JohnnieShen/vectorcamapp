@@ -7,6 +7,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -67,9 +68,6 @@ fun LiveCameraPreviewPage(
 
     val focusBoxSize = 64.dp
     val aspectRatio = 4f / 3f
-    var overlaySize by remember { mutableStateOf(IntSize.Zero) }
-
-    var outerOverlaySize by remember { mutableStateOf(IntSize.Zero) }
 
     DisposableEffect(lifecycleOwner) {
         cameraManager.bind(lifecycleOwner)
@@ -91,25 +89,28 @@ fun LiveCameraPreviewPage(
     Box(
         modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center
     ) {
-        Box(
+        BoxWithConstraints(
             modifier = Modifier
                 .fillMaxWidth()
                 .aspectRatio(1f / aspectRatio)
-                .onSizeChanged { outerOverlaySize = it }
         ) {
+            val containerSize = IntSize(
+                width = with(density) { maxWidth.roundToPx() },
+                height = with(density) { maxHeight.roundToPx() }
+            )
+
             AndroidView(
                 factory = { previewView },
                 modifier = Modifier.fillMaxSize()
             )
 
             boundingBoxes.map {
-                BoundingBoxOverlay(it, overlaySize = outerOverlaySize, Modifier.fillMaxSize())
+                BoundingBoxOverlay(it, overlaySize = containerSize, Modifier.fillMaxSize())
             }
 
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .onSizeChanged { overlaySize = it }
                     .pointerInput(Unit) {
                         detectTapGestures { offset ->
                             cameraManager.focusAt(offset)
@@ -117,11 +118,12 @@ fun LiveCameraPreviewPage(
                         }
                     }
             ) {
+
                 manualFocusPoint?.let { focusPoint ->
-                    if (overlaySize != IntSize.Zero) {
+                    if (containerSize != IntSize.Zero) {
                         val (offsetX, offsetY) = cameraManager.calculateFocusRingOffset(
                             focusPoint = focusPoint,
-                            overlaySize = overlaySize,
+                            overlaySize = containerSize,
                             focusBoxSize = focusBoxSize,
                             density = density
                         )

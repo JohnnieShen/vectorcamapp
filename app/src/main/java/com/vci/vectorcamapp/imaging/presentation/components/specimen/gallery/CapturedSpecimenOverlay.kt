@@ -6,6 +6,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
@@ -29,6 +30,7 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
@@ -52,7 +54,7 @@ fun CapturedSpecimenOverlay(
     onSaveImageToSession: (() -> Unit)? = null,
 ) {
     val context = LocalContext.current
-    var overlaySize by remember { mutableStateOf(IntSize.Zero) }
+    val density = LocalDensity.current
 
     val aspectRatio = 4f / 3f
 
@@ -64,12 +66,16 @@ fun CapturedSpecimenOverlay(
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.Center
         ) {
-            Box(
+            BoxWithConstraints(
                 modifier = Modifier
                     .fillMaxWidth()
                     .aspectRatio(1f / aspectRatio)
-                    .onSizeChanged { overlaySize = it }
             ) {
+                val containerSize = IntSize(
+                    width = with(density) { maxWidth.roundToPx() },
+                    height = with(density) { maxHeight.roundToPx() }
+                )
+
                 if (specimenBitmap != null) {
                     Image(
                         bitmap = specimenBitmap.asImageBitmap(),
@@ -88,7 +94,7 @@ fun CapturedSpecimenOverlay(
                 }
 
                 BoundingBoxOverlay(
-                    boundingBox = boundingBox, overlaySize = overlaySize, modifier = Modifier.fillMaxSize()
+                    boundingBox = boundingBox, overlaySize = containerSize, modifier = Modifier.fillMaxSize()
                 )
             }
         }
