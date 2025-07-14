@@ -238,13 +238,15 @@ class ImagingViewModel @Inject constructor(
 
                             1 -> {
                                 val boundingBox = boundingBoxesList[0]
-                                val topLeftXAbsolute =
-                                    (boundingBox.topLeftX * jpegBitmap.width).toInt()
-                                val topLeftYAbsolute =
-                                    (boundingBox.topLeftY * jpegBitmap.height).toInt()
-                                val widthAbsolute = (boundingBox.width * jpegBitmap.width).toInt()
-                                val heightAbsolute =
-                                    (boundingBox.height * jpegBitmap.height).toInt()
+                                val topLeftXFloat = boundingBox.topLeftX * bitmap.width
+                                val topLeftYFloat = boundingBox.topLeftY * bitmap.height
+                                val widthFloat = boundingBox.width * bitmap.width
+                                val heightFloat = boundingBox.height * bitmap.height
+
+                                val topLeftXAbsolute = topLeftXFloat.toInt()
+                                val topLeftYAbsolute = topLeftYFloat.toInt()
+                                val widthAbsolute = (widthFloat + (topLeftXFloat - topLeftXAbsolute)).toInt()
+                                val heightAbsolute = (heightFloat + (topLeftYFloat - topLeftYAbsolute)).toInt()
 
                                 val croppedBitmap = Bitmap.createBitmap(
                                     jpegBitmap,
