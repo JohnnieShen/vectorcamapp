@@ -225,8 +225,6 @@ class ImagingViewModel @Inject constructor(
                         val jpegStream = ByteArrayOutputStream()
                         bitmap.compress(Bitmap.CompressFormat.JPEG, 100, jpegStream)
                         val jpegByteArray = jpegStream.toByteArray()
-
-                        // Create bitmap from JPEG bytes for ML processing
                         val jpegBitmap =
                             BitmapFactory.decodeByteArray(jpegByteArray, 0, jpegByteArray.size)
 
@@ -266,7 +264,6 @@ class ImagingViewModel @Inject constructor(
                                             sex = sex?.label,
                                             abdomenStatus = abdomenStatus?.label,
                                         ),
-                                        currentImage = jpegBitmap,
                                         currentImageBytes = jpegByteArray,
                                         captureBoundingBox = boundingBox,
                                         previewBoundingBoxes = emptyList()
@@ -365,7 +362,6 @@ class ImagingViewModel @Inject constructor(
                 currentSpecimen = it.currentSpecimen.copy(
                     id = "", species = null, sex = null, abdomenStatus = null
                 ),
-                currentImage = null,
                 currentImageBytes = null,
                 captureBoundingBox = null,
                 previewBoundingBoxes = emptyList(),
