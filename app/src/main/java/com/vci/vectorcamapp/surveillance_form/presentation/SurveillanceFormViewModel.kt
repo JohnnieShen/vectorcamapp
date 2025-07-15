@@ -14,9 +14,9 @@ import com.vci.vectorcamapp.core.domain.util.errorOrNull
 import com.vci.vectorcamapp.core.domain.util.onError
 import com.vci.vectorcamapp.core.domain.util.onSuccess
 import com.vci.vectorcamapp.core.presentation.CoreViewModel
+import com.vci.vectorcamapp.surveillance_form.domain.repository.LocationRepository
 import com.vci.vectorcamapp.surveillance_form.domain.use_cases.ValidationUseCases
 import com.vci.vectorcamapp.surveillance_form.domain.util.SurveillanceFormError
-import com.vci.vectorcamapp.surveillance_form.location.domain.repository.LocationRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.channels.Channel
@@ -43,8 +43,7 @@ class SurveillanceFormViewModel @Inject constructor(
 ) : CoreViewModel() {
 
     companion object {
-        private const val MAX_ATTEMPTS = 2
-        private const val LOCATION_TIMEOUT_MS = 30_000L
+        private const val LOCATION_TIMEOUT_MS = 30000L
     }
 
     @Inject
@@ -408,34 +407,32 @@ class SurveillanceFormViewModel @Inject constructor(
     }
 
     private suspend fun getLocation() {
-        repeat(MAX_ATTEMPTS) {
-            if (_state.value.latitude == null || _state.value.longitude == null) {
-                val result: Result<Pair<Float, Float>, SurveillanceFormError> = try {
-                    val loc = withTimeout(LOCATION_TIMEOUT_MS) {
-                        locationRepository.getCurrentLocation()
-                    }
-                    Result.Success(loc.latitude.toFloat() to loc.longitude.toFloat())
-                } catch (e: Exception) {
-                    val error = when (e) {
-                        is SecurityException -> SurveillanceFormError.LOCATION_GPS_TIMEOUT
-                        is TimeoutCancellationException -> SurveillanceFormError.LOCATION_GPS_TIMEOUT
-                        else -> SurveillanceFormError.UNKNOWN_ERROR
-                    }
-                    Result.Error(error)
+        if (_state.value.latitude == null || _state.value.longitude == null) {
+            val locationResult = try {
+                withTimeout(LOCATION_TIMEOUT_MS) {
+                    locationRepository.getCurrentLocation()
                 }
+            } catch (e: SecurityException) {
+                Result.Error(SurveillanceFormError.LOCATION_PERMISSION_DENIED)
+            } catch (e: TimeoutCancellationException) {
+                Result.Error(SurveillanceFormError.LOCATION_GPS_TIMEOUT)
+            } catch (e: Exception) {
+                Result.Error(SurveillanceFormError.UNKNOWN_ERROR)
+            }
 
-                result.onSuccess { (latitude, longitude) ->
-                    _state.update {
-                        it.copy(latitude = latitude, longitude = longitude)
-                    }
-                }.onError { error ->
-                    if (error == SurveillanceFormError.LOCATION_GPS_TIMEOUT) {
-                        _state.update {
-                            it.copy(locationError = error)
-                        }
-                    } else {
-                        emitError(error)
-                    }
+            locationResult.onSuccess { location ->
+                _state.update {
+                    it.copy(
+                        latitude = location.latitude.toFloat(),
+                        longitude = location.longitude.toFloat(),
+                        locationError = null
+                    )
+                }
+            }.onError { error ->
+                if (error == SurveillanceFormError.LOCATION_GPS_TIMEOUT) {
+                    _state.update { it.copy(locationError = error) }
+                } else {
+                    emitError(error)
                 }
             }
         }

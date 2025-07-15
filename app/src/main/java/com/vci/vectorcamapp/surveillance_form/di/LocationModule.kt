@@ -1,4 +1,4 @@
-package com.vci.vectorcamapp.surveillance_form.location.data
+package com.vci.vectorcamapp.surveillance_form.di
 
 import android.content.Context
 import com.google.android.gms.location.FusedLocationProviderClient
@@ -12,7 +12,8 @@ import dagger.hilt.android.scopes.ViewModelScoped
 
 @Module
 @InstallIn(ViewModelComponent::class)
-object FusedLocationProviderModule {
+object LocationModule {
+
     @Provides
     @ViewModelScoped
     fun provideFusedLocationProviderClient(
