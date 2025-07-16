@@ -38,39 +38,43 @@ class LocationClient @Inject constructor(
             return@suspendCancellableCoroutine
         }
 
-            val cancellationTokenSource = CancellationTokenSource()
-            val now = System.currentTimeMillis()
+        val cancellationTokenSource = CancellationTokenSource()
+        val now = System.currentTimeMillis()
 
-            fused.lastLocation
-                .addOnSuccessListener { last ->
-                    if (last != null && now - last.time <= MAX_LAST_LOCATION_AGE_MS) {
-                        if (cont.isActive) cont.resume(last)
-                    } else {
+        fused.lastLocation
+            .addOnSuccessListener { last ->
+                if (last != null && now - last.time <= MAX_LAST_LOCATION_AGE_MS) {
+                    if (cont.isActive) cont.resume(last)
+                } else {
+                    if (cont.isActive) {
                         requestFreshLocation(cancellationTokenSource, cont)
                     }
                 }
-                .addOnFailureListener {
+            }
+            .addOnFailureListener {
+                if (cont.isActive) {
                     requestFreshLocation(cancellationTokenSource, cont)
                 }
+            }
 
-            cont.invokeOnCancellation { cancellationTokenSource.cancel() }
-        }
+        cont.invokeOnCancellation { cancellationTokenSource.cancel() }
+    }
 
     private fun requestFreshLocation(
         cancellationTokenSource: CancellationTokenSource,
         cancellableContinuation: CancellableContinuation<Location>
     ) {
-    if (ActivityCompat.checkSelfPermission(
-            context,
-            Manifest.permission.ACCESS_FINE_LOCATION
-        ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
-            context,
-            Manifest.permission.ACCESS_COARSE_LOCATION
-        ) != PackageManager.PERMISSION_GRANTED
-    ) {
-        return
-    }
-    fused.getCurrentLocation(
+        if (ActivityCompat.checkSelfPermission(
+                context,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
+                context,
+                Manifest.permission.ACCESS_COARSE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            return
+        }
+        fused.getCurrentLocation(
             Priority.PRIORITY_HIGH_ACCURACY,
             cancellationTokenSource.token
         ).addOnSuccessListener { loc ->

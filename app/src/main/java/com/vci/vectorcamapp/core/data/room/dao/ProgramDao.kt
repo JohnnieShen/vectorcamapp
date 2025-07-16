@@ -15,4 +15,7 @@ interface ProgramDao {
 
     @Query("SELECT * FROM program")
     suspend fun getAllPrograms(): List<ProgramEntity>
+
+    @Query("SELECT * FROM program WHERE id = :id")
+    suspend fun getProgramById(id: Int): ProgramEntity?
 }

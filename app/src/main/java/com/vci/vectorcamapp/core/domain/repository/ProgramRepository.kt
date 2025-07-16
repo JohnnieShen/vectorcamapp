@@ -5,4 +5,5 @@ import kotlinx.coroutines.flow.Flow
 
 interface ProgramRepository {
     suspend fun getAllPrograms(): List<Program>
+    suspend fun getProgramById(programId: Int): Program?
 }

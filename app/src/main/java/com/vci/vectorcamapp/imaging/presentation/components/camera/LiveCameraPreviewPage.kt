@@ -3,8 +3,15 @@ package com.vci.vectorcamapp.imaging.presentation.components.camera
 import androidx.camera.view.LifecycleCameraController
 import androidx.camera.view.PreviewView
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
@@ -12,42 +19,128 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.vci.vectorcamapp.R
-import com.vci.vectorcamapp.imaging.presentation.model.BoundingBoxUi
+import com.vci.vectorcamapp.core.domain.model.BoundingBox
+import com.vci.vectorcamapp.imaging.data.CameraFocusManagerImplementation
+import com.vci.vectorcamapp.imaging.presentation.ImagingAction
 
 @Composable
 fun LiveCameraPreviewPage(
     controller: LifecycleCameraController,
-    boundingBoxesUiList: List<BoundingBoxUi>,
+    boundingBoxes: List<BoundingBox>,
+    manualFocusPoint: Offset?,
     onImageCaptured: () -> Unit,
     onSaveSessionProgress: () -> Unit,
     onSubmitSession: () -> Unit,
+    onAction: (ImagingAction) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
+    val previewView = remember { PreviewView(context) }
+    val density = LocalDensity.current
+
+    val cameraManager = remember(previewView, controller) {
+        CameraFocusManagerImplementation(
+            previewView = previewView,
+            controller = controller
+        )
+    }
+
+    val focusBoxSize = 64.dp
+    val aspectRatio = 4f / 3f
+
+    DisposableEffect(lifecycleOwner) {
+        cameraManager.bind(lifecycleOwner)
+        onDispose {
+            cameraManager.cancelFocus()
+        }
+    }
+
+    LaunchedEffect(boundingBoxes, manualFocusPoint) {
+        if (manualFocusPoint == null) {
+            if (boundingBoxes.isNotEmpty()) {
+                cameraManager.autoFocusOn(boundingBoxes.first())
+            } else {
+                cameraManager.cancelFocus()
+            }
+        }
+    }
 
     Box(
-        modifier = modifier.fillMaxSize(), contentAlignment = Alignment.BottomCenter
+        modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center
     ) {
-        AndroidView(
-            factory = { context ->
-                PreviewView(context).apply {
-                    this.controller = controller
-                    scaleType = PreviewView.ScaleType.FIT_CENTER
-                    controller.bindToLifecycle(lifecycleOwner)
-                }
-            },
-            modifier = Modifier.fillMaxSize()
-        )
+        BoxWithConstraints(
+            modifier = Modifier
+                .fillMaxWidth()
+                .aspectRatio(1f / aspectRatio)
+        ) {
+            val containerSize = IntSize(
+                width = with(density) { maxWidth.roundToPx() },
+                height = with(density) { maxHeight.roundToPx() }
+            )
 
-        boundingBoxesUiList.map {
-            BoundingBoxOverlay(it, Modifier.fillMaxSize())
+            AndroidView(
+                factory = { previewView },
+                modifier = Modifier.fillMaxSize()
+            )
+
+            boundingBoxes.map {
+                BoundingBoxOverlay(it, overlaySize = containerSize, Modifier.fillMaxSize())
+            }
+
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .pointerInput(Unit) {
+                        detectTapGestures { offset ->
+                            cameraManager.focusAt(offset)
+                            onAction(ImagingAction.ManualFocusAt(offset))
+                        }
+                    }
+            ) {
+
+                manualFocusPoint?.let { focusPoint ->
+                    if (containerSize != IntSize.Zero) {
+                        val (offsetX, offsetY) = cameraManager.calculateFocusRingOffset(
+                            focusPoint = focusPoint,
+                            overlaySize = containerSize,
+                            focusBoxSize = focusBoxSize,
+                            density = density
+                        )
+
+                        Box(
+                            modifier = Modifier
+                                .offset(x = offsetX, y = offsetY)
+                                .size(focusBoxSize)
+                                .border(2.dp, Color.Cyan, CircleShape)
+                                .clickable {
+                                    cameraManager.cancelFocus()
+                                    onAction(ImagingAction.CancelManualFocus)
+                                }
+                        )
+                    }
+                }
+            }
         }
 
         IconButton(
@@ -75,7 +168,7 @@ fun LiveCameraPreviewPage(
                 .align(Alignment.TopEnd)
         ) {
             Icon(
-                painter = painterResource(id = R.drawable.ic_upload),
+                painter = painterResource(id = R.drawable.ic_cloud_upload),
                 contentDescription = "Submit Session",
                 modifier = Modifier.size(32.dp),
                 tint = MaterialTheme.colorScheme.onTertiary

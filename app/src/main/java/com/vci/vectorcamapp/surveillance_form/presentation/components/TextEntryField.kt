@@ -11,8 +11,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.font.FontWeight
+import com.vci.vectorcamapp.core.presentation.util.error.toString
 import com.vci.vectorcamapp.surveillance_form.domain.util.FormValidationError
-import com.vci.vectorcamapp.surveillance_form.presentation.util.toString
 
 @Composable
 fun TextEntryField(
@@ -22,7 +23,8 @@ fun TextEntryField(
     modifier: Modifier = Modifier,
     singleLine: Boolean = false,
     keyboardType: KeyboardType = KeyboardType.Text,
-    error: FormValidationError? = null
+    error: FormValidationError? = null,
+    placeholder: String? = null
 ) {
     val context = LocalContext.current
 
@@ -30,14 +32,22 @@ fun TextEntryField(
         modifier = modifier
             .fillMaxWidth()
     ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium)
+        )
 
         OutlinedTextField(
             value = value,
             onValueChange = onValueChange,
-            label = { Text(label) },
             isError = error != null,
             singleLine = singleLine,
             keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
+            placeholder = {
+                if (placeholder != null) {
+                    Text(text = placeholder)
+                }
+            },
             modifier = Modifier.fillMaxWidth()
         )
 

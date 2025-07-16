@@ -1,15 +1,15 @@
 package com.vci.vectorcamapp.complete_session.list.presentation
 
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
-import com.vci.vectorcamapp.complete_session.list.presentation.components.CompleteSessionListCard
+import androidx.compose.ui.tooling.preview.PreviewLightDark
+import com.vci.vectorcamapp.complete_session.list.presentation.components.CompleteSessionListTile
+import com.vci.vectorcamapp.core.presentation.components.ui.ScreenHeader
+import com.vci.vectorcamapp.ui.theme.VectorcamappTheme
 
 @Composable
 fun CompleteSessionListScreen(
@@ -17,20 +17,35 @@ fun CompleteSessionListScreen(
     onAction: (CompleteSessionListAction) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    LazyColumn(
+    ScreenHeader(
+        title = "Complete Sessions",
+        subtitle = "Click on a session to view more details",
         modifier = modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        items(items = state.sessionsAndSites.asReversed(), key = { it.session.localId }) { sessionAndSite ->
-            CompleteSessionListCard(
-                session = sessionAndSite.session,
-                site = sessionAndSite.site,
-                modifier = Modifier
-                    .clickable {
-                        onAction(CompleteSessionListAction.ViewCompleteSessionDetails(sessionAndSite.session.localId))
-                    }
+        items(
+            items = state.sessionsAndSites.asReversed(),
+            key = { it.session.localId }) { sessionAndSite ->
+            CompleteSessionListTile(
+                session = sessionAndSite.session, site = sessionAndSite.site, onClick = {
+                    onAction(
+                        CompleteSessionListAction.ViewCompleteSessionDetails(
+                            sessionAndSite.session.localId
+                        )
+                    )
+                })
+        }
+    }
+}
+
+@PreviewLightDark
+@Composable
+fun CompleteSessionListScreenPreview() {
+    VectorcamappTheme {
+        Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
+            CompleteSessionListScreen(
+                state = CompleteSessionListState(),
+                onAction = {},
+                modifier = Modifier.padding(innerPadding)
             )
         }
     }

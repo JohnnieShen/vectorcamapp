@@ -40,7 +40,7 @@ class SessionRepositoryImplementation @Inject constructor(
         return sessionDao.markSessionAsComplete(sessionId, System.currentTimeMillis()) > 0
     }
 
-    override suspend fun getSessionWithSpecimens(sessionId: UUID): SessionWithSpecimens? {
+    override suspend fun getSessionWithSpecimensById(sessionId: UUID): SessionWithSpecimens? {
         val relation = sessionDao.getSessionWithSpecimens(sessionId)
         return relation?.let {
             SessionWithSpecimens(
@@ -50,7 +50,7 @@ class SessionRepositoryImplementation @Inject constructor(
         }
     }
 
-    override suspend fun getSessionAndSurveillanceForm(sessionId: UUID): SessionAndSurveillanceForm? {
+    override suspend fun getSessionAndSurveillanceFormById(sessionId: UUID): SessionAndSurveillanceForm? {
         val relation = sessionDao.getSessionAndSurveillanceForm(sessionId)
         return relation?.let {
             SessionAndSurveillanceForm(

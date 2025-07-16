@@ -1,5 +1,6 @@
 package com.vci.vectorcamapp.imaging.presentation
 
+import android.graphics.BitmapFactory
 import androidx.camera.core.ImageCapture
 import androidx.camera.core.resolutionselector.ResolutionSelector
 import androidx.camera.core.resolutionselector.ResolutionStrategy
@@ -47,27 +48,31 @@ fun ImagingScreen(
 
     val pagerState = rememberPagerState(
         initialPage = 0,
-        pageCount = { state.capturedSpecimensAndBoundingBoxesUi.size + 1 }
+        pageCount = { state.capturedSpecimensAndBoundingBoxes.size + 1 }
     )
 
     HorizontalPager(
         state = pagerState, modifier = modifier.fillMaxSize()
     ) { page ->
         when {
-            page < state.capturedSpecimensAndBoundingBoxesUi.size -> {
+            page < state.capturedSpecimensAndBoundingBoxes.size -> {
                 CapturedSpecimenOverlay(
-                    specimen = state.capturedSpecimensAndBoundingBoxesUi[page].specimen,
-                    boundingBoxUi = state.capturedSpecimensAndBoundingBoxesUi[page].boundingBoxUi,
+                    specimen = state.capturedSpecimensAndBoundingBoxes[page].specimen,
+                    boundingBox = state.capturedSpecimensAndBoundingBoxes[page].boundingBox,
                     modifier = modifier
                 )
             }
 
-            (state.currentImage != null && state.captureBoundingBoxUi != null) -> {
+            (state.currentImageBytes != null && state.captureBoundingBox != null) -> {
+                val specimenBitmap = remember(state.currentImageBytes) {
+                    BitmapFactory.decodeByteArray(state.currentImageBytes, 0, state.currentImageBytes.size)
+                }
+
                 CapturedSpecimenOverlay(
                     specimen = state.currentSpecimen,
-                    boundingBoxUi = state.captureBoundingBoxUi,
+                    boundingBox = state.captureBoundingBox,
                     modifier = modifier,
-                    specimenBitmap = state.currentImage,
+                    specimenBitmap = specimenBitmap,
                     onSpecimenIdCorrected = { onAction(ImagingAction.CorrectSpecimenId(it)) },
                     onRetakeImage = { onAction(ImagingAction.RetakeImage) },
                     onSaveImageToSession = { onAction(ImagingAction.SaveImageToSession) }
@@ -77,12 +82,14 @@ fun ImagingScreen(
             else -> {
                 LiveCameraPreviewPage(
                     controller = controller,
-                    boundingBoxesUiList = state.previewBoundingBoxesUiList,
+                    boundingBoxes = state.previewBoundingBoxes,
                     onImageCaptured = {
                         onAction(ImagingAction.CaptureImage(controller))
                     },
                     onSaveSessionProgress = { onAction(ImagingAction.SaveSessionProgress) },
                     onSubmitSession = { onAction(ImagingAction.SubmitSession) },
+                    manualFocusPoint = state.manualFocusPoint,
+                    onAction = onAction,
                     modifier = modifier
                 )
             }

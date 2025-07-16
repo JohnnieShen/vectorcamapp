@@ -2,7 +2,6 @@ package com.vci.vectorcamapp.imaging.data.repository
 
 import android.content.ContentValues
 import android.content.Context
-import android.graphics.Bitmap
 import android.net.Uri
 import android.os.Environment
 import android.provider.MediaStore
@@ -14,8 +13,8 @@ import androidx.core.content.ContextCompat
 import com.vci.vectorcamapp.R
 import com.vci.vectorcamapp.core.domain.model.Session
 import com.vci.vectorcamapp.core.domain.util.Result
-import com.vci.vectorcamapp.imaging.domain.util.ImagingError
 import com.vci.vectorcamapp.imaging.domain.repository.CameraRepository
+import com.vci.vectorcamapp.imaging.domain.util.ImagingError
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -31,8 +30,8 @@ class CameraRepositoryImplementation @Inject constructor(
 ) : CameraRepository {
     override suspend fun captureImage(controller: LifecycleCameraController): Result<ImageProxy, ImagingError> {
         return suspendCoroutine { continuation ->
-            controller.takePicture(ContextCompat.getMainExecutor(context),
-                object : OnImageCapturedCallback() {
+            controller.takePicture(
+                ContextCompat.getMainExecutor(context), object : OnImageCapturedCallback() {
                     override fun onCaptureSuccess(image: ImageProxy) {
                         super.onCaptureSuccess(image)
                         continuation.resume(Result.Success(image))
@@ -42,12 +41,13 @@ class CameraRepositoryImplementation @Inject constructor(
                         super.onError(exception)
                         continuation.resume(Result.Error(ImagingError.CAPTURE_ERROR))
                     }
-                }
-            )
+                })
         }
     }
 
-    override suspend fun saveImage(bitmap: Bitmap, filename: String, currentSession: Session): Result<Uri, ImagingError> {
+    override suspend fun saveImage(
+        jpegBytes: ByteArray, filename: String, currentSession: Session
+    ): Result<Uri, ImagingError> {
         val dateFormat = SimpleDateFormat("yyyy-MM-dd_HH-mm-ss", Locale.getDefault())
         val sessionTimestamp = dateFormat.format(Date(currentSession.createdAt))
 
@@ -78,7 +78,8 @@ class CameraRepositoryImplementation @Inject constructor(
                 }
 
                 val writeSuccess = outputStream.use {
-                    bitmap.compress(Bitmap.CompressFormat.JPEG, 100, it)
+                    it.write(jpegBytes)
+                    true
                 }
 
                 if (!writeSuccess) {

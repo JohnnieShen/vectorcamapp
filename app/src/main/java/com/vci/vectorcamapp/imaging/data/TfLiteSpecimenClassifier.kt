@@ -6,16 +6,20 @@ import android.os.Handler
 import android.os.HandlerThread
 import android.util.Log
 import com.vci.vectorcamapp.imaging.domain.SpecimenClassifier
+import org.opencv.android.Utils
+import org.opencv.core.Core
+import org.opencv.core.CvType
+import org.opencv.core.Mat
+import org.opencv.core.Scalar
+import org.opencv.core.Size
+import org.opencv.imgproc.Imgproc
 import org.tensorflow.lite.DataType
 import org.tensorflow.lite.Interpreter
 import org.tensorflow.lite.support.common.FileUtil
-import org.tensorflow.lite.support.common.ops.CastOp
-import org.tensorflow.lite.support.common.ops.NormalizeOp
-import org.tensorflow.lite.support.image.ImageProcessor
-import org.tensorflow.lite.support.image.TensorImage
 import org.tensorflow.lite.support.tensorbuffer.TensorBuffer
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
+import kotlin.math.max
 
 class TfLiteSpecimenClassifier(
     private val context: Context,
@@ -31,15 +35,6 @@ class TfLiteSpecimenClassifier(
     private val handlerThread = HandlerThread(threadName).apply { start() }
     private val handler = Handler(handlerThread.looper)
 
-    private val imageProcessor by lazy {
-        ImageProcessor.Builder()
-            .add(CastOp(DataType.FLOAT32))
-            .add(NormalizeOp(0f, 255f))
-            .add(NormalizeOp(NORMALIZE_MEAN, NORMALIZE_STD))
-            .build()
-    }
-
-    private var inputNumChannels = DEFAULT_NUM_CHANNELS
     private var inputTensorHeight = DEFAULT_TENSOR_HEIGHT
     private var inputTensorWidth = DEFAULT_TENSOR_WIDTH
 
@@ -61,7 +56,6 @@ class TfLiteSpecimenClassifier(
                 classifier = Interpreter(model, options)
 
                 classifier?.let {
-                    inputNumChannels = it.getInputTensor(0).shape()[1]
                     inputTensorHeight = it.getInputTensor(0).shape()[2]
                     inputTensorWidth = it.getInputTensor(0).shape()[3]
 
@@ -83,48 +77,49 @@ class TfLiteSpecimenClassifier(
 
     override fun getOutputTensorShape(): Int = outputNumClasses
 
-    override suspend fun classify(bitmap: Bitmap): Int? {
+    override suspend fun classify(croppedBitmap: Bitmap): Int? {
         if (!isReady()) return null
 
         return suspendCoroutine { continuation ->
             handler.post {
                 try {
-                    Log.d(TAG, "Inference started!")
-                    val tensorImage = TensorImage(DataType.FLOAT32).apply {
-                        load(bitmap.copy(Bitmap.Config.ARGB_8888, false))
-                    }
-                    val processedImage = imageProcessor.process(tensorImage)
-                    val inputBufferHWC = processedImage.buffer.asFloatBuffer()
+                    val inputMatrix = prepareInputMatrix(croppedBitmap)
 
-                    val chwArray = FloatArray(inputNumChannels * inputTensorHeight * inputTensorWidth)
-                    for (y in 0 until inputTensorHeight) {
-                        for (x in 0 until inputTensorWidth) {
-                            for (c in 0 until inputNumChannels) {
-                                val hwcIndex = (y * inputTensorWidth + x) * inputNumChannels + c
-                                val chwIndex = c * inputTensorHeight * inputTensorWidth + y * inputTensorWidth + x
-                                chwArray[chwIndex] = inputBufferHWC.get(hwcIndex)
-                            }
-                        }
-                    }
+                    val preprocessedMatrix = preprocessMatrix(inputMatrix)
+                    val preprocessedMatrixHeight = preprocessedMatrix.height()
+                    val preprocessedMatrixWidth = preprocessedMatrix.width()
+                    val preprocessedMatrixChannels = preprocessedMatrix.channels()
 
-                    val input = TensorBuffer.createFixedSize(
+                    val inputTensor = TensorBuffer.createFixedSize(
                         intArrayOf(
                             1,
-                            inputNumChannels,
-                            inputTensorHeight,
-                            inputTensorWidth
+                            preprocessedMatrixChannels,
+                            preprocessedMatrixHeight,
+                            preprocessedMatrixWidth
                         ), DataType.FLOAT32
                     )
-                    input.loadArray(chwArray)
+                    val inputFloatBuffer =
+                        FloatArray(preprocessedMatrixHeight * preprocessedMatrixWidth * preprocessedMatrixChannels)
+                    preprocessedMatrix.get(0, 0, inputFloatBuffer)
 
-                    val output = TensorBuffer.createFixedSize(
+                    val chwArray =
+                        FloatArray(preprocessedMatrixChannels * preprocessedMatrixHeight * preprocessedMatrixWidth)
+                    for (channel in 0 until preprocessedMatrixChannels) {
+                        for (i in 0 until preprocessedMatrixHeight * preprocessedMatrixWidth) {
+                            chwArray[channel * preprocessedMatrixHeight * preprocessedMatrixWidth + i] =
+                                inputFloatBuffer[i * preprocessedMatrixChannels + channel]
+                        }
+                    }
+                    inputTensor.loadArray(chwArray)
+
+                    val outputTensor = TensorBuffer.createFixedSize(
                         intArrayOf(1, outputNumClasses), DataType.FLOAT32
                     )
 
                     val result = synchronized(classifierLock) {
                         if (!isReady()) return@post continuation.resume(null)
-                        classifier?.run(input.buffer, output.buffer)
-                        getClass(output.floatArray)
+                        classifier?.run(inputTensor.buffer, outputTensor.buffer)
+                        getClass(outputTensor.floatArray)
                     }
 
                     Log.d(TAG, "Inference result: $result")
@@ -137,8 +132,45 @@ class TfLiteSpecimenClassifier(
         }
     }
 
+    private fun prepareInputMatrix(croppedBitmap: Bitmap): Mat {
+        val inputMatrix = Mat()
+        Utils.bitmapToMat(croppedBitmap, inputMatrix)
+        Imgproc.cvtColor(inputMatrix, inputMatrix, Imgproc.COLOR_RGBA2RGB)
+        return inputMatrix
+    }
+
+    private fun preprocessMatrix(inputMatrix: Mat): Mat {
+        val inputMatrixWidth = inputMatrix.width()
+        val inputMatrixHeight = inputMatrix.height()
+        val paddedSideLength = max(inputMatrixWidth, inputMatrixHeight)
+        val paddedMatrix = Mat.zeros(paddedSideLength, paddedSideLength, inputMatrix.type())
+
+        val rowStart = (paddedSideLength - inputMatrixHeight) / 2
+        val rowEnd = rowStart + inputMatrixHeight
+        val colStart = (paddedSideLength - inputMatrixWidth) / 2
+        val colEnd = colStart + inputMatrixWidth
+        val regionOfIntersection = paddedMatrix.submat(rowStart, rowEnd, colStart, colEnd)
+        inputMatrix.copyTo(regionOfIntersection)
+
+        val resizedMatrix = Mat()
+        Imgproc.resize(
+            paddedMatrix,
+            resizedMatrix,
+            Size(inputTensorWidth.toDouble(), inputTensorHeight.toDouble())
+        )
+        resizedMatrix.convertTo(resizedMatrix, CvType.CV_32F, PIXEL_NORMALIZATION_SCALE.toDouble())
+
+        val meanMatrix = Mat(resizedMatrix.size(), CvType.CV_32FC3, NORMALIZE_MEAN)
+        val stdDevMatrix = Mat(resizedMatrix.size(), CvType.CV_32FC3, NORMALIZE_STDDEV)
+        Core.subtract(resizedMatrix, meanMatrix, resizedMatrix)
+        Core.divide(resizedMatrix, stdDevMatrix, resizedMatrix)
+
+        return resizedMatrix
+    }
+
     private fun getClass(logits: FloatArray): Int {
         if (logits.isEmpty()) return -1
+        Log.d(TAG, "Logits: ${logits.joinToString()}")
         return logits.indices.maxByOrNull { logits[it] } ?: -1
     }
 
@@ -162,12 +194,12 @@ class TfLiteSpecimenClassifier(
 
     companion object {
         private const val TAG = "TfLiteSpeciesClassifier"
-        private const val DEFAULT_NUM_CHANNELS = 3
         private const val DEFAULT_TENSOR_HEIGHT = 300
         private const val DEFAULT_TENSOR_WIDTH = 300
         private const val DEFAULT_NUM_CLASSES = 1
 
-        private val NORMALIZE_MEAN = floatArrayOf(0.485f, 0.456f, 0.406f)
-        private val NORMALIZE_STD = floatArrayOf(0.229f, 0.224f, 0.225f)
+        private const val PIXEL_NORMALIZATION_SCALE = 1f / 255f
+        private val NORMALIZE_MEAN = Scalar(0.485, 0.456, 0.406)
+        private val NORMALIZE_STDDEV = Scalar(0.229, 0.224, 0.225)
     }
 }

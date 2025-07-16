@@ -11,9 +11,9 @@ enum class NetworkError : Error {
     CONFLICT,
     CLIENT_ERROR,
     SERVER_ERROR,
-    SERIALIZATION,
-    UNKNOWN,
+    SERIALIZATION_ERROR,
+    UNKNOWN_ERROR,
 
     // Endpoint-Specific Errors
-    SESSION_NOT_COMPLETED
+    SESSION_NOT_COMPLETED;
 }

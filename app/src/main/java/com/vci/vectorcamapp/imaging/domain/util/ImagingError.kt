@@ -5,6 +5,7 @@ import com.vci.vectorcamapp.core.domain.util.Error
 enum class ImagingError : Error {
     CAPTURE_ERROR,
     SAVE_ERROR,
+    PROCESSING_ERROR,
     NO_SPECIMEN_FOUND,
     MULTIPLE_SPECIMENS_FOUND,
     NO_ACTIVE_SESSION,
@@ -14,7 +15,6 @@ enum class ImagingError : Error {
     INVALID_INPUT_SHAPE,
     SPECIMEN_ID_RECOGNITION_FAILED,
     SPECIMEN_DETECTION_FAILED,
-    SPECIMEN_CLASSIFICATION_FAILED,
     UNKNOWN_INFERENCE_ERROR,
-    UNKNOWN
+    UNKNOWN_ERROR;
 }

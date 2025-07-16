@@ -1,8 +1,8 @@
 package com.vci.vectorcamapp.complete_session.list.presentation
 
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.vci.vectorcamapp.core.domain.repository.SessionRepository
+import com.vci.vectorcamapp.core.presentation.CoreViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -16,7 +16,7 @@ import javax.inject.Inject
 @HiltViewModel
 class CompleteSessionListViewModel @Inject constructor(
     sessionRepository: SessionRepository
-) : ViewModel() {
+) : CoreViewModel() {
 
     private val _completeSessionsAndSites = sessionRepository.observeCompleteSessionsAndSites()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), emptyList())
@@ -41,4 +41,3 @@ class CompleteSessionListViewModel @Inject constructor(
         }
     }
 }
-
