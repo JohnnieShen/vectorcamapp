@@ -1,4 +1,4 @@
-package com.vci.vectorcamapp.core.presentation.util.error
+package com.vci.vectorcamapp.core.presentation.components
 
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
@@ -13,8 +13,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.unit.dp
 import com.vci.vectorcamapp.core.presentation.util.ObserveAsEvents
+import com.vci.vectorcamapp.core.presentation.util.error.ErrorMessageBus
+import com.vci.vectorcamapp.core.presentation.util.error.LocalErrorDataFlow
+import com.vci.vectorcamapp.core.presentation.util.error.toString
+import com.vci.vectorcamapp.ui.extensions.dimensions
+import com.vci.vectorcamapp.ui.theme.screenWidthFraction
 import kotlinx.coroutines.launch
 
 @Composable
@@ -34,7 +38,6 @@ fun ErrorSnackbarHost(
                 message = errorData.error.toString(context),
                 duration = errorData.duration
             )
-            ErrorMessageBus.clearLastMessage()
         }
     }
 
@@ -57,8 +60,8 @@ fun ErrorSnackbarHost(
                     }
                 },
                 modifier = Modifier
-                    .padding(horizontal = 8.dp)
-                    .widthIn(max = 420.dp)
+                    .padding(horizontal = MaterialTheme.dimensions.paddingSmall)
+                    .widthIn(max = screenWidthFraction(1.0f))
             ) {
                 Text(
                     text = snackbarData.visuals.message, style = MaterialTheme.typography.bodyMedium

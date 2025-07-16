@@ -10,8 +10,8 @@ import com.vci.vectorcamapp.imaging.domain.util.ImagingError
 import com.vci.vectorcamapp.incomplete_session.domain.util.IncompleteSessionError
 import com.vci.vectorcamapp.main.domain.util.MainError
 import com.vci.vectorcamapp.registration.domain.util.RegistrationError
-import com.vci.vectorcamapp.surveillance_form.domain.util.SurveillanceFormError
 import com.vci.vectorcamapp.surveillance_form.domain.util.FormValidationError
+import com.vci.vectorcamapp.surveillance_form.domain.util.SurveillanceFormError
 
 fun Error.toString(context: Context): String {
     val resId = when (this) {
@@ -27,10 +27,12 @@ fun Error.toString(context: Context): String {
             NetworkError.CLIENT_ERROR -> R.string.network_error_client_error
             NetworkError.UNKNOWN_ERROR -> R.string.roomdb_error_unknown_error
         }
+
         is RoomDbError -> when (this) {
             RoomDbError.CONSTRAINT_VIOLATION -> R.string.roomdb_error_constraint_violation
             RoomDbError.UNKNOWN_ERROR -> R.string.roomdb_error_unknown_error
         }
+
         is CompleteSessionDetailsError -> when (this) {
             CompleteSessionDetailsError.SESSION_NOT_FOUND -> R.string.complete_session_error_session_not_found
             CompleteSessionDetailsError.SITE_NOT_FOUND -> R.string.complete_session_error_site_not_found
@@ -38,7 +40,8 @@ fun Error.toString(context: Context): String {
             CompleteSessionDetailsError.SPECIMENS_NOT_FOUND -> R.string.complete_session_error_specimens_not_found
             CompleteSessionDetailsError.UNKNOWN_ERROR -> R.string.complete_session_error_unknown_error
         }
-        is ImagingError -> when(this) {
+
+        is ImagingError -> when (this) {
             ImagingError.CAPTURE_ERROR -> R.string.imaging_error_capture_error
             ImagingError.SAVE_ERROR -> R.string.imaging_error_save_error
             ImagingError.PROCESSING_ERROR -> R.string.imaging_error_processing_error
@@ -54,19 +57,23 @@ fun Error.toString(context: Context): String {
             ImagingError.UNKNOWN_INFERENCE_ERROR -> R.string.imaging_error_unknown_inference_error
             ImagingError.UNKNOWN_ERROR -> R.string.imaging_error_unknown_error
         }
+
         is IncompleteSessionError -> when (this) {
             IncompleteSessionError.SESSION_NOT_FOUND -> R.string.incomplete_session_error_session_not_found
             IncompleteSessionError.SESSION_RETRIEVAL_FAILED -> R.string.incomplete_session_error_session_retrieval_failed
             IncompleteSessionError.UNKNOWN_ERROR -> R.string.incomplete_session_error_unknown_error
         }
+
         is MainError -> when (this) {
             MainError.DEVICE_FETCH_FAILED -> R.string.main_error_device_fetch_failed
             MainError.UNKNOWN_ERROR -> R.string.main_error_unknown_error
         }
+
         is RegistrationError -> when (this) {
             RegistrationError.PROGRAM_NOT_FOUND -> R.string.registration_error_program_not_found
             RegistrationError.UNKNOWN_ERROR -> R.string.registration_error_unknown_error
         }
+
         is SurveillanceFormError -> when (this) {
             SurveillanceFormError.SITE_NOT_FOUND -> R.string.surveillance_form_error_site_not_found
             SurveillanceFormError.MISSING_PROGRAM_ID -> R.string.surveillance_form_error_missing_program_id
@@ -75,6 +82,7 @@ fun Error.toString(context: Context): String {
             SurveillanceFormError.LOCATION_GPS_TIMEOUT -> R.string.surveillance_form_error_location_gps_timeout
             SurveillanceFormError.UNKNOWN_ERROR -> R.string.surveillance_form_error_unknown_error
         }
+
         is FormValidationError -> when (this) {
             FormValidationError.BLANK_COLLECTOR_TITLE -> R.string.form_validation_error_blank_collector_title
             FormValidationError.BLANK_COLLECTOR_NAME -> R.string.form_validation_error_blank_collector_name
@@ -87,6 +95,7 @@ fun Error.toString(context: Context): String {
             FormValidationError.BLANK_COLLECTION_METHOD -> R.string.form_validation_error_blank_collection_method
             FormValidationError.BLANK_SPECIMEN_CONDITION -> R.string.form_validation_error_blank_specimen_condition
         }
+
         else -> R.string.error_fallback
     }
 

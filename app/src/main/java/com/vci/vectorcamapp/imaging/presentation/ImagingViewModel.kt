@@ -248,28 +248,38 @@ class ImagingViewModel @Inject constructor(
                                 val widthAbsolute = (widthFloat + (topLeftXFloat - topLeftXAbsolute)).toInt()
                                 val heightAbsolute = (heightFloat + (topLeftYFloat - topLeftYAbsolute)).toInt()
 
-                                val croppedBitmap = Bitmap.createBitmap(
-                                    jpegBitmap,
-                                    topLeftXAbsolute,
-                                    topLeftYAbsolute,
-                                    widthAbsolute,
-                                    heightAbsolute
-                                )
-                                val (species, sex, abdomenStatus) = inferenceRepository.classifySpecimen(
-                                    croppedBitmap
-                                )
+                                // Clamp the crop rectangle to stay within bitmap bounds
+                                val clampedTopLeftX = topLeftXAbsolute.coerceIn(0, jpegBitmap.width - 1)
+                                val clampedTopLeftY = topLeftYAbsolute.coerceIn(0, jpegBitmap.height - 1)
+                                val clampedWidth = widthAbsolute.coerceIn(1, jpegBitmap.width - clampedTopLeftX)
+                                val clampedHeight = heightAbsolute.coerceIn(1, jpegBitmap.height - clampedTopLeftY)
 
-                                _state.update {
-                                    it.copy(
-                                        currentSpecimen = it.currentSpecimen.copy(
-                                            species = species?.label,
-                                            sex = sex?.label,
-                                            abdomenStatus = abdomenStatus?.label,
-                                        ),
-                                        currentImageBytes = jpegByteArray,
-                                        captureBoundingBox = boundingBox,
-                                        previewBoundingBoxes = emptyList()
+                                if (clampedWidth > 0 && clampedHeight > 0) {
+                                    val croppedBitmap = Bitmap.createBitmap(
+                                        jpegBitmap,
+                                        clampedTopLeftX,
+                                        clampedTopLeftY,
+                                        clampedWidth,
+                                        clampedHeight
                                     )
+                                    val (species, sex, abdomenStatus) = inferenceRepository.classifySpecimen(
+                                        croppedBitmap
+                                    )
+
+                                    _state.update {
+                                        it.copy(
+                                            currentSpecimen = it.currentSpecimen.copy(
+                                                species = species?.label,
+                                                sex = sex?.label,
+                                                abdomenStatus = abdomenStatus?.label,
+                                            ),
+                                            currentImageBytes = jpegByteArray,
+                                            captureBoundingBox = boundingBox,
+                                            previewBoundingBoxes = emptyList()
+                                        )
+                                    }
+                                } else {
+                                    emitError(ImagingError.PROCESSING_ERROR, SnackbarDuration.Short)
                                 }
                             }
 

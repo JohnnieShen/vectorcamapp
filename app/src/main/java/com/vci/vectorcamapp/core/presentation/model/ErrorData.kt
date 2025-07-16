@@ -1,4 +1,4 @@
-package com.vci.vectorcamapp.core.presentation.util.error
+package com.vci.vectorcamapp.core.presentation.model
 
 import androidx.compose.material3.SnackbarDuration
 import com.vci.vectorcamapp.core.domain.util.Error
