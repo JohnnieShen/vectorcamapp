@@ -22,13 +22,14 @@ import io.tus.java.client.TusClient
 import io.tus.java.client.TusUpload
 import io.tus.java.client.TusUploader
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.io.IOException
 import java.net.HttpURLConnection
-import java.net.ProtocolException
 import java.net.URL
 import java.security.MessageDigest
 import androidx.work.ListenableWorker.Result as WorkerResult
@@ -40,31 +41,33 @@ class ImageUploadWorker @AssistedInject constructor(
 ) : CoroutineWorker(context, workerParams) {
 
     companion object {
-        const val KEY_URI          = "uri"
-        const val KEY_ENDPOINT     = "endpoint"
-        const val KEY_FINGERPRINT  = "fingerprint"
-
-        const val KEY_UPLOAD_URL   = "upload_url"
+        const val KEY_URI = "uri"
+        const val KEY_ENDPOINT = "endpoint"
+        const val KEY_UPLOAD_URL = "upload_url"
+        const val KEY_SPECIMEN_ID = "specimen_id"
 
         const val KEY_PROGRESS_UPLOADED = "progress_uploaded"
-        const val KEY_PROGRESS_TOTAL    = "progress_total"
+        const val KEY_PROGRESS_TOTAL = "progress_total"
 
-        const val CHUNK_SIZE_KB        = 64
-        const val REQUEST_PAYLOAD_KB   = 256
+        const val CHUNK_SIZE_KB = 32
+        const val REQUEST_PAYLOAD_KB = 64
 
-        const val CHANNEL_ID    = "image_upload_channel"
-        const val CHANNEL_NAME  = "Image Upload Channel"
+        const val CHANNEL_ID = "image_upload_channel"
+        const val CHANNEL_NAME = "Image Upload Channel"
         const val NOTIFICATION_ID = 1001
         const val STATUS_NOTIFICATION_ID = 1002
+
+        private const val NETWORK_TIMEOUT_MS = 30_000L
     }
 
     private val notificationManager =
         context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
     override suspend fun doWork(): WorkerResult {
-        val uriStr   = inputData.getString(KEY_URI)      ?: return WorkerResult.failure()
+        val uriStr = inputData.getString(KEY_URI) ?: return WorkerResult.failure()
         val endpoint = inputData.getString(KEY_ENDPOINT) ?: return WorkerResult.failure()
-        val srcUri   = uriStr.toUri()
+        val specimenId = inputData.getString(KEY_SPECIMEN_ID) ?: return WorkerResult.failure()
+        val srcUri = uriStr.toUri()
 
         createNotificationChannel()
         setForeground(showInitialNotification())
@@ -76,20 +79,9 @@ class ImageUploadWorker @AssistedInject constructor(
             tmpFile = prep.first
             val contentType = prep.second
             val md5 = calculateMD5(tmpFile)
+            val uniqueFingerprint = "$specimenId-$md5"
 
             val checkUrl = getCheckUrl(endpoint, md5)
-
-            Log.d("ImageUploadWorker", "Checking if image with MD5 $md5 already exists at $checkUrl")
-            val (exists, existingUrl) = imageExists(checkUrl)
-            if (exists && existingUrl != null) {
-                Log.d("ImageUploadWorker", "Image already exists on server. Skipping upload. URL: $existingUrl")
-                notificationManager.cancel(NOTIFICATION_ID)
-                return WorkerResult.success(
-                    workDataOf(KEY_UPLOAD_URL to existingUrl.toString())
-                )
-            }
-            Log.d("ImageUploadWorker", "Image does not exist. Proceeding with upload.")
-
 
             val client = TusClient().apply {
                 setUploadCreationURL(URL(endpoint))
@@ -102,36 +94,121 @@ class ImageUploadWorker @AssistedInject constructor(
             }
 
             val upload = TusUpload(tmpFile).apply {
-                this.fingerprint = md5
+                this.fingerprint = uniqueFingerprint
                 setMetadata(
                     mapOf(
-                        "filename"    to tmpFile.name,
+                        "filename" to tmpFile.name,
                         "contentType" to (contentType ?: "application/octet-stream"),
-                        "filemd5"     to md5
+                        "filemd5" to md5
                     )
                 )
             }
 
-            Log.d("ImageUploadWorker", "Start/resume $tmpFile (fp=$md5, md5=$md5)")
+            Log.d("ImageUploadWorker", "Start/resume $tmpFile (fp=$uniqueFingerprint,md5=$md5)")
 
-            val uploader = client.resumeOrCreateUpload(upload).apply {
-                setChunkSize(CHUNK_SIZE_KB * 1024)
-                setRequestPayloadSize(REQUEST_PAYLOAD_KB * 1024)
+            var uploader: TusUploader
+            try {
+                uploader = client.resumeOrCreateUpload(upload).apply {
+                    setChunkSize(CHUNK_SIZE_KB * 1024)
+                    setRequestPayloadSize(REQUEST_PAYLOAD_KB * 1024)
+                }
+            } catch (e: io.tus.java.client.ProtocolException) {
+                Log.w(
+                    "ImageUploadWorker",
+                    "resumeOrCreateUpload failed. Verifying if file already exists on server.",
+                    e
+                )
+
+                val conn = e.causingConnection
+                if (conn != null) {
+                    try {
+                        val responseCode = conn.responseCode
+                        val responseMessage = conn.responseMessage
+                        val errorBody = conn.errorStream?.bufferedReader()?.readText()
+                        Log.e(
+                            "ImageUploadWorker",
+                            "TUS creation failed with HTTP $responseCode: $responseMessage. Body: $errorBody"
+                        )
+                    } catch (ioe: IOException) {
+                        Log.e(
+                            "ImageUploadWorker",
+                            "Failed to read error details from connection.",
+                            ioe
+                        )
+                    }
+                }
+
+                val (exists, existingUrl) = imageExists(checkUrl)
+                if (exists && existingUrl != null) {
+                    Log.d(
+                        "ImageUploadWorker",
+                        "Image already exists on server (verified after create failed). Success. URL: $existingUrl"
+                    )
+                    notificationManager.cancel(NOTIFICATION_ID)
+                    return WorkerResult.success(workDataOf(KEY_UPLOAD_URL to existingUrl.toString()))
+                } else {
+                    Log.e(
+                        "ImageUploadWorker",
+                        "File does not exist on server. Upload initialization truly failed.",
+                        e
+                    )
+                    throw e
+                }
             }
+
 
             updateWorkerProgress(uploader.offset, upload.size)
 
             while (true) {
-                val chunkStart = System.currentTimeMillis()
-                val bytes = uploader.uploadChunk()
-                if (bytes <= -1) break
+                val bytesUploaded: Int
+                try {
+                    bytesUploaded = withTimeout(NETWORK_TIMEOUT_MS) {
+                        uploader.uploadChunk()
+                    }
+                    if (bytesUploaded <= -1) break
 
-                val chunkEnd   = System.currentTimeMillis()
-                val deltaMs    = (chunkEnd - chunkStart).coerceAtLeast(1L)
-                val bytesPerSec = bytes * 1000 / deltaMs
+                    Log.d(
+                        "ImageUploadWorker",
+                        "Chunked $bytesUploaded bytes"
+                    )
+                    updateWorkerProgress(uploader.offset, upload.size)
 
-                Log.d("ImageUploadWorker", "Chunked $bytes bytes in $deltaMs ms → $bytesPerSec B/s")
-                updateWorkerProgress(uploader.offset, upload.size)
+                } catch (e: io.tus.java.client.ProtocolException) {
+                    val conn = e.causingConnection
+                    val responseCode = conn?.responseCode ?: -1
+
+                    if (responseCode == HttpURLConnection.HTTP_CONFLICT) {
+                        Log.w(
+                            "ImageUploadWorker",
+                            "409 Conflict during chunk upload. Resyncing offset with server."
+                        )
+
+                        uploader = client.resumeOrCreateUpload(upload).apply {
+                            setChunkSize(CHUNK_SIZE_KB * 1024)
+                            setRequestPayloadSize(REQUEST_PAYLOAD_KB * 1024)
+                        }
+
+                        Log.i(
+                            "ImageUploadWorker",
+                            "Offset resynced to ${uploader.offset}. Continuing upload."
+                        )
+                        continue
+                    } else {
+                        Log.e(
+                            "ImageUploadWorker",
+                            "Unhandled ProtocolException ($responseCode) in upload loop.",
+                            e
+                        )
+                        throw e
+                    }
+                } catch (e: TimeoutCancellationException) {
+                    Log.w("ImageUploadWorker", "Chunk stalled >$NETWORK_TIMEOUT_MS ms, restarting socket…")
+                    uploader = client.resumeOrCreateUpload(upload).apply {
+                        setChunkSize(CHUNK_SIZE_KB * 1024)
+                        setRequestPayloadSize(REQUEST_PAYLOAD_KB * 1024)
+                    }
+                    continue
+                }
             }
 
             val url = safeFinish(uploader, checkUrl).toString()
@@ -144,10 +221,21 @@ class ImageUploadWorker @AssistedInject constructor(
                 workDataOf(KEY_UPLOAD_URL to url)
             )
 
-        } catch (e: ProtocolException) {
-            Log.e("ImageUploadWorker", "Permanent failure", e)
+        } catch (e: io.tus.java.client.ProtocolException) {
+            val responseCode = e.causingConnection?.responseCode ?: -1
+            val errorBody = try {
+                e.causingConnection?.errorStream?.bufferedReader()?.use { it.readText() }
+            } catch (ioe: IOException) {
+                "Could not read error body."
+            }
+
+            Log.e(
+                "ImageUploadKWorker",
+                "Permanent failure (tus ProtocolException). HTTP Status: $responseCode. Body: $errorBody",
+                e
+            )
             notificationManager.cancel(NOTIFICATION_ID)
-            showUploadErrorNotification("Permanent protocol error.")
+            showUploadErrorNotification("Permanent protocol error (tus).")
             WorkerResult.failure()
 
         } catch (e: IOException) {
@@ -233,16 +321,25 @@ class ImageUploadWorker @AssistedInject constructor(
         try {
             uploader.finish()
             return@withContext uploader.uploadURL
-        } catch (e: Exception) {
-            Log.w("ImageUploadWorker", "finish() failed (${e.javaClass.simpleName}). " +
-                    "Verifying with server via MD5 check...")
+        } catch (e: io.tus.java.client.ProtocolException) {
+            Log.w(
+                "ImageUploadWorker", "finish() failed (${e.javaClass.simpleName}). " +
+                        "Verifying with server via MD5 check..."
+            )
 
             val (exists, existingUrl) = imageExists(checkUrl)
             if (exists && existingUrl != null) {
-                Log.d("ImageUploadWorker", "Server has the file (verified by MD5 check), treating as success.")
+                Log.d(
+                    "ImageUploadWorker",
+                    "Server has the file (verified by MD5 check), treating as success."
+                )
                 return@withContext existingUrl
             } else {
-                Log.e("ImageUploadWorker", "MD5 check also failed after upload failure. Marking as failed.", e)
+                Log.e(
+                    "ImageUploadWorker",
+                    "MD5 check also failed after upload failure. Marking as failed. $checkUrl",
+                    e
+                )
                 throw e
             }
         }
@@ -272,10 +369,12 @@ class ImageUploadWorker @AssistedInject constructor(
     }
 
     private suspend fun updateWorkerProgress(uploaded: Long, total: Long) {
-        setProgress(workDataOf(
-            KEY_PROGRESS_UPLOADED to uploaded,
-            KEY_PROGRESS_TOTAL    to total
-        ))
+        setProgress(
+            workDataOf(
+                KEY_PROGRESS_UPLOADED to uploaded,
+                KEY_PROGRESS_TOTAL to total
+            )
+        )
 
         val percent = if (total > 0) (uploaded * 100 / total).toInt() else 0
         val n = NotificationCompat.Builder(context, CHANNEL_ID)

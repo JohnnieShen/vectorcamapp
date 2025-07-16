@@ -1,6 +1,8 @@
 package com.vci.vectorcamapp.imaging.presentation
 
 import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.util.Log
 import android.view.OrientationEventListener
 import androidx.lifecycle.ViewModel
@@ -47,6 +49,7 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.io.InputStream
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
@@ -63,6 +66,7 @@ class ImagingViewModel @Inject constructor(
 
     companion object {
         private const val SPECIMEN_IMAGE_ENDPOINT_TEMPLATE = "https://api.vectorcam.org/specimens/%s/images/tus"
+        private const val UPLOAD_WORK_CHAIN_NAME = "vectorcam_session_upload_chain"
     }
 
     @Inject
@@ -175,8 +179,10 @@ class ImagingViewModel @Inject constructor(
 
                     val success = sessionRepository.markSessionAsComplete(currentSession.localId)
                     if (success) {
+                        val workManager = WorkManager.getInstance(context)
                         val uploadConstraints =
-                            Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED)
+                            Constraints.Builder()
+                                .setRequiredNetworkType(NetworkType.CONNECTED)
                                 .build()
 
                         val metadataUploadRequest =
@@ -191,37 +197,38 @@ class ImagingViewModel @Inject constructor(
                                 TimeUnit.MILLISECONDS,
                             ).build()
 
-                        WorkManager.getInstance(context).enqueueUniqueWork(
-                            "metadata_upload_${currentSession.localId}",
-                            ExistingWorkPolicy.REPLACE,
-                            metadataUploadRequest
-                        )
-
                         val sessionWithSpecimens =
                             sessionRepository.getSessionWithSpecimens(currentSession.localId)
 
-                        sessionWithSpecimens?.specimens?.forEach { specimen ->
+                        val imageUploadRequests = sessionWithSpecimens?.specimens?.map { specimen ->
                             val endpoint = SPECIMEN_IMAGE_ENDPOINT_TEMPLATE.format(specimen.id)
-
-                            val imageUploadRequest =
-                                OneTimeWorkRequestBuilder<ImageUploadWorker>().setInputData(
-                                    workDataOf(
-                                        ImageUploadWorker.KEY_URI to specimen.imageUri.toString(),
-                                        ImageUploadWorker.KEY_ENDPOINT to endpoint
-                                    )
+                            OneTimeWorkRequestBuilder<ImageUploadWorker>().setInputData(
+                                workDataOf(
+                                    ImageUploadWorker.KEY_URI to specimen.imageUri.toString(),
+                                    ImageUploadWorker.KEY_ENDPOINT to endpoint,
+                                    ImageUploadWorker.KEY_SPECIMEN_ID to specimen.id
                                 )
-                                    .setConstraints(uploadConstraints)
-                                    .setBackoffCriteria(
-                                        BackoffPolicy.EXPONENTIAL,
-                                        WorkRequest.MIN_BACKOFF_MILLIS,
-                                        TimeUnit.MILLISECONDS
-                                    )
-                                    .build()
+                            )
+                                .setConstraints(uploadConstraints)
+                                .setBackoffCriteria(
+                                    BackoffPolicy.LINEAR,
+                                    WorkRequest.MIN_BACKOFF_MILLIS,
+                                    TimeUnit.MILLISECONDS
+                                )
+                                .build()
+                        }
 
-                            WorkManager.getInstance(context).enqueueUniqueWork(
-                                "image_upload_${specimen.id}",
-                                ExistingWorkPolicy.REPLACE,
-                                imageUploadRequest
+                        if (!imageUploadRequests.isNullOrEmpty()) {
+                            workManager.beginUniqueWork(
+                                UPLOAD_WORK_CHAIN_NAME,
+                                ExistingWorkPolicy.APPEND_OR_REPLACE,
+                                metadataUploadRequest
+                            ).then(imageUploadRequests).enqueue()
+                        } else {
+                            workManager.enqueueUniqueWork(
+                                UPLOAD_WORK_CHAIN_NAME,
+                                ExistingWorkPolicy.APPEND_OR_REPLACE,
+                                metadataUploadRequest
                             )
                         }
 
