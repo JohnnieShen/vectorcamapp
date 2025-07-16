@@ -211,7 +211,8 @@ class ImagingViewModel @Inject constructor(
                                 workDataOf(
                                     ImageUploadWorker.KEY_URI to specimen.imageUri.toString(),
                                     ImageUploadWorker.KEY_ENDPOINT to endpoint,
-                                    ImageUploadWorker.KEY_SPECIMEN_ID to specimen.id
+                                    ImageUploadWorker.KEY_SPECIMEN_ID to specimen.id,
+                                    ImageUploadWorker.KEY_SESSION_ID to currentSession.localId.toString()
                                 )
                             )
                                 .setConstraints(uploadConstraints)

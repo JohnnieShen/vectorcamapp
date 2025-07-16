@@ -15,6 +15,8 @@ import androidx.work.ForegroundInfo
 import androidx.work.WorkerParameters
 import androidx.work.workDataOf
 import com.vci.vectorcamapp.R
+import com.vci.vectorcamapp.core.domain.model.UploadStatus
+import com.vci.vectorcamapp.core.domain.repository.SpecimenRepository
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import io.tus.android.client.TusPreferencesURLStore
@@ -32,12 +34,14 @@ import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.URL
 import java.security.MessageDigest
+import java.util.UUID
 import androidx.work.ListenableWorker.Result as WorkerResult
 
 @HiltWorker
 class ImageUploadWorker @AssistedInject constructor(
     @Assisted private val context: Context,
     @Assisted workerParams: WorkerParameters,
+    private val specimenRepository: SpecimenRepository,
 ) : CoroutineWorker(context, workerParams) {
 
     companion object {
@@ -45,6 +49,7 @@ class ImageUploadWorker @AssistedInject constructor(
         const val KEY_ENDPOINT = "endpoint"
         const val KEY_UPLOAD_URL = "upload_url"
         const val KEY_SPECIMEN_ID = "specimen_id"
+        const val KEY_SESSION_ID = "session_id"
         const val KEY_PROGRESS_UPLOADED = "progress_uploaded"
         const val KEY_PROGRESS_TOTAL = "progress_total"
 
@@ -61,10 +66,11 @@ class ImageUploadWorker @AssistedInject constructor(
     private val notificationManager =
         context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
-    private data class UploadInput(val uri: Uri, val endpoint: String, val specimenId: String)
+    private data class UploadInput(val uri: Uri, val endpoint: String, val specimenId: String, val sessionId: UUID)
 
     override suspend fun doWork(): WorkerResult {
         val input = getUploadInput() ?: return WorkerResult.failure()
+        updateStatus(input.specimenId, input.sessionId, UploadStatus.IN_PROGRESS)
         createNotificationChannel()
         setForeground(showInitialNotification())
 
@@ -77,16 +83,21 @@ class ImageUploadWorker @AssistedInject constructor(
             val uploadUrl = performUpload(input, file, contentType)
 
             notificationManager.cancel(NOTIFICATION_ID)
+
+            updateStatus(input.specimenId, input.sessionId, UploadStatus.COMPLETED)
+
             WorkerResult.success(workDataOf(KEY_UPLOAD_URL to uploadUrl))
 
         } catch (e: IOException) {
             Log.w("ImageUploadWorker", "Transient I/O failure, will retry.", e)
             showUploadErrorNotification("Connection issue, retrying...")
+            updateStatus(input.specimenId, input.sessionId, UploadStatus.RETRY)
             WorkerResult.retry()
         } catch (e: Exception) {
             val responseCode = (e as? io.tus.java.client.ProtocolException)?.causingConnection?.responseCode
             Log.e("ImageUploadWorker", "Permanent or unexpected failure (Code: $responseCode).", e)
             showUploadErrorNotification("Upload failed: ${e.message}")
+            updateStatus(input.specimenId, input.sessionId, UploadStatus.RETRY)
             WorkerResult.failure()
         } finally {
             temporaryFile?.delete()
@@ -108,9 +119,9 @@ class ImageUploadWorker @AssistedInject constructor(
             client.resumeOrCreateUpload(upload)
         } catch (e: io.tus.java.client.ProtocolException) {
             Log.w("ImageUploadWorker", "resumeOrCreateUpload failed. Verifying if file already exists on server.", e)
-            val (exists, existingUrl) = imageExists(checkUrl)
-            if (exists && existingUrl != null) {
-                Log.d("ImageUploadWorker", "Image already exists on server (verified after create failed). Success. URL: $existingUrl")
+            val existingUrl = verifyUploadByMD5(checkUrl)
+            if (existingUrl != null) {
+                Log.d("ImageUploadWorker", "Image already exists on server. URL: $existingUrl")
                 return existingUrl.toString()
             } else {
                 Log.e("ImageUploadWorker", "File does not exist on server. Upload initialization truly failed.", e)
@@ -159,10 +170,17 @@ class ImageUploadWorker @AssistedInject constructor(
     }
 
     private fun getUploadInput(): UploadInput? {
-        val uriStr = inputData.getString(KEY_URI) ?: return null
-        val endpoint = inputData.getString(KEY_ENDPOINT) ?: return null
-        val specimenId = inputData.getString(KEY_SPECIMEN_ID) ?: return null
-        return UploadInput(uriStr.toUri(), endpoint, specimenId)
+        return try {
+            val uriStr = inputData.getString(KEY_URI) ?: return null
+            val endpoint = inputData.getString(KEY_ENDPOINT) ?: return null
+            val specimenId = inputData.getString(KEY_SPECIMEN_ID) ?: return null
+            val sessionIdStr = inputData.getString(KEY_SESSION_ID) ?: return null
+            val sessionId = UUID.fromString(sessionIdStr)
+            UploadInput(uriStr.toUri(), endpoint, specimenId, sessionId)
+        } catch (e: IllegalArgumentException) {
+            Log.e("ImageUploadWorker", "Invalid input data provided.", e)
+            null
+        }
     }
 
     private fun createTusClient(endpoint: String): TusClient = TusClient().apply {
@@ -232,6 +250,16 @@ class ImageUploadWorker @AssistedInject constructor(
         return@withContext dst to mimeType
     }
 
+    private suspend fun verifyUploadByMD5(checkUrl: URL): URL? {
+        val (exists, existingUrl) = imageExists(checkUrl)
+        return if (exists && existingUrl != null) {
+            Log.d("ImageUploadWorker", "Server has the file (verified by MD5 check). Success.")
+            existingUrl
+        } else {
+            null
+        }
+    }
+
     @Throws(io.tus.java.client.ProtocolException::class, IOException::class)
     private suspend fun safeFinish(uploader: TusUploader, checkUrl: URL): URL = withContext(Dispatchers.IO) {
         try {
@@ -239,14 +267,27 @@ class ImageUploadWorker @AssistedInject constructor(
             return@withContext uploader.uploadURL
         } catch (e: io.tus.java.client.ProtocolException) {
             Log.w("ImageUploadWorker", "finish() failed. Verifying with server via MD5 check...", e)
-            val (exists, existingUrl) = imageExists(checkUrl)
-            if (exists && existingUrl != null) {
-                Log.d("ImageUploadWorker", "Server has the file (verified by MD5 check), treating as success.")
+            val existingUrl = verifyUploadByMD5(checkUrl)
+            if (existingUrl != null) {
+                Log.d("ImageUploadWorker", "Image already exists on server. URL: $existingUrl")
                 return@withContext existingUrl
             } else {
-                Log.e("ImageUploadWorker", "MD5 check also failed after upload failure.", e)
+                Log.e("ImageUploadWorker", "File does not exist on server. Upload initialization truly failed.", e)
                 throw e
             }
+        }
+    }
+
+    private suspend fun updateStatus(specimenId: String, sessionId: UUID, status: UploadStatus) {
+        try {
+            val specimen = specimenRepository.getSpecimenById(specimenId)
+            specimen?.let {
+                val updatedSpecimen = it.copy(imageUploadStatus = status)
+                specimenRepository.updateSpecimen(updatedSpecimen, sessionId)
+                Log.d("ImageUploadWorker", "Updated status for specimen $specimenId to $status")
+            } ?: Log.w("ImageUploadWorker", "Could not find specimen $specimenId to update status.")
+        } catch (e: Exception) {
+            Log.e("ImageUploadWorker", "Failed to update specimen status for $specimenId", e)
         }
     }
 
