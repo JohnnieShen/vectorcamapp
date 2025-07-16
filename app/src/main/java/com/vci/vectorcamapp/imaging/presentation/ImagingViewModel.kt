@@ -50,6 +50,7 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.io.ByteArrayOutputStream
 import java.io.InputStream
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
@@ -202,7 +203,7 @@ class ImagingViewModel @Inject constructor(
                             ).build()
 
                         val sessionWithSpecimens =
-                            sessionRepository.getSessionWithSpecimens(currentSession.localId)
+                            sessionRepository.getSessionWithSpecimensById(currentSession.localId)
 
                         val imageUploadRequests = sessionWithSpecimens?.specimens?.map { specimen ->
                             val endpoint = SPECIMEN_IMAGE_ENDPOINT_TEMPLATE.format(specimen.id)
