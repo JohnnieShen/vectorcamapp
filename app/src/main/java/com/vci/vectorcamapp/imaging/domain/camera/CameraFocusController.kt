@@ -8,8 +8,7 @@ import androidx.lifecycle.LifecycleOwner
 import com.vci.vectorcamapp.core.domain.model.BoundingBox
 
 interface CameraFocusController {
-    fun bind(lifecycleOwner: LifecycleOwner)
-    fun manualFocusAt(offsetPx: Offset)
+    fun manualFocusAt(offset: Offset)
     fun autoFocusAt(box: BoundingBox)
     fun cancelFocus()
 }

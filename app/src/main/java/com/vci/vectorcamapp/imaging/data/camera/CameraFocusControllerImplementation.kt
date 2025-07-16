@@ -15,14 +15,9 @@ class CameraFocusControllerImplementation (
     private val controller: LifecycleCameraController,
 ) : CameraFocusController {
 
-    override fun bind(lifecycleOwner: LifecycleOwner) {
-        previewView.controller = controller
-        controller.bindToLifecycle(lifecycleOwner)
-    }
-
-    override fun manualFocusAt(offsetPx: Offset) {
+    override fun manualFocusAt(offset: Offset) {
         controller.cameraControl
-            ?.startFocusAndMetering(buildFocusAction(offsetPx.x, offsetPx.y))
+            ?.startFocusAndMetering(buildFocusAction(offset.x, offset.y))
             ?: Log.w("CameraFocusManager", "focusAt(): cameraControl not ready yet")
     }
 

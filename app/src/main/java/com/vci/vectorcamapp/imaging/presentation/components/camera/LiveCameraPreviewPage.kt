@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
@@ -16,7 +15,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -51,27 +49,26 @@ fun LiveCameraPreviewPage(
     val density = LocalDensity.current
     val aspectRatio = 4f / 3f
 
-    val previewView = remember { PreviewView(context) }
+    val previewView = remember {
+        PreviewView(context).apply {
+            this.controller = controller
+            this.scaleType = PreviewView.ScaleType.FIT_CENTER
+            controller.bindToLifecycle(lifecycleOwner)
+        }
+    }
 
-    val cameraManager = remember(previewView, controller) {
+    val cameraFocusController = remember(previewView, controller) {
         CameraFocusControllerImplementation(
             previewView = previewView, controller = controller
         )
     }
 
-    DisposableEffect(lifecycleOwner) {
-        cameraManager.bind(lifecycleOwner)
-        onDispose {
-            cameraManager.cancelFocus()
-        }
-    }
-
     LaunchedEffect(boundingBoxes, manualFocusPoint) {
         if (manualFocusPoint == null) {
             if (boundingBoxes.isNotEmpty()) {
-                cameraManager.autoFocusAt(boundingBoxes.first())
+                cameraFocusController.autoFocusAt(boundingBoxes.first())
             } else {
-                cameraManager.cancelFocus()
+                cameraFocusController.cancelFocus()
             }
         }
     }
@@ -80,18 +77,16 @@ fun LiveCameraPreviewPage(
         modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center
     ) {
         BoxWithConstraints(
-            modifier = Modifier
-                .fillMaxWidth()
-                .aspectRatio(1f / aspectRatio)
+            modifier = Modifier.fillMaxSize().aspectRatio(1f / aspectRatio)
         ) {
             val containerSize = IntSize(
                 width = with(density) { maxWidth.roundToPx() },
-                height = with(density) { maxHeight.roundToPx() }
-            )
+                height = with(density) { maxHeight.roundToPx() })
 
             AndroidView(
-                factory = { previewView },
-                modifier = Modifier.fillMaxSize()
+                factory = {
+                    previewView
+                }, modifier = Modifier.fillMaxSize()
             )
 
             boundingBoxes.map {
@@ -103,7 +98,7 @@ fun LiveCameraPreviewPage(
                     .fillMaxSize()
                     .pointerInput(Unit) {
                         detectTapGestures { offset ->
-                            cameraManager.manualFocusAt(offset)
+                            cameraFocusController.manualFocusAt(offset)
                             onAction(ImagingAction.ManualFocusAt(offset))
                         }
                     }) {
@@ -111,7 +106,7 @@ fun LiveCameraPreviewPage(
                     if (containerSize != IntSize.Zero) {
                         AutofocusRingOverlay(
                             focusPoint = focusPoint, overlaySize = containerSize, onCancel = {
-                                cameraManager.cancelFocus()
+                                cameraFocusController.cancelFocus()
                                 onAction(ImagingAction.CancelManualFocus)
                             })
                     }
