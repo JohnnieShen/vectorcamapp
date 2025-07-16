@@ -237,7 +237,7 @@ class ImagingViewModel @Inject constructor(
                             }
 
                             1 -> {
-                                val boundingBox = boundingBoxesList[0]
+                                val boundingBox = boundingBoxesList.first()
                                 val topLeftXFloat = boundingBox.topLeftX * bitmap.width
                                 val topLeftYFloat = boundingBox.topLeftY * bitmap.height
                                 val widthFloat = boundingBox.width * bitmap.width

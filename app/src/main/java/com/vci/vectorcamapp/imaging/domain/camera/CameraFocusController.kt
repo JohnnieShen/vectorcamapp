@@ -1,4 +1,4 @@
-package com.vci.vectorcamapp.imaging.domain.use_cases
+package com.vci.vectorcamapp.imaging.domain.camera
 
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.unit.Density
@@ -7,19 +7,9 @@ import androidx.compose.ui.unit.IntSize
 import androidx.lifecycle.LifecycleOwner
 import com.vci.vectorcamapp.core.domain.model.BoundingBox
 
-interface CameraFocusManager {
+interface CameraFocusController {
     fun bind(lifecycleOwner: LifecycleOwner)
-
-    fun focusAt(offsetPx: Offset)
-
-    fun autoFocusOn(box: BoundingBox)
-
+    fun manualFocusAt(offsetPx: Offset)
+    fun autoFocusAt(box: BoundingBox)
     fun cancelFocus()
-
-    fun calculateFocusRingOffset(
-        focusPx: Offset,
-        overlayPx: IntSize,
-        focusSizeDp: Dp,
-        density: Density
-    ): Pair<Dp, Dp>
 }
