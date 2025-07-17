@@ -53,8 +53,12 @@ class ImageUploadWorker @AssistedInject constructor(
         const val KEY_PROGRESS_UPLOADED = "progress_uploaded"
         const val KEY_PROGRESS_TOTAL = "progress_total"
 
-        private const val CHUNK_SIZE_BYTES = 32 * 1024
-        private const val REQUEST_PAYLOAD_BYTES = 64 * 1024
+        private const val INITIAL_CHUNK_SIZE_BYTES = 64 * 1024
+        private const val MIN_CHUNK_SIZE_BYTES = 16 * 1024
+        private const val MAX_CHUNK_SIZE_BYTES = 1024 * 1024
+        private const val SUCCESS_STREAK_FOR_INCREASE = 5
+        private const val SUCCESS_CHUNK_SIZE_MULTIPLIER = 2
+        private const val FAILURE_CHUNK_SIZE_DIVIDER = 2
         private const val NETWORK_TIMEOUT_MS = 30_000L
 
         private const val CHANNEL_ID = "image_upload_channel"
@@ -138,23 +142,29 @@ class ImageUploadWorker @AssistedInject constructor(
     }
 
     private suspend fun executeUploadLoop(initialUploader: TusUploader, client: TusClient, upload: TusUpload) {
-        var uploader = initialUploader.apply {
-            chunkSize = CHUNK_SIZE_BYTES
-            requestPayloadSize = REQUEST_PAYLOAD_BYTES
-        }
+        var uploader = initialUploader
+        var currentChunkSize = INITIAL_CHUNK_SIZE_BYTES
+        var successfulUploadsInARow = 0
 
-        updateWorkerProgress(uploader.offset, upload.size)
+        while (uploader.offset < upload.size) {
+            uploader.chunkSize = currentChunkSize
+            uploader.requestPayloadSize = currentChunkSize
 
-        while (true) {
             val bytesUploaded = try {
                 withTimeout(NETWORK_TIMEOUT_MS) { uploader.uploadChunk() }
-            } catch (e: TimeoutCancellationException) {
-                Log.w("ImageUploadWorker", "Chunk stalled >$NETWORK_TIMEOUT_MS ms, re-syncing...")
-                uploader = client.resumeOrCreateUpload(upload)
-                continue
-            } catch (e: io.tus.java.client.ProtocolException) {
-                if (e.causingConnection?.responseCode == HttpURLConnection.HTTP_CONFLICT) {
-                    Log.w("ImageUploadWorker", "409 Conflict, re-syncing...")
+            } catch (e: Exception) {
+                successfulUploadsInARow = 0
+                currentChunkSize = (currentChunkSize / FAILURE_CHUNK_SIZE_DIVIDER).coerceAtLeast(MIN_CHUNK_SIZE_BYTES)
+                Log.w("ImageUploadWorker", "Upload error. Reducing chunk size to $currentChunkSize bytes.", e)
+
+                val isRetryable = when (e) {
+                    is TimeoutCancellationException, is IOException -> true
+                    is io.tus.java.client.ProtocolException ->
+                        e.causingConnection?.responseCode == HttpURLConnection.HTTP_CONFLICT
+                    else -> false
+                }
+
+                if (isRetryable) {
                     uploader = client.resumeOrCreateUpload(upload)
                     continue
                 } else {
@@ -162,11 +172,22 @@ class ImageUploadWorker @AssistedInject constructor(
                 }
             }
 
-            if (bytesUploaded <= -1) break
+            if (bytesUploaded <= -1) {
+                Log.w("ImageUploadWorker", "File stream ended unexpectedly.")
+                break
+            }
 
-            Log.d("ImageUploadWorker", "Chunked $bytesUploaded bytes")
             updateWorkerProgress(uploader.offset, upload.size)
+            Log.d("ImageUploadWorker", "Uploaded a payload of $bytesUploaded bytes.")
+
+            successfulUploadsInARow++
+            if (successfulUploadsInARow >= SUCCESS_STREAK_FOR_INCREASE) {
+                currentChunkSize = (currentChunkSize * SUCCESS_CHUNK_SIZE_MULTIPLIER).coerceAtMost(MAX_CHUNK_SIZE_BYTES)
+                Log.i("ImageUploadWorker", "Stable connection. Increasing chunk and payload size to $currentChunkSize bytes.")
+                successfulUploadsInARow = 0
+            }
         }
+        Log.d("ImageUploadWorker", "Upload loop finished. Final offset: ${uploader.offset}")
     }
 
     private fun getUploadInput(): UploadInput? {
