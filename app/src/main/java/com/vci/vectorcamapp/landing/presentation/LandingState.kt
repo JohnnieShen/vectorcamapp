@@ -9,5 +9,6 @@ data class LandingState(
         name = "",
         country = ""
     ),
-    val showResumeDialog: Boolean = false
+    val showResumeDialog: Boolean = false,
+    val incompleteSessionsCount: Int = 0
 )

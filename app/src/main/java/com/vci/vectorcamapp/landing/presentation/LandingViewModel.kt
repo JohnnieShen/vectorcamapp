@@ -5,12 +5,15 @@ import androidx.lifecycle.viewModelScope
 import com.vci.vectorcamapp.core.domain.cache.CurrentSessionCache
 import com.vci.vectorcamapp.core.domain.cache.DeviceCache
 import com.vci.vectorcamapp.core.domain.repository.ProgramRepository
+import com.vci.vectorcamapp.core.domain.repository.SessionRepository
 import com.vci.vectorcamapp.core.presentation.CoreViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
@@ -23,13 +26,25 @@ class LandingViewModel @Inject constructor(
     private val deviceCache: DeviceCache,
     private val currentSessionCache: CurrentSessionCache,
     private val programRepository: ProgramRepository,
+    sessionRepository: SessionRepository,
 ) : CoreViewModel() {
 
+    private val _incompleteSessionsCount = sessionRepository.observeIncompleteSessions()
+        .map { it.size }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), 0)
+
     private val _state = MutableStateFlow(LandingState())
-    val state: StateFlow<LandingState> = _state.onStart {
+    val state: StateFlow<LandingState> = combine(
+        _state,
+        _incompleteSessionsCount
+    ) { state, incompleteSessionsCount ->
+        state.copy(incompleteSessionsCount = incompleteSessionsCount)
+    }.onStart {
         loadLandingDetails()
     }.stateIn(
-        viewModelScope, SharingStarted.WhileSubscribed(5000L), LandingState()
+        viewModelScope,
+        SharingStarted.WhileSubscribed(5000L),
+        LandingState()
     )
 
     private val _events = Channel<LandingEvent>()
@@ -76,12 +91,14 @@ class LandingViewModel @Inject constructor(
             val programId = deviceCache.getProgramId()
             if (programId == null) {
                 _events.send(LandingEvent.NavigateBackToRegistrationScreen)
+                _state.update { it.copy(isLoading = false) }
                 return@launch
             }
 
             val program = programRepository.getProgramById(programId)
             if (program == null) {
                 _events.send(LandingEvent.NavigateBackToRegistrationScreen)
+                _state.update { it.copy(isLoading = false) }
                 return@launch
             }
 
@@ -98,3 +115,4 @@ class LandingViewModel @Inject constructor(
         }
     }
 }
+
