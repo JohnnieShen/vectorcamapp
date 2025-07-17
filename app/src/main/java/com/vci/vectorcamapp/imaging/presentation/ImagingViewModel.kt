@@ -3,7 +3,6 @@ package com.vci.vectorcamapp.imaging.presentation
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import android.util.Log
 import android.view.OrientationEventListener
 import androidx.compose.material3.SnackbarDuration
 import androidx.lifecycle.viewModelScope
@@ -51,7 +50,6 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.io.ByteArrayOutputStream
-import java.io.InputStream
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 

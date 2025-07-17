@@ -91,7 +91,6 @@ class ImageUploadWorker @AssistedInject constructor(
             updateStatus(input.specimenId, input.sessionId, UploadStatus.COMPLETED)
 
             WorkerResult.success(workDataOf(KEY_UPLOAD_URL to uploadUrl))
-
         } catch (e: IOException) {
             Log.w("ImageUploadWorker", "Transient I/O failure, will retry.", e)
             showUploadErrorNotification("Connection issue, retrying...")
@@ -122,13 +121,18 @@ class ImageUploadWorker @AssistedInject constructor(
         val uploader = try {
             client.resumeOrCreateUpload(upload)
         } catch (e: io.tus.java.client.ProtocolException) {
-            Log.w("ImageUploadWorker", "resumeOrCreateUpload failed. Verifying if file already exists on server.", e)
-            val existingUrl = verifyUploadByMD5(checkUrl)
-            if (existingUrl != null) {
-                Log.d("ImageUploadWorker", "Image already exists on server. URL: $existingUrl")
-                return existingUrl.toString()
+            if (e.causingConnection?.responseCode == HttpURLConnection.HTTP_CONFLICT) {
+                Log.w("ImageUploadWorker", "resumeOrCreateUpload failed with 409 Conflict. Verifying if file already exists on server.", e)
+                val existingUrl = verifyUploadByMD5(checkUrl)
+                if (existingUrl != null) {
+                    Log.d("ImageUploadWorker", "Image already exists on server. URL: $existingUrl")
+                    return existingUrl.toString()
+                } else {
+                    Log.e("ImageUploadWorker", "File does not exist on server despite 409. Upload initialization truly failed.", e)
+                    throw e
+                }
             } else {
-                Log.e("ImageUploadWorker", "File does not exist on server. Upload initialization truly failed.", e)
+                Log.e("ImageUploadWorker", "resumeOrCreateUpload failed with unhandled status code: ${e.causingConnection?.responseCode}", e)
                 throw e
             }
         }
@@ -285,7 +289,16 @@ class ImageUploadWorker @AssistedInject constructor(
     private suspend fun safeFinish(uploader: TusUploader, checkUrl: URL): URL = withContext(Dispatchers.IO) {
         try {
             uploader.finish()
-            return@withContext uploader.uploadURL
+            Log.d("ImageUploadWorker", "Tus finish() successful. Verifying with MD5 check.")
+
+            val verifiedUrl = verifyUploadByMD5(checkUrl)
+            if (verifiedUrl != null) {
+                Log.d("ImageUploadWorker", "MD5 verification successful after finish(). Final URL: $verifiedUrl")
+                return@withContext verifiedUrl
+            } else {
+                Log.e("ImageUploadWorker", "CRITICAL: finish() succeeded but MD5 check failed for ${checkUrl}.")
+                throw IOException("Upload verification failed: file not found on server after successful finish.")
+            }
         } catch (e: io.tus.java.client.ProtocolException) {
             Log.w("ImageUploadWorker", "finish() failed. Verifying with server via MD5 check...", e)
             val existingUrl = verifyUploadByMD5(checkUrl)
