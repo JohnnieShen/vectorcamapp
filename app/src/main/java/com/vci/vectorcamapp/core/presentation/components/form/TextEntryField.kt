@@ -1,4 +1,4 @@
-package com.vci.vectorcamapp.intake.presentation.components
+package com.vci.vectorcamapp.core.presentation.components.form
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth

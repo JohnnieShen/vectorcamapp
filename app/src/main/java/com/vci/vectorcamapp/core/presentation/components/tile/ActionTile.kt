@@ -1,4 +1,4 @@
-package com.vci.vectorcamapp.core.presentation.components.ui
+package com.vci.vectorcamapp.core.presentation.components.tile
 
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -13,9 +13,10 @@ import com.vci.vectorcamapp.ui.extensions.customShadow
 import com.vci.vectorcamapp.ui.extensions.dimensions
 
 @Composable
-fun InfoTile(modifier: Modifier = Modifier, content: @Composable () -> Unit) {
+fun ActionTile(onClick: () -> Unit, modifier: Modifier = Modifier, content: @Composable () -> Unit) {
 
     Card(
+        onClick = onClick,
         border = CardDefaults.outlinedCardBorder(),
         shape = RoundedCornerShape(MaterialTheme.dimensions.cornerRadiusMedium),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colors.cardBackground),

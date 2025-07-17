@@ -1,4 +1,4 @@
-package com.vci.vectorcamapp.core.presentation.components
+package com.vci.vectorcamapp.core.presentation.components.scaffold
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues

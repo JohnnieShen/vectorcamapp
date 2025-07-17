@@ -10,7 +10,7 @@ import com.vci.vectorcamapp.complete_session.details.presentation.components.Seg
 import com.vci.vectorcamapp.complete_session.details.presentation.components.form.CompleteSessionForm
 import com.vci.vectorcamapp.complete_session.details.presentation.components.specimens.CompleteSessionSpecimens
 import com.vci.vectorcamapp.complete_session.details.presentation.enums.CompleteSessionDetailsTab
-import com.vci.vectorcamapp.core.presentation.components.ui.ScreenHeader
+import com.vci.vectorcamapp.core.presentation.components.header.ScreenHeader
 import com.vci.vectorcamapp.ui.theme.VectorcamappTheme
 
 @Composable

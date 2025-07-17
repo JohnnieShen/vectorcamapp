@@ -26,7 +26,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.PreviewLightDark
-import com.vci.vectorcamapp.core.presentation.components.ui.ScreenHeader
+import com.vci.vectorcamapp.core.presentation.components.form.DatePickerField
+import com.vci.vectorcamapp.core.presentation.components.form.DropdownField
+import com.vci.vectorcamapp.core.presentation.components.form.TextEntryField
+import com.vci.vectorcamapp.core.presentation.components.form.ToggleField
+import com.vci.vectorcamapp.core.presentation.components.header.ScreenHeader
 import com.vci.vectorcamapp.core.presentation.util.error.toString
 import com.vci.vectorcamapp.intake.domain.enums.CollectionMethodOption
 import com.vci.vectorcamapp.intake.domain.enums.DistrictOption
@@ -35,11 +39,7 @@ import com.vci.vectorcamapp.intake.domain.enums.LlinTypeOption
 import com.vci.vectorcamapp.intake.domain.enums.SentinelSiteOption
 import com.vci.vectorcamapp.intake.domain.enums.SpecimenConditionOption
 import com.vci.vectorcamapp.intake.domain.util.IntakeError
-import com.vci.vectorcamapp.intake.presentation.components.DatePickerField
-import com.vci.vectorcamapp.intake.presentation.components.DropdownField
 import com.vci.vectorcamapp.intake.presentation.components.SectionCard
-import com.vci.vectorcamapp.intake.presentation.components.TextEntryField
-import com.vci.vectorcamapp.intake.presentation.components.ToggleField
 import com.vci.vectorcamapp.ui.extensions.dimensions
 import com.vci.vectorcamapp.ui.theme.LocalColors
 import com.vci.vectorcamapp.ui.theme.VectorcamappTheme
@@ -303,7 +303,8 @@ fun IntakeScreen(
                 if (state.surveillanceForm.wasIrsConducted) {
                     TextEntryField(
                         label = "Months Since IRS",
-                        value = state.surveillanceForm.monthsSinceIrs?.let { if (it == 0) "" else it.toString() }.orEmpty(),
+                        value = state.surveillanceForm.monthsSinceIrs?.let { if (it == 0) "" else it.toString() }
+                            .orEmpty(),
                         onValueChange = {
                             onAction(IntakeAction.EnterMonthsSinceIrs(it.filter { character -> character.isDigit() }))
                         },

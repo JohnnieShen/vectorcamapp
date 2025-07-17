@@ -381,7 +381,6 @@ class IntakeViewModel @Inject constructor(
             if (currentSession != null) {
                 savedForm =
                     surveillanceFormRepository.getSurveillanceFormBySessionId(currentSession.localId)
-                Log.d("SAVED FORM", "Saved form: ${savedForm?.wasIrsConducted}")
 
                 val siteId = currentSessionCache.getSiteId()
                 val site = allSites.find { it.id == siteId }

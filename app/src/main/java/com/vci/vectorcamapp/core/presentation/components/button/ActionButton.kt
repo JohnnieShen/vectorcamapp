@@ -1,4 +1,4 @@
-package com.vci.vectorcamapp.core.presentation.components.ui
+package com.vci.vectorcamapp.core.presentation.components.button
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.fillMaxWidth

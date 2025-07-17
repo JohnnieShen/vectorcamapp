@@ -16,7 +16,7 @@ import com.vci.vectorcamapp.complete_session.details.presentation.CompleteSessio
 import com.vci.vectorcamapp.complete_session.list.presentation.CompleteSessionListEvent
 import com.vci.vectorcamapp.complete_session.list.presentation.CompleteSessionListScreen
 import com.vci.vectorcamapp.complete_session.list.presentation.CompleteSessionListViewModel
-import com.vci.vectorcamapp.core.presentation.components.BaseScaffold
+import com.vci.vectorcamapp.core.presentation.components.scaffold.BaseScaffold
 import com.vci.vectorcamapp.core.presentation.util.ObserveAsEvents
 import com.vci.vectorcamapp.imaging.presentation.ImagingEvent
 import com.vci.vectorcamapp.imaging.presentation.ImagingScreen
