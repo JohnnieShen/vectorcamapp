@@ -10,8 +10,8 @@ import com.vci.vectorcamapp.imaging.domain.util.ImagingError
 import com.vci.vectorcamapp.incomplete_session.domain.util.IncompleteSessionError
 import com.vci.vectorcamapp.main.domain.util.MainError
 import com.vci.vectorcamapp.registration.domain.util.RegistrationError
-import com.vci.vectorcamapp.surveillance_form.domain.util.FormValidationError
-import com.vci.vectorcamapp.surveillance_form.domain.util.SurveillanceFormError
+import com.vci.vectorcamapp.intake.domain.util.FormValidationError
+import com.vci.vectorcamapp.intake.domain.util.IntakeError
 
 fun Error.toString(context: Context): String {
     val resId = when (this) {
@@ -74,13 +74,12 @@ fun Error.toString(context: Context): String {
             RegistrationError.UNKNOWN_ERROR -> R.string.registration_error_unknown_error
         }
 
-        is SurveillanceFormError -> when (this) {
-            SurveillanceFormError.SITE_NOT_FOUND -> R.string.surveillance_form_error_site_not_found
-            SurveillanceFormError.MISSING_PROGRAM_ID -> R.string.surveillance_form_error_missing_program_id
-            SurveillanceFormError.MISSING_SESSION -> R.string.surveillance_form_error_missing_session
-            SurveillanceFormError.LOCATION_PERMISSION_DENIED -> R.string.surveillance_form_error_location_permission_denied
-            SurveillanceFormError.LOCATION_GPS_TIMEOUT -> R.string.surveillance_form_error_location_gps_timeout
-            SurveillanceFormError.UNKNOWN_ERROR -> R.string.surveillance_form_error_unknown_error
+        is IntakeError -> when (this) {
+            IntakeError.SITE_NOT_FOUND -> R.string.intake_error_site_not_found
+            IntakeError.PROGRAM_NOT_FOUND -> R.string.intake_error_missing_program_id
+            IntakeError.LOCATION_PERMISSION_DENIED -> R.string.intake_error_location_permission_denied
+            IntakeError.LOCATION_GPS_TIMEOUT -> R.string.intake_error_location_gps_timeout
+            IntakeError.UNKNOWN_ERROR -> R.string.intake_error_unknown_error
         }
 
         is FormValidationError -> when (this) {

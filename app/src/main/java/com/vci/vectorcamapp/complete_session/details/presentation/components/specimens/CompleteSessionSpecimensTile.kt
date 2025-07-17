@@ -68,7 +68,7 @@ fun CompleteSessionSpecimensTile(
                 )
 
                 Icon(
-                    painter = painterResource(R.drawable.landing_surveillance_session_icon),
+                    painter = painterResource(R.drawable.ic_specimen),
                     contentDescription = "Mosquito",
                     tint = MaterialTheme.colors.icon,
                     modifier = Modifier.size(MaterialTheme.dimensions.iconSizeMedium)

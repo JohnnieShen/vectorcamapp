@@ -118,23 +118,20 @@
     <!-- Main error: Unknown error -->
     <string name="main_error_unknown_error">An unknown error occurred. Please try again or contact support if the issue persists.</string>
 
-    <!-- Surveillance form error: Site fetch failed -->
-    <string name="surveillance_form_error_site_not_found">Site not found for selected district and sentinel site.</string>
+    <!-- Intake error: Site fetch failed -->
+    <string name="intake_error_site_not_found">Site not found for selected district and sentinel site.</string>
 
-    <!-- Surveillance form error: Missing program id -->
-    <string name="surveillance_form_error_missing_program_id">Program ID is missing. Please contact support.</string>
+    <!-- Intake error: Missing program id -->
+    <string name="intake_error_missing_program_id">Program ID is missing. Please contact support.</string>
 
-    <!-- Surveillance form error: Missing session -->
-    <string name="surveillance_form_error_missing_session">Session is missing. Please try again.</string>
+    <!-- Intake error: Permission denied -->
+    <string name="intake_error_location_permission_denied">Permission error. Please enable location access in settings.</string>
 
-    <!-- Surveillance form error: Permission denied -->
-    <string name="surveillance_form_error_location_permission_denied">Permission error. Please enable location access in settings.</string>
+    <!-- Intake error: GPS timeout -->
+    <string name="intake_error_location_gps_timeout">GPS Timeout. Please move to a different location and try again.</string>
 
-    <!-- Surveillance form error: GPS timeout -->
-    <string name="surveillance_form_error_location_gps_timeout">GPS Timeout. Please move to a different location and try again.</string>
-
-    <!-- Surveillance form error: Unknown error -->
-    <string name="surveillance_form_error_unknown_error">An unknown error occurred. Please try again or contact support if the issue persists.</string>
+    <!-- Intake error: Unknown error -->
+    <string name="intake_error_unknown_error">An unknown error occurred. Please try again or contact support if the issue persists.</string>
 
     <!-- Registration error: Program not found -->
     <string name="registration_error_program_not_found">Program not found. Please contact support.</string>
