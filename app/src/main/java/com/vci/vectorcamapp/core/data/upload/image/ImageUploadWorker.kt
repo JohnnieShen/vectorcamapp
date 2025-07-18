@@ -15,10 +15,10 @@ import androidx.work.WorkerParameters
 import androidx.work.workDataOf
 import com.vci.vectorcamapp.R
 import com.vci.vectorcamapp.core.data.network.constructUrl
-import com.vci.vectorcamapp.core.data.upload.image.util.UploadError
 import com.vci.vectorcamapp.core.domain.model.UploadStatus
 import com.vci.vectorcamapp.core.domain.network.api.ImageUploadDataSource
 import com.vci.vectorcamapp.core.domain.repository.SpecimenRepository
+import com.vci.vectorcamapp.core.domain.util.network.NetworkError
 import com.vci.vectorcamapp.core.domain.util.onError
 import com.vci.vectorcamapp.core.domain.util.successOrNull
 import dagger.assisted.Assisted
@@ -104,30 +104,31 @@ class ImageUploadWorker @AssistedInject constructor(
             }
         } catch (e: IOException) {
             Log.w("ImageUploadWorker", "Transient I/O failure, will retry.", e)
-            return handleUploadError(UploadError.NO_INTERNET, input)
+            return handleUploadError(NetworkError.NO_INTERNET, input)
         } catch (e: Exception) {
             val responseCode = (e as? io.tus.java.client.ProtocolException)?.causingConnection?.responseCode
             Log.e("ImageUploadWorker", "Permanent or unexpected failure (Code: $responseCode).", e)
-            return handleUploadError(UploadError.UNKNOWN_ERROR, input)
+            return handleUploadError(NetworkError.UNKNOWN_ERROR, input)
         } finally {
             temporaryFile?.delete()
             notificationManager.cancel(NOTIFICATION_ID)
         }
     }
 
-    private suspend fun handleUploadError(error: UploadError, input: UploadInput): WorkerResult {
+    private suspend fun handleUploadError(error: NetworkError, input: UploadInput): WorkerResult {
         val isRetryable = when (error) {
-            UploadError.NO_INTERNET,
-            UploadError.TIMEOUT -> true
+            NetworkError.NO_INTERNET,
+            NetworkError.REQUEST_TIMEOUT -> true
             else -> false
         }
 
         val errorMessage = when (error) {
-            UploadError.NO_INTERNET -> "Connection issue, retrying..."
-            UploadError.TIMEOUT -> "Connection timed out, retrying..."
-            UploadError.PROTOCOL_ERROR -> "Server protocol error."
-            UploadError.VERIFICATION_ERROR -> "Upload failed: file could not be verified."
-            UploadError.UNKNOWN_ERROR -> "An unknown upload error occurred."
+            NetworkError.NO_INTERNET -> "Connection issue, retrying..."
+            NetworkError.REQUEST_TIMEOUT -> "Connection timed out, retrying..."
+            NetworkError.SERVER_ERROR -> "Server protocol error."
+            NetworkError.VERIFICATION_ERROR -> "Upload failed: file could not be verified."
+            NetworkError.UNKNOWN_ERROR -> "An unknown upload error occurred."
+            else -> "An unknown upload error occurred."
         }
 
         if (isRetryable && runAttemptCount < MAX_RETRIES) {
@@ -143,7 +144,7 @@ class ImageUploadWorker @AssistedInject constructor(
         }
     }
 
-    private suspend fun performUpload(input: UploadInput, file: File, contentType: String?): DomainResult<String, UploadError> {
+    private suspend fun performUpload(input: UploadInput, file: File, contentType: String?): DomainResult<String, NetworkError> {
         val md5 = calculateMD5(file)
         val uniqueFingerprint = "${input.specimenId}-$md5"
 
@@ -163,18 +164,18 @@ class ImageUploadWorker @AssistedInject constructor(
                     is DomainResult.Success -> DomainResult.Success(existingUrlResult.data.toString())
                     is DomainResult.Error -> {
                         Log.e("ImageUploadWorker", "MD5 check failed despite 409. Upload initialization failed.", e)
-                        DomainResult.Error(UploadError.PROTOCOL_ERROR)
+                        DomainResult.Error(NetworkError.SERVER_ERROR)
                     }
                 }
             } else {
                 Log.e("ImageUploadWorker", "resumeOrCreateUpload failed with code: ${e.causingConnection?.responseCode}", e)
-                return DomainResult.Error(UploadError.PROTOCOL_ERROR)
+                return DomainResult.Error(NetworkError.SERVER_ERROR)
             }
         } catch (e: IOException) {
-            return DomainResult.Error(UploadError.NO_INTERNET)
+            return DomainResult.Error(NetworkError.NO_INTERNET)
         }
 
-        val uploader = uploaderResult.successOrNull() ?: return DomainResult.Error(UploadError.UNKNOWN_ERROR)
+        val uploader = uploaderResult.successOrNull() ?: return DomainResult.Error(NetworkError.UNKNOWN_ERROR)
 
         executeUploadLoop(uploader, tusClient, upload).onError {
             return DomainResult.Error(it)
@@ -190,7 +191,7 @@ class ImageUploadWorker @AssistedInject constructor(
         }
     }
 
-    private suspend fun executeUploadLoop(initialUploader: TusUploader, client: TusClient, upload: TusUpload): DomainResult<Unit, UploadError> {
+    private suspend fun executeUploadLoop(initialUploader: TusUploader, client: TusClient, upload: TusUpload): DomainResult<Unit, NetworkError> {
         var uploader = initialUploader
         var currentChunkSize = INITIAL_CHUNK_SIZE_BYTES
         var successfulUploadsInARow = 0
@@ -203,10 +204,10 @@ class ImageUploadWorker @AssistedInject constructor(
                 withTimeout(NETWORK_TIMEOUT_MS) { DomainResult.Success(uploader.uploadChunk()) }
             } catch (e: Exception) {
                 when (e) {
-                    is TimeoutCancellationException -> DomainResult.Error(UploadError.TIMEOUT)
-                    is IOException -> DomainResult.Error(UploadError.NO_INTERNET)
-                    is io.tus.java.client.ProtocolException -> DomainResult.Error(UploadError.PROTOCOL_ERROR)
-                    else -> DomainResult.Error(UploadError.UNKNOWN_ERROR)
+                    is TimeoutCancellationException -> DomainResult.Error(NetworkError.REQUEST_TIMEOUT)
+                    is IOException -> DomainResult.Error(NetworkError.NO_INTERNET)
+                    is io.tus.java.client.ProtocolException -> DomainResult.Error(NetworkError.SERVER_ERROR)
+                    else -> DomainResult.Error(NetworkError.UNKNOWN_ERROR)
                 }
             }
 
@@ -232,12 +233,12 @@ class ImageUploadWorker @AssistedInject constructor(
                     currentChunkSize = (currentChunkSize / FAILURE_CHUNK_SIZE_DIVIDER).coerceAtLeast(MIN_CHUNK_SIZE_BYTES)
                     Log.w("ImageUploadWorker", "Upload error: $error. Reducing chunk size to $currentChunkSize bytes.")
 
-                    if (error == UploadError.TIMEOUT || error == UploadError.NO_INTERNET || error == UploadError.PROTOCOL_ERROR) {
+                    if (error == NetworkError.REQUEST_TIMEOUT || error == NetworkError.NO_INTERNET || error == NetworkError.SERVER_ERROR) {
                         try {
                             uploader = client.resumeOrCreateUpload(upload)
                             continue
                         } catch (resumeException: Exception) {
-                            return DomainResult.Error(UploadError.UNKNOWN_ERROR)
+                            return DomainResult.Error(NetworkError.UNKNOWN_ERROR)
                         }
                     } else {
                         return DomainResult.Error(error)
@@ -299,22 +300,22 @@ class ImageUploadWorker @AssistedInject constructor(
         return@withContext destination to mimeType
     }
 
-    private suspend fun safeFinish(uploader: TusUploader, specimenId: String, md5: String): DomainResult<URL, UploadError> = withContext(Dispatchers.IO) {
+    private suspend fun safeFinish(uploader: TusUploader, specimenId: String, md5: String): DomainResult<URL, NetworkError> = withContext(Dispatchers.IO) {
         try {
             uploader.finish()
             Log.d("ImageUploadWorker", "Tus finish() successful. Verifying with MD5 check.")
             when (val verificationResult = imageUploadDataSource.imageExists(specimenId, md5)) {
                 is DomainResult.Success -> verificationResult
-                is DomainResult.Error -> DomainResult.Error(UploadError.VERIFICATION_ERROR)
+                is DomainResult.Error -> DomainResult.Error(NetworkError.VERIFICATION_ERROR)
             }
         } catch (e: io.tus.java.client.ProtocolException) {
             Log.w("ImageUploadWorker", "finish() failed. Fallback to MD5 check.", e)
             when (val verificationResult = imageUploadDataSource.imageExists(specimenId, md5)) {
                 is DomainResult.Success -> verificationResult
-                is DomainResult.Error -> DomainResult.Error(UploadError.VERIFICATION_ERROR)
+                is DomainResult.Error -> DomainResult.Error(NetworkError.VERIFICATION_ERROR)
             }
         } catch (e: IOException) {
-            DomainResult.Error(UploadError.NO_INTERNET)
+            DomainResult.Error(NetworkError.NO_INTERNET)
         }
     }
 
