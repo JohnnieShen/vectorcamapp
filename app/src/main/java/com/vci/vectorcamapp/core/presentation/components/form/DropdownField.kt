@@ -57,7 +57,8 @@ fun <T> DropdownField(
         label?.let {
             Text(
                 text = label,
-                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium)
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colors.textSecondary,
             )
         }
 
@@ -119,12 +120,7 @@ fun <T> DropdownField(
                     width = MaterialTheme.dimensions.borderThicknessThick,
                     color = MaterialTheme.colors.primary
                 ),
-                shape = RoundedCornerShape(
-                    topStart = MaterialTheme.dimensions.cornerRadiusSmall,
-                    topEnd = MaterialTheme.dimensions.cornerRadiusSmall,
-                    bottomEnd = MaterialTheme.dimensions.cornerRadiusSmall,
-                    bottomStart = MaterialTheme.dimensions.cornerRadiusSmall
-                ),
+                shape = RoundedCornerShape(MaterialTheme.dimensions.cornerRadiusSmall),
                 onDismissRequest = { expanded = false },
                 modifier = Modifier
                     .width(parentWidth)
@@ -154,10 +150,8 @@ fun <T> DropdownField(
         if (error != null) {
             Text(
                 text = error.toString(context),
-                color = MaterialTheme.colors.error,
                 style = MaterialTheme.typography.bodySmall,
-                modifier = Modifier.fillMaxWidth(),
-                textAlign = TextAlign.Start
+                color = MaterialTheme.colors.error
             )
         }
     }

@@ -65,13 +65,13 @@
     <string name="form_validation_error_blank_specimen_condition">Specimen condition is required.</string>
 
     <!-- Imaging error: Capture error -->
-    <string name="imaging_error_capture_error">Couldn’t take the photo. Please try again.</string>
+    <string name="imaging_error_capture_error">Could not take the photo. Please try again.</string>
 
     <!-- Imaging error: Save error -->
-    <string name="imaging_error_save_error">Couldn’t save the photo. Please try again.</string>
+    <string name="imaging_error_save_error">Could not save the photo. Please try again.</string>
 
     <!-- Imaging error: Processing error -->
-    <string name="imaging_error_processing_error">Couldn’t process the photo. Please try again.</string>
+    <string name="imaging_error_processing_error">Could not process the photo. Please try again.</string>
 
     <!-- Imaging error: No specimen found -->
     <string name="imaging_error_no_specimen_found">No specimen found in the photo. Please try again with a clearer image.</string>
@@ -83,7 +83,7 @@
     <string name="imaging_error_no_active_session">No active session found. Please start a new session before capturing images.</string>
 
     <!-- Imaging error: Model initialization failed -->
-    <string name="imaging_error_model_initialization_failed">App couldn’t load its brain. Try restarting the app.</string>
+    <string name="imaging_error_model_initialization_failed">App could not load its brain. Try restarting the app.</string>
 
     <!-- Imaging error: GPU delegate initialization failed -->
     <string name="imaging_error_gpu_delegate_initialization_failed">Your device may not support faster image analysis. The app will still work, but may be slower.</string>
@@ -95,10 +95,10 @@
     <string name="imaging_error_invalid_input_shape">The app ran into a problem analyzing the image. Please retake the photo.</string>
 
     <!-- Imaging error: Specimen ID recognition failed -->
-    <string name="imaging_error_specimen_id_recognition_failed">Couldn’t read the specimen ID. Make sure the label is clear and well-lit.</string>
+    <string name="imaging_error_specimen_id_recognition_failed">Could not read the specimen ID. Make sure the label is clear and well-lit.</string>
 
     <!-- Imaging error: Specimen detection failed -->
-    <string name="imaging_error_specimen_detection_failed">Couldn’t detect a specimen in the image. Try taking a clearer photo.</string>
+    <string name="imaging_error_specimen_detection_failed">Could not detect a specimen in the image. Try taking a clearer photo.</string>
     
     <!-- Imaging error: Unknown inference error -->
     <string name="imaging_error_unknown_inference_error">An unknown error occurred during analysis. Please try again.</string>
@@ -140,7 +140,7 @@
     <string name="registration_error_unknown_error">An unknown error occurred. Please try again or contact support if the issue persists.</string>
 
     <!-- Incomplete session error: Session not found -->
-    <string name="incomplete_session_error_session_not_found">Session not found. Please try again.</string>"
+    <string name="incomplete_session_error_session_not_found">Session not found. Please try again.</string>
 
     <!-- Incomplete session error: Session retrieval failed -->
     <string name="incomplete_session_error_session_retrieval_failed">Unable to retrieve session. Please try again.</string>

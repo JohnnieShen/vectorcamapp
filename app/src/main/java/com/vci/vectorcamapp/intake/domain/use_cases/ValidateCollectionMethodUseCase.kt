@@ -5,7 +5,7 @@ import com.vci.vectorcamapp.intake.domain.util.FormValidationError
 import javax.inject.Inject
 
 class ValidateCollectionMethodUseCase @Inject constructor() {
-    operator fun invoke(collectionMethod: String) : Result<Unit, FormValidationError> {
+    operator fun invoke(collectionMethod: String): Result<Unit, FormValidationError> {
         return if (collectionMethod.isBlank()) {
             Result.Error(FormValidationError.BLANK_COLLECTION_METHOD)
         } else {

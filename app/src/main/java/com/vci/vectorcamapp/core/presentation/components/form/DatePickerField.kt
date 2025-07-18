@@ -3,23 +3,33 @@ package com.vci.vectorcamapp.core.presentation.components.form
 import android.app.DatePickerDialog
 import android.icu.util.Calendar
 import android.icu.util.TimeZone
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import com.vci.vectorcamapp.R
 import com.vci.vectorcamapp.core.presentation.util.error.toString
 import com.vci.vectorcamapp.intake.domain.util.FormValidationError
+import com.vci.vectorcamapp.ui.extensions.colors
+import com.vci.vectorcamapp.ui.extensions.dimensions
 import java.text.SimpleDateFormat
 import java.util.Locale
 
@@ -32,46 +42,56 @@ fun DatePickerField(
     error: FormValidationError? = null
 ) {
     val context = LocalContext.current
-    val calendar = remember { Calendar.getInstance(TimeZone.getDefault(), Locale.getDefault()) }
-    calendar.timeInMillis = selectedDateInMillis
+
+    val calendar = remember(selectedDateInMillis) {
+        Calendar.getInstance(TimeZone.getDefault(), Locale.getDefault()).apply {
+            timeInMillis = selectedDateInMillis
+        }
+    }
+    
+    val dateFormatter = remember {
+        SimpleDateFormat("MMM dd, yyyy", Locale.getDefault())
+    }
 
     val formattedDate = remember(selectedDateInMillis) {
-        SimpleDateFormat("MMM dd, yyyy", Locale.getDefault()).format(selectedDateInMillis)
+        dateFormatter.format(selectedDateInMillis)
     }
 
     Column(modifier = modifier.fillMaxWidth()) {
         Text(
-            text  = label,
-            style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium)
+            text = label,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colors.textSecondary,
         )
 
-        OutlinedTextField(
-            value = formattedDate,
-            onValueChange = { },
-            isError = error != null,
-            enabled = false,
-            singleLine = true,
-            trailingIcon = {
-                Icon(
-                    painter = painterResource(R.drawable.ic_calendar),
-                    contentDescription = "Calendar"
-                )
-            },
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
+                .background(
+                    color = MaterialTheme.colors.cardBackground,
+                    shape = RoundedCornerShape(MaterialTheme.dimensions.cornerRadiusSmall)
+                )
+                .border(
+                    width = MaterialTheme.dimensions.borderThicknessThick,
+                    color = if (error != null) MaterialTheme.colors.error else MaterialTheme.colors.primary,
+                    shape = RoundedCornerShape(MaterialTheme.dimensions.cornerRadiusSmall)
+                )
+                .heightIn(min = MaterialTheme.dimensions.componentHeightMedium)
                 .clickable {
                     DatePickerDialog(
                         context,
                         { _, year, month, dayOfMonth ->
-                            calendar.set(Calendar.YEAR, year)
-                            calendar.set(Calendar.MONTH, month)
-                            calendar.set(Calendar.DAY_OF_MONTH, dayOfMonth)
-                            calendar.set(Calendar.HOUR_OF_DAY, 0)
-                            calendar.set(Calendar.MINUTE, 0)
-                            calendar.set(Calendar.SECOND, 0)
-                            calendar.set(Calendar.MILLISECOND, 0)
+                            val newCalendar =
+                                Calendar.getInstance(TimeZone.getDefault(), Locale.getDefault())
+                            newCalendar.set(Calendar.YEAR, year)
+                            newCalendar.set(Calendar.MONTH, month)
+                            newCalendar.set(Calendar.DAY_OF_MONTH, dayOfMonth)
+                            newCalendar.set(Calendar.HOUR_OF_DAY, 0)
+                            newCalendar.set(Calendar.MINUTE, 0)
+                            newCalendar.set(Calendar.SECOND, 0)
+                            newCalendar.set(Calendar.MILLISECOND, 0)
 
-                            onDateSelected(calendar.timeInMillis)
+                            onDateSelected(newCalendar.timeInMillis)
                         },
                         calendar.get(Calendar.YEAR),
                         calendar.get(Calendar.MONTH),
@@ -80,15 +100,34 @@ fun DatePickerField(
                         datePicker.maxDate = System.currentTimeMillis()
                     }.show()
                 }
-        )
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(MaterialTheme.dimensions.paddingMedium),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    text = formattedDate,
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colors.textPrimary
+                )
+
+                Icon(
+                    painter = painterResource(R.drawable.ic_calendar),
+                    contentDescription = "Calendar",
+                    tint = MaterialTheme.colors.icon,
+                    modifier = Modifier.size(MaterialTheme.dimensions.iconSizeLarge)
+                )
+            }
+        }
 
         if (error != null) {
             Text(
                 text = error.toString(context),
-                color = MaterialTheme.colorScheme.error,
                 style = MaterialTheme.typography.bodySmall,
-                modifier = Modifier.fillMaxWidth(),
-                textAlign = TextAlign.Start
+                color = MaterialTheme.colors.error
             )
         }
     }

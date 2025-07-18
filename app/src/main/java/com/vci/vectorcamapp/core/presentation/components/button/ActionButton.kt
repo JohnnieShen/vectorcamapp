@@ -11,7 +11,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import com.vci.vectorcamapp.ui.extensions.colors
 import com.vci.vectorcamapp.ui.extensions.dimensions
@@ -24,7 +23,8 @@ fun ActionButton(
         onClick = onClick,
         enabled = enabled,
         colors = ButtonDefaults.buttonColors(
-            containerColor = Color.Transparent, disabledContainerColor = Color.LightGray
+            containerColor = MaterialTheme.colors.transparent,
+            disabledContainerColor = MaterialTheme.colors.disabled
         ),
         shape = RoundedCornerShape(MaterialTheme.dimensions.cornerRadiusMedium),
         modifier = modifier

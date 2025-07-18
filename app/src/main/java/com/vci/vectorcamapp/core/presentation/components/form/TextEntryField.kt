@@ -1,19 +1,24 @@
 package com.vci.vectorcamapp.core.presentation.components.form
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.font.FontWeight
 import com.vci.vectorcamapp.core.presentation.util.error.toString
 import com.vci.vectorcamapp.intake.domain.util.FormValidationError
+import com.vci.vectorcamapp.ui.extensions.colors
+import com.vci.vectorcamapp.ui.extensions.dimensions
 
 @Composable
 fun TextEntryField(
@@ -29,12 +34,12 @@ fun TextEntryField(
     val context = LocalContext.current
 
     Column(
-        modifier = modifier
-            .fillMaxWidth()
+        modifier = modifier.fillMaxWidth()
     ) {
         Text(
             text = label,
-            style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium)
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colors.textSecondary,
         )
 
         OutlinedTextField(
@@ -45,19 +50,38 @@ fun TextEntryField(
             keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
             placeholder = {
                 if (placeholder != null) {
-                    Text(text = placeholder)
+                    Text(
+                        text = placeholder,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colors.textSecondary,
+                    )
                 }
             },
-            modifier = Modifier.fillMaxWidth()
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = MaterialTheme.colors.transparent,
+                unfocusedBorderColor = MaterialTheme.colors.transparent,
+                errorBorderColor = MaterialTheme.colors.transparent,
+                cursorColor = MaterialTheme.colors.primary,
+            ),
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(
+                    color = MaterialTheme.colors.cardBackground,
+                    shape = RoundedCornerShape(MaterialTheme.dimensions.cornerRadiusSmall)
+                )
+                .border(
+                    width = MaterialTheme.dimensions.borderThicknessThick,
+                    shape = RoundedCornerShape(MaterialTheme.dimensions.cornerRadiusSmall),
+                    color = if (error != null) MaterialTheme.colors.error else MaterialTheme.colors.primary
+                )
+                .heightIn(min = MaterialTheme.dimensions.componentHeightMedium)
         )
 
         if (error != null) {
             Text(
                 text = error.toString(context),
-                color = MaterialTheme.colorScheme.error,
                 style = MaterialTheme.typography.bodySmall,
-                modifier = Modifier.fillMaxWidth(),
-                textAlign = TextAlign.Start
+                color = MaterialTheme.colors.error
             )
         }
     }
