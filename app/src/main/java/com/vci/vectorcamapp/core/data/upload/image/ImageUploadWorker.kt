@@ -8,18 +8,21 @@ import android.content.pm.ServiceInfo
 import android.net.Uri
 import android.util.Log
 import androidx.core.app.NotificationCompat
-import androidx.core.net.toUri
 import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.ForegroundInfo
 import androidx.work.WorkerParameters
 import androidx.work.workDataOf
 import com.vci.vectorcamapp.R
+import com.vci.vectorcamapp.core.data.network.constructUrl
+import com.vci.vectorcamapp.core.data.upload.image.util.UploadError
 import com.vci.vectorcamapp.core.domain.model.UploadStatus
+import com.vci.vectorcamapp.core.domain.network.api.ImageUploadDataSource
 import com.vci.vectorcamapp.core.domain.repository.SpecimenRepository
+import com.vci.vectorcamapp.core.domain.util.onError
+import com.vci.vectorcamapp.core.domain.util.successOrNull
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
-import io.tus.android.client.TusPreferencesURLStore
 import io.tus.java.client.TusClient
 import io.tus.java.client.TusUpload
 import io.tus.java.client.TusUploader
@@ -36,20 +39,21 @@ import java.net.URL
 import java.security.MessageDigest
 import java.util.UUID
 import androidx.work.ListenableWorker.Result as WorkerResult
+import com.vci.vectorcamapp.core.domain.util.Result as DomainResult
 
 @HiltWorker
 class ImageUploadWorker @AssistedInject constructor(
     @Assisted private val context: Context,
     @Assisted workerParams: WorkerParameters,
     private val specimenRepository: SpecimenRepository,
+    private val imageUploadDataSource: ImageUploadDataSource,
+    private val tusClient: TusClient
 ) : CoroutineWorker(context, workerParams) {
 
     companion object {
-        const val KEY_URI = "uri"
-        const val KEY_ENDPOINT = "endpoint"
-        const val KEY_UPLOAD_URL = "upload_url"
         const val KEY_SPECIMEN_ID = "specimen_id"
         const val KEY_SESSION_ID = "session_id"
+
         const val KEY_PROGRESS_UPLOADED = "progress_uploaded"
         const val KEY_PROGRESS_TOTAL = "progress_total"
 
@@ -59,7 +63,9 @@ class ImageUploadWorker @AssistedInject constructor(
         private const val SUCCESS_STREAK_FOR_INCREASE = 5
         private const val SUCCESS_CHUNK_SIZE_MULTIPLIER = 2
         private const val FAILURE_CHUNK_SIZE_DIVIDER = 2
+
         private const val NETWORK_TIMEOUT_MS = 30_000L
+        private const val MAX_RETRIES = 5
 
         private const val CHANNEL_ID = "image_upload_channel"
         private const val CHANNEL_NAME = "Image Upload Channel"
@@ -70,7 +76,7 @@ class ImageUploadWorker @AssistedInject constructor(
     private val notificationManager =
         context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
-    private data class UploadInput(val uri: Uri, val endpoint: String, val specimenId: String, val sessionId: UUID)
+    private data class UploadInput(val specimenId: String, val sessionId: UUID)
 
     override suspend fun doWork(): WorkerResult {
         val input = getUploadInput() ?: return WorkerResult.failure()
@@ -80,72 +86,111 @@ class ImageUploadWorker @AssistedInject constructor(
 
         var temporaryFile: File? = null
 
+        val specimenToUpload = specimenRepository.getSpecimenById(input.specimenId) ?: return WorkerResult.failure()
+
         return try {
-            val (file, contentType) = prepareFile(context.contentResolver, input.uri)
+            val (file, contentType) = prepareFile(context.contentResolver, specimenToUpload.imageUri)
             temporaryFile = file
 
-            val uploadUrl = performUpload(input, file, contentType)
-
-            notificationManager.cancel(NOTIFICATION_ID)
-
-            updateStatus(input.specimenId, input.sessionId, UploadStatus.COMPLETED)
-
-            WorkerResult.success(workDataOf(KEY_UPLOAD_URL to uploadUrl))
+            return when (val result = performUpload(input, file, contentType)) {
+                is DomainResult.Success -> {
+                    notificationManager.cancel(NOTIFICATION_ID)
+                    updateStatus(input.specimenId, input.sessionId, UploadStatus.COMPLETED)
+                    WorkerResult.success()
+                }
+                is DomainResult.Error -> {
+                    handleUploadError(result.error, input)
+                }
+            }
         } catch (e: IOException) {
             Log.w("ImageUploadWorker", "Transient I/O failure, will retry.", e)
-            showUploadErrorNotification("Connection issue, retrying...")
-            updateStatus(input.specimenId, input.sessionId, UploadStatus.RETRY)
-            WorkerResult.retry()
+            return handleUploadError(UploadError.NO_INTERNET, input)
         } catch (e: Exception) {
             val responseCode = (e as? io.tus.java.client.ProtocolException)?.causingConnection?.responseCode
             Log.e("ImageUploadWorker", "Permanent or unexpected failure (Code: $responseCode).", e)
-            showUploadErrorNotification("Upload failed: ${e.message}")
-            updateStatus(input.specimenId, input.sessionId, UploadStatus.RETRY)
-            WorkerResult.failure()
+            return handleUploadError(UploadError.UNKNOWN_ERROR, input)
         } finally {
             temporaryFile?.delete()
             notificationManager.cancel(NOTIFICATION_ID)
         }
     }
 
-    private suspend fun performUpload(input: UploadInput, file: File, contentType: String?): String {
+    private suspend fun handleUploadError(error: UploadError, input: UploadInput): WorkerResult {
+        val isRetryable = when (error) {
+            UploadError.NO_INTERNET,
+            UploadError.TIMEOUT -> true
+            else -> false
+        }
+
+        val errorMessage = when (error) {
+            UploadError.NO_INTERNET -> "Connection issue, retrying..."
+            UploadError.TIMEOUT -> "Connection timed out, retrying..."
+            UploadError.PROTOCOL_ERROR -> "Server protocol error."
+            UploadError.VERIFICATION_ERROR -> "Upload failed: file could not be verified."
+            UploadError.UNKNOWN_ERROR -> "An unknown upload error occurred."
+        }
+
+        if (isRetryable && runAttemptCount < MAX_RETRIES) {
+            Log.w("ImageUploadWorker", "Retryable error occurred: $error. Attempt ${runAttemptCount + 1}.")
+            showUploadErrorNotification(errorMessage)
+            updateStatus(input.specimenId, input.sessionId, UploadStatus.FAILED)
+            return WorkerResult.retry()
+        } else {
+            Log.e("ImageUploadWorker", "Permanent or max-retry error: $error, $errorMessage.")
+            showUploadErrorNotification(errorMessage)
+            updateStatus(input.specimenId, input.sessionId, UploadStatus.FAILED)
+            return WorkerResult.failure()
+        }
+    }
+
+    private suspend fun performUpload(input: UploadInput, file: File, contentType: String?): DomainResult<String, UploadError> {
         val md5 = calculateMD5(file)
         val uniqueFingerprint = "${input.specimenId}-$md5"
-        val checkUrl = getCheckUrl(input.endpoint, md5)
 
-        val client = createTusClient(input.endpoint)
+        val tusPath = "specimens/${input.specimenId}/images/tus"
+
+        tusClient.uploadCreationURL = URL(constructUrl(tusPath))
         val upload = createTusUpload(file, uniqueFingerprint, contentType, md5)
 
         Log.d("ImageUploadWorker", "Start/resume ${file.name} (fp=$uniqueFingerprint,md5=$md5)")
 
-        val uploader = try {
-            client.resumeOrCreateUpload(upload)
+        val uploaderResult = try {
+            DomainResult.Success(tusClient.resumeOrCreateUpload(upload))
         } catch (e: io.tus.java.client.ProtocolException) {
             if (e.causingConnection?.responseCode == HttpURLConnection.HTTP_CONFLICT) {
-                Log.w("ImageUploadWorker", "resumeOrCreateUpload failed with 409 Conflict. Verifying if file already exists on server.", e)
-                val existingUrl = verifyUploadByMD5(checkUrl)
-                if (existingUrl != null) {
-                    Log.d("ImageUploadWorker", "Image already exists on server. URL: $existingUrl")
-                    return existingUrl.toString()
-                } else {
-                    Log.e("ImageUploadWorker", "File does not exist on server despite 409. Upload initialization truly failed.", e)
-                    throw e
+                Log.w("ImageUploadWorker", "resumeOrCreateUpload failed with 409 Conflict. Verifying by MD5.", e)
+                return when (val existingUrlResult = imageUploadDataSource.imageExists(input.specimenId, md5)) {
+                    is DomainResult.Success -> DomainResult.Success(existingUrlResult.data.toString())
+                    is DomainResult.Error -> {
+                        Log.e("ImageUploadWorker", "MD5 check failed despite 409. Upload initialization failed.", e)
+                        DomainResult.Error(UploadError.PROTOCOL_ERROR)
+                    }
                 }
             } else {
-                Log.e("ImageUploadWorker", "resumeOrCreateUpload failed with unhandled status code: ${e.causingConnection?.responseCode}", e)
-                throw e
+                Log.e("ImageUploadWorker", "resumeOrCreateUpload failed with code: ${e.causingConnection?.responseCode}", e)
+                return DomainResult.Error(UploadError.PROTOCOL_ERROR)
             }
+        } catch (e: IOException) {
+            return DomainResult.Error(UploadError.NO_INTERNET)
         }
 
-        executeUploadLoop(uploader, client, upload)
+        val uploader = uploaderResult.successOrNull() ?: return DomainResult.Error(UploadError.UNKNOWN_ERROR)
 
-        val finalUrl = safeFinish(uploader, checkUrl)
-        updateWorkerProgress(upload.size, upload.size)
-        Log.d("ImageUploadWorker", "Upload finished successfully: $finalUrl")
-        return finalUrl.toString()
+        executeUploadLoop(uploader, tusClient, upload).onError {
+            return DomainResult.Error(it)
+        }
+
+        return when (val finalUrlResult = safeFinish(uploader, input.specimenId, md5)) {
+            is DomainResult.Success -> {
+                updateWorkerProgress(upload.size, upload.size)
+                Log.d("ImageUploadWorker", "Upload finished successfully: ${finalUrlResult.data}")
+                DomainResult.Success(finalUrlResult.data.toString())
+            }
+            is DomainResult.Error -> DomainResult.Error(finalUrlResult.error)
+        }
     }
 
-    private suspend fun executeUploadLoop(initialUploader: TusUploader, client: TusClient, upload: TusUpload) {
+    private suspend fun executeUploadLoop(initialUploader: TusUploader, client: TusClient, upload: TusUpload): DomainResult<Unit, UploadError> {
         var uploader = initialUploader
         var currentChunkSize = INITIAL_CHUNK_SIZE_BYTES
         var successfulUploadsInARow = 0
@@ -154,64 +199,66 @@ class ImageUploadWorker @AssistedInject constructor(
             uploader.chunkSize = currentChunkSize
             uploader.requestPayloadSize = currentChunkSize
 
-            val bytesUploaded = try {
-                withTimeout(NETWORK_TIMEOUT_MS) { uploader.uploadChunk() }
+            val chunkResult = try {
+                withTimeout(NETWORK_TIMEOUT_MS) { DomainResult.Success(uploader.uploadChunk()) }
             } catch (e: Exception) {
-                successfulUploadsInARow = 0
-                currentChunkSize = (currentChunkSize / FAILURE_CHUNK_SIZE_DIVIDER).coerceAtLeast(MIN_CHUNK_SIZE_BYTES)
-                Log.w("ImageUploadWorker", "Upload error. Reducing chunk size to $currentChunkSize bytes.", e)
-
-                val isRetryable = when (e) {
-                    is TimeoutCancellationException, is IOException -> true
-                    is io.tus.java.client.ProtocolException ->
-                        e.causingConnection?.responseCode == HttpURLConnection.HTTP_CONFLICT
-                    else -> false
-                }
-
-                if (isRetryable) {
-                    uploader = client.resumeOrCreateUpload(upload)
-                    continue
-                } else {
-                    throw e
+                when (e) {
+                    is TimeoutCancellationException -> DomainResult.Error(UploadError.TIMEOUT)
+                    is IOException -> DomainResult.Error(UploadError.NO_INTERNET)
+                    is io.tus.java.client.ProtocolException -> DomainResult.Error(UploadError.PROTOCOL_ERROR)
+                    else -> DomainResult.Error(UploadError.UNKNOWN_ERROR)
                 }
             }
 
-            if (bytesUploaded <= -1) {
-                Log.w("ImageUploadWorker", "File stream ended unexpectedly.")
-                break
-            }
+            when (chunkResult) {
+                is DomainResult.Success -> {
+                    val bytesUploaded = chunkResult.data
+                    if (bytesUploaded <= -1) {
+                        Log.w("ImageUploadWorker", "File stream ended unexpectedly.")
+                        break
+                    }
 
-            updateWorkerProgress(uploader.offset, upload.size)
-            Log.d("ImageUploadWorker", "Uploaded a payload of $bytesUploaded bytes.")
+                    updateWorkerProgress(uploader.offset, upload.size)
+                    successfulUploadsInARow++
+                    if (successfulUploadsInARow >= SUCCESS_STREAK_FOR_INCREASE) {
+                        currentChunkSize = (currentChunkSize * SUCCESS_CHUNK_SIZE_MULTIPLIER).coerceAtMost(MAX_CHUNK_SIZE_BYTES)
+                        Log.i("ImageUploadWorker", "Increasing chunk size to $currentChunkSize bytes.")
+                        successfulUploadsInARow = 0
+                    }
+                }
+                is DomainResult.Error -> {
+                    val error = chunkResult.error
+                    successfulUploadsInARow = 0
+                    currentChunkSize = (currentChunkSize / FAILURE_CHUNK_SIZE_DIVIDER).coerceAtLeast(MIN_CHUNK_SIZE_BYTES)
+                    Log.w("ImageUploadWorker", "Upload error: $error. Reducing chunk size to $currentChunkSize bytes.")
 
-            successfulUploadsInARow++
-            if (successfulUploadsInARow >= SUCCESS_STREAK_FOR_INCREASE) {
-                currentChunkSize = (currentChunkSize * SUCCESS_CHUNK_SIZE_MULTIPLIER).coerceAtMost(MAX_CHUNK_SIZE_BYTES)
-                Log.i("ImageUploadWorker", "Stable connection. Increasing chunk and payload size to $currentChunkSize bytes.")
-                successfulUploadsInARow = 0
+                    if (error == UploadError.TIMEOUT || error == UploadError.NO_INTERNET || error == UploadError.PROTOCOL_ERROR) {
+                        try {
+                            uploader = client.resumeOrCreateUpload(upload)
+                            continue
+                        } catch (resumeException: Exception) {
+                            return DomainResult.Error(UploadError.UNKNOWN_ERROR)
+                        }
+                    } else {
+                        return DomainResult.Error(error)
+                    }
+                }
             }
         }
         Log.d("ImageUploadWorker", "Upload loop finished. Final offset: ${uploader.offset}")
+        return DomainResult.Success(Unit)
     }
 
     private fun getUploadInput(): UploadInput? {
         return try {
-            val uriStr = inputData.getString(KEY_URI) ?: return null
-            val endpoint = inputData.getString(KEY_ENDPOINT) ?: return null
             val specimenId = inputData.getString(KEY_SPECIMEN_ID) ?: return null
             val sessionIdStr = inputData.getString(KEY_SESSION_ID) ?: return null
             val sessionId = UUID.fromString(sessionIdStr)
-            UploadInput(uriStr.toUri(), endpoint, specimenId, sessionId)
+            UploadInput(specimenId, sessionId)
         } catch (e: IllegalArgumentException) {
             Log.e("ImageUploadWorker", "Invalid input data provided.", e)
             null
         }
-    }
-
-    private fun createTusClient(endpoint: String): TusClient = TusClient().apply {
-        setUploadCreationURL(URL(endpoint))
-        enableResuming(TusPreferencesURLStore(context.getSharedPreferences("tus_worker", Context.MODE_PRIVATE)))
-        setHeaders(mapOf("Content-Type" to "application/offset+octet-stream"))
     }
 
     private fun createTusUpload(file: File, fingerprint: String, contentType: String?, md5: String) = TusUpload(file).apply {
@@ -235,80 +282,39 @@ class ImageUploadWorker @AssistedInject constructor(
         return md.digest().joinToString("") { "%02x".format(it) }
     }
 
-    private fun getCheckUrl(tusEndpoint: String, md5: String): URL {
-        val baseUrl = tusEndpoint.removeSuffix("/tus")
-        return URL("$baseUrl/$md5")
-    }
-
-    private suspend fun imageExists(url: URL): Pair<Boolean, URL?> = withContext(Dispatchers.IO) {
-        try {
-            val connection = url.openConnection() as HttpURLConnection
-            connection.requestMethod = "HEAD"
-            connection.instanceFollowRedirects = true
-            connection.connectTimeout = 5000
-            connection.readTimeout = 5000
-            connection.connect()
-
-            val responseCode = connection.responseCode
-            val finalUrl = connection.url
-            (responseCode == HttpURLConnection.HTTP_OK) to finalUrl
-        } catch (e: IOException) {
-            Log.w("ImageUploadWorker", "Image existence check failed for $url", e)
-            false to null
-        }
-    }
-
-    private suspend fun prepareFile(resolver: ContentResolver, src: Uri): Pair<File, String?> = withContext(Dispatchers.IO) {
-        val mimeType = resolver.getType(src)
+    private suspend fun prepareFile(resolver: ContentResolver, source: Uri): Pair<File, String?> = withContext(Dispatchers.IO) {
+        val mimeType = resolver.getType(source)
         val extension = when (mimeType) {
             "image/jpeg" -> "jpg"
             "image/png" -> "png"
             else -> "bin"
         }
-        val dst = File(context.cacheDir, "work_upload_${System.currentTimeMillis()}.$extension")
-        resolver.openInputStream(src)?.use { input ->
-            FileOutputStream(dst).use { output ->
+        val destination = File(context.cacheDir, "work_upload_${System.currentTimeMillis()}.$extension")
+        resolver.openInputStream(source)?.use { input ->
+            FileOutputStream(destination).use { output ->
                 input.copyTo(output)
             }
-        } ?: throw IOException("Unable to open $src")
-        Log.d("ImageUploadWorker", "Prepared ${dst.name} (${dst.length()} bytes)")
-        return@withContext dst to mimeType
+        } ?: throw IOException("Unable to open $source")
+        Log.d("ImageUploadWorker", "Prepared ${destination.name} (${destination.length()} bytes)")
+        return@withContext destination to mimeType
     }
 
-    private suspend fun verifyUploadByMD5(checkUrl: URL): URL? {
-        val (exists, existingUrl) = imageExists(checkUrl)
-        return if (exists && existingUrl != null) {
-            Log.d("ImageUploadWorker", "Server has the file (verified by MD5 check). Success.")
-            existingUrl
-        } else {
-            null
-        }
-    }
-
-    @Throws(io.tus.java.client.ProtocolException::class, IOException::class)
-    private suspend fun safeFinish(uploader: TusUploader, checkUrl: URL): URL = withContext(Dispatchers.IO) {
+    private suspend fun safeFinish(uploader: TusUploader, specimenId: String, md5: String): DomainResult<URL, UploadError> = withContext(Dispatchers.IO) {
         try {
             uploader.finish()
             Log.d("ImageUploadWorker", "Tus finish() successful. Verifying with MD5 check.")
-
-            val verifiedUrl = verifyUploadByMD5(checkUrl)
-            if (verifiedUrl != null) {
-                Log.d("ImageUploadWorker", "MD5 verification successful after finish(). Final URL: $verifiedUrl")
-                return@withContext verifiedUrl
-            } else {
-                Log.e("ImageUploadWorker", "CRITICAL: finish() succeeded but MD5 check failed for ${checkUrl}.")
-                throw IOException("Upload verification failed: file not found on server after successful finish.")
+            when (val verificationResult = imageUploadDataSource.imageExists(specimenId, md5)) {
+                is DomainResult.Success -> verificationResult
+                is DomainResult.Error -> DomainResult.Error(UploadError.VERIFICATION_ERROR)
             }
         } catch (e: io.tus.java.client.ProtocolException) {
-            Log.w("ImageUploadWorker", "finish() failed. Verifying with server via MD5 check...", e)
-            val existingUrl = verifyUploadByMD5(checkUrl)
-            if (existingUrl != null) {
-                Log.d("ImageUploadWorker", "Image already exists on server. URL: $existingUrl")
-                return@withContext existingUrl
-            } else {
-                Log.e("ImageUploadWorker", "File does not exist on server. Upload initialization truly failed.", e)
-                throw e
+            Log.w("ImageUploadWorker", "finish() failed. Fallback to MD5 check.", e)
+            when (val verificationResult = imageUploadDataSource.imageExists(specimenId, md5)) {
+                is DomainResult.Success -> verificationResult
+                is DomainResult.Error -> DomainResult.Error(UploadError.VERIFICATION_ERROR)
             }
+        } catch (e: IOException) {
+            DomainResult.Error(UploadError.NO_INTERNET)
         }
     }
 

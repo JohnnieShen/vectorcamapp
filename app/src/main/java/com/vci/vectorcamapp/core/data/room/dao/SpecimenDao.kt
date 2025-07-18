@@ -24,7 +24,7 @@ interface SpecimenDao {
     @Delete
     suspend fun deleteSpecimen(specimen: SpecimenEntity): Int
 
-    @Query("SELECT * FROM specimen WHERE id = :id LIMIT 1")
+    @Query("SELECT * FROM specimen WHERE id = :id")
     suspend fun getSpecimenById(id: String): SpecimenEntity?
 
     @Transaction
