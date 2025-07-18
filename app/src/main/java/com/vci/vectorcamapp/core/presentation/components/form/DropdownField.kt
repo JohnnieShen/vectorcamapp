@@ -1,11 +1,14 @@
 package com.vci.vectorcamapp.core.presentation.components.form
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
@@ -13,115 +16,101 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.KeyboardArrowDown
-import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import com.vci.vectorcamapp.R
 import com.vci.vectorcamapp.core.presentation.util.error.toString
-import com.vci.vectorcamapp.intake.domain.enums.DropdownOption
 import com.vci.vectorcamapp.intake.domain.util.FormValidationError
 import com.vci.vectorcamapp.ui.extensions.colors
 import com.vci.vectorcamapp.ui.extensions.dimensions
 import com.vci.vectorcamapp.ui.theme.screenHeightFraction
 
 @Composable
-fun <T : DropdownOption> DropdownField(
-    label: String,
+fun <T> DropdownField(
     options: List<T>,
     selectedOption: T?,
     onOptionSelected: (T) -> Unit,
     modifier: Modifier = Modifier,
-    highlightBorder: Boolean = false,
-    arrowAlwaysDown: Boolean = true,
-    menuItemContent: @Composable (T) -> Unit = { Text(text = it.label) },
-    error: FormValidationError? = null
+    label: String? = null,
+    error: FormValidationError? = null,
+    itemContent: @Composable (T) -> Unit,
 ) {
     val context = LocalContext.current
     var expanded by remember { mutableStateOf(false) }
 
-    Column(modifier = modifier.fillMaxWidth()) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium)
-        )
+    Column(modifier = Modifier.fillMaxWidth()) {
+        label?.let {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium)
+            )
+        }
 
-        BoxWithConstraints(
-            modifier = modifier
-
-        ) {
+        BoxWithConstraints(modifier = modifier) {
             val parentWidth = maxWidth
             val parentHeight = maxHeight
 
-            val borderColor = when {
-                error != null -> MaterialTheme.colors.error
-                highlightBorder -> MaterialTheme.colors.primary
-                else -> Color.Black
-            }
-
-            val borderThickness = if (error != null || highlightBorder)
-                MaterialTheme.dimensions.borderThicknessThick
-            else
-                MaterialTheme.dimensions.borderThicknessThin
-
-            OutlinedTextField(
-                value = selectedOption?.label ?: "",
-                onValueChange = { },
-                placeholder = {
-                    Text(
-                        text = label,
-                        style = MaterialTheme.typography.bodyLarge,
-                        modifier = Modifier.padding(start = MaterialTheme.dimensions.paddingSmall)
+            Box(
+                modifier = modifier
+                    .fillMaxWidth()
+                    .background(
+                        color = MaterialTheme.colors.cardBackground,
+                        shape = RoundedCornerShape(MaterialTheme.dimensions.cornerRadiusSmall)
                     )
-                },
-                shape = RoundedCornerShape(MaterialTheme.dimensions.cornerRadiusSmall),
-                singleLine = true,
-                enabled = false,
-                colors = TextFieldDefaults.colors(
-                    disabledTextColor = MaterialTheme.colors.textPrimary,
-                    disabledPlaceholderColor = MaterialTheme.colors.textSecondary,
-                    disabledContainerColor = MaterialTheme.colors.cardBackground,
-                    disabledTrailingIconColor = if (selectedOption == null) MaterialTheme.colors.textSecondary else MaterialTheme.colors.textPrimary
-                ),
-                trailingIcon = {
-                    Box(modifier = Modifier.padding(end = MaterialTheme.dimensions.paddingLarge)) {
-                        val showDown = if (arrowAlwaysDown) true else expanded
+                    .border(
+                        width = MaterialTheme.dimensions.borderThicknessThick,
+                        color = if (error != null) MaterialTheme.colors.error else MaterialTheme.colors.primary,
+                        shape = RoundedCornerShape(MaterialTheme.dimensions.cornerRadiusSmall)
+                    )
+                    .heightIn(min = MaterialTheme.dimensions.componentHeightMedium)
+                    .clickable { expanded = true }) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(MaterialTheme.dimensions.paddingMedium),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .padding(start = MaterialTheme.dimensions.paddingSmall)
+                    ) {
+                        if (selectedOption != null) {
+                            itemContent(selectedOption)
+                        } else {
+                            Text(
+                                text = label ?: "Select",
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = MaterialTheme.colors.textSecondary
+                            )
+                        }
+                    }
+
+                    Box(modifier = Modifier.padding(start = MaterialTheme.dimensions.paddingLarge)) {
                         Icon(
-                            imageVector = if (showDown) Icons.Default.KeyboardArrowDown else Icons.Default.KeyboardArrowUp,
-                            contentDescription = "Expand dropdown",
+                            painter = painterResource(if (expanded) R.drawable.ic_arrow_up else R.drawable.ic_arrow_down),
+                            contentDescription = if (expanded) "Collapse dropdown" else "Expand dropdown",
+                            tint = if (selectedOption == null) MaterialTheme.colors.textSecondary else MaterialTheme.colors.textPrimary,
                             modifier = Modifier.size(MaterialTheme.dimensions.iconSizeLarge)
                         )
                     }
-                },
-                modifier = modifier
-                    .fillMaxWidth()
-                    .border(
-                        width = borderThickness,
-                        color = borderColor,
-                        shape = RoundedCornerShape(
-                            topStart = MaterialTheme.dimensions.cornerRadiusSmall,
-                            topEnd = MaterialTheme.dimensions.cornerRadiusSmall,
-                            bottomStart = MaterialTheme.dimensions.cornerRadiusSmall,
-                            bottomEnd = MaterialTheme.dimensions.cornerRadiusSmall
-                        )
-                    )
-                    .clickable { expanded = true })
+                }
+            }
 
             DropdownMenu(
                 expanded = expanded,
@@ -143,7 +132,7 @@ fun <T : DropdownOption> DropdownField(
             ) {
                 options.forEachIndexed { index, option ->
                     DropdownMenuItem(
-                        text = { menuItemContent(option) },
+                        text = { itemContent(option) },
                         onClick = {
                             onOptionSelected(option)
                             expanded = false

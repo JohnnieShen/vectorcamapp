@@ -180,7 +180,7 @@ class IntakeViewModel @Inject constructor(
                 is IntakeAction.SelectDistrict -> {
                     _state.update {
                         it.copy(
-                            selectedDistrict = action.option.label, selectedSentinelSite = ""
+                            selectedDistrict = action.district, selectedSentinelSite = ""
                         )
                     }
                 }
@@ -188,7 +188,7 @@ class IntakeViewModel @Inject constructor(
                 is IntakeAction.SelectSentinelSite -> {
                     _state.update {
                         it.copy(
-                            selectedSentinelSite = action.option.label
+                            selectedSentinelSite = action.sentinelSite
                         )
                     }
                 }

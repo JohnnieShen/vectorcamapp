@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.vci.vectorcamapp.core.domain.cache.CurrentSessionCache
 import com.vci.vectorcamapp.core.domain.cache.DeviceCache
 import com.vci.vectorcamapp.core.domain.model.Device
+import com.vci.vectorcamapp.core.domain.model.Program
 import com.vci.vectorcamapp.core.domain.repository.ProgramRepository
 import com.vci.vectorcamapp.core.presentation.CoreViewModel
 import com.vci.vectorcamapp.registration.domain.util.RegistrationError
@@ -39,12 +40,11 @@ class RegistrationViewModel @Inject constructor(
         viewModelScope.launch {
             when (action) {
                 is RegistrationAction.SelectProgram -> {
-                    _state.update { it.copy(selectedProgramName = action.option.label) }
+                    _state.update { it.copy(selectedProgram = action.program) }
                 }
 
                 RegistrationAction.ConfirmRegistration -> {
-                    val selectedProgram =
-                        _state.value.programs.find { it.name == _state.value.selectedProgramName }
+                    val selectedProgram = _state.value.selectedProgram
                     if (selectedProgram == null) {
                         emitError(RegistrationError.PROGRAM_NOT_FOUND)
                         return@launch

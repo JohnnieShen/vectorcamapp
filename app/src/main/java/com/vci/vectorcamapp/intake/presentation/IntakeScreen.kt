@@ -32,32 +32,24 @@ import com.vci.vectorcamapp.core.presentation.components.form.TextEntryField
 import com.vci.vectorcamapp.core.presentation.components.form.ToggleField
 import com.vci.vectorcamapp.core.presentation.components.header.ScreenHeader
 import com.vci.vectorcamapp.core.presentation.util.error.toString
-import com.vci.vectorcamapp.intake.domain.enums.CollectionMethodOption
-import com.vci.vectorcamapp.intake.domain.enums.DistrictOption
-import com.vci.vectorcamapp.intake.domain.enums.LlinBrandOption
-import com.vci.vectorcamapp.intake.domain.enums.LlinTypeOption
-import com.vci.vectorcamapp.intake.domain.enums.SentinelSiteOption
-import com.vci.vectorcamapp.intake.domain.enums.SpecimenConditionOption
+import com.vci.vectorcamapp.intake.domain.enums.IntakeDropdownOptions
 import com.vci.vectorcamapp.intake.domain.util.IntakeError
 import com.vci.vectorcamapp.intake.presentation.components.SectionCard
+import com.vci.vectorcamapp.ui.extensions.colors
 import com.vci.vectorcamapp.ui.extensions.dimensions
 import com.vci.vectorcamapp.ui.theme.LocalColors
 import com.vci.vectorcamapp.ui.theme.VectorcamappTheme
 
 @Composable
 fun IntakeScreen(
-    state: IntakeState,
-    onAction: (IntakeAction) -> Unit,
-    modifier: Modifier = Modifier
+    state: IntakeState, onAction: (IntakeAction) -> Unit, modifier: Modifier = Modifier
 ) {
     BackHandler {
         onAction(IntakeAction.ReturnToLandingScreen)
     }
 
     ScreenHeader(
-        title = "Session Intake",
-        subtitle = "Fill out the information below",
-        modifier = modifier
+        title = "Session Intake", subtitle = "Fill out the information below", modifier = modifier
     ) {
         item {
             SectionCard(sectionTitle = "General Information") {
@@ -90,9 +82,8 @@ fun IntakeScreen(
 
                 DropdownField(
                     label = "Collection Method",
-                    options = CollectionMethodOption.entries,
-                    selectedOption = CollectionMethodOption.entries
-                        .firstOrNull { it.label == state.session.collectionMethod },
+                    options = IntakeDropdownOptions.CollectionMethodOption.entries,
+                    selectedOption = IntakeDropdownOptions.CollectionMethodOption.entries.firstOrNull { it.label == state.session.collectionMethod },
                     onOptionSelected = {
                         onAction(
                             IntakeAction.SelectCollectionMethod(
@@ -102,14 +93,19 @@ fun IntakeScreen(
                     },
                     error = state.intakeErrors.collectionMethod,
                     modifier = Modifier.fillMaxWidth()
-                )
+                ) { collectionMethod ->
+                    Text(
+                        text = collectionMethod.label,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colors.textPrimary
+                    )
+                }
                 Spacer(Modifier.height(MaterialTheme.dimensions.spacingMedium))
 
                 DropdownField(
                     label = "Specimen Condition",
-                    options = SpecimenConditionOption.entries,
-                    selectedOption = SpecimenConditionOption.entries
-                        .firstOrNull { it.label == state.session.specimenCondition },
+                    options = IntakeDropdownOptions.SpecimenConditionOption.entries,
+                    selectedOption = IntakeDropdownOptions.SpecimenConditionOption.entries.firstOrNull { it.label == state.session.specimenCondition },
                     onOptionSelected = {
                         onAction(
                             IntakeAction.SelectSpecimenCondition(
@@ -119,37 +115,51 @@ fun IntakeScreen(
                     },
                     error = state.intakeErrors.specimenCondition,
                     modifier = Modifier.fillMaxWidth()
-                )
+                ) { specimenCondition ->
+                    Text(
+                        text = specimenCondition.label,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colors.textPrimary
+                    )
+                }
             }
         }
 
         item {
             SectionCard(sectionTitle = "Geographical Information") {
-
                 DropdownField(
                     label = "District",
-                    options = state.allSitesInProgram
-                        .map { DistrictOption(it.district) }
-                        .distinctBy { it.label },
-                    selectedOption = DistrictOption(state.selectedDistrict),
+                    options = state.allSitesInProgram.map { it.district }.distinct(),
+                    selectedOption = state.selectedDistrict,
                     onOptionSelected = { onAction(IntakeAction.SelectDistrict(it)) },
-                    error = state.intakeErrors.district
-                )
+                    error = state.intakeErrors.district,
+                ) { district ->
+                    Text(
+                        text = district,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colors.textPrimary
+                    )
+                }
                 Spacer(Modifier.height(MaterialTheme.dimensions.spacingMedium))
 
                 if (state.selectedDistrict.isNotBlank()) {
                     DropdownField(
                         label = "Sentinel Site",
-                        options = state.allSitesInProgram
-                            .filter { it.district == state.selectedDistrict }
-                            .map { SentinelSiteOption(it.sentinelSite) }
-                            .distinctBy { it.label },
-                        selectedOption = SentinelSiteOption(state.selectedSentinelSite),
+                        options = state.allSitesInProgram.filter { it.district == state.selectedDistrict }
+                            .map { it.sentinelSite }.distinct(),
+                        selectedOption = state.selectedSentinelSite,
                         onOptionSelected = {
                             onAction(IntakeAction.SelectSentinelSite(it))
                         },
-                        error = state.intakeErrors.sentinelSite
-                    )
+                        error = state.intakeErrors.sentinelSite,
+
+                        ) { sentinelSite ->
+                        Text(
+                            text = sentinelSite,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colors.textPrimary
+                        )
+                    }
                     Spacer(Modifier.height(MaterialTheme.dimensions.spacingMedium))
                 }
 
@@ -184,8 +194,7 @@ fun IntakeScreen(
                     state.locationError != null -> {
                         val context = LocalContext.current
                         Text(
-                            text = "Could not get location: " +
-                                    state.locationError.toString(context)
+                            text = "Could not get location: " + state.locationError.toString(context)
                         )
                         if (state.locationError == IntakeError.LOCATION_GPS_TIMEOUT) {
                             Spacer(Modifier.height(MaterialTheme.dimensions.spacingSmall))
@@ -210,8 +219,7 @@ fun IntakeScreen(
                                         .padding(
                                             horizontal = MaterialTheme.dimensions.paddingMedium,
                                             vertical = MaterialTheme.dimensions.paddingSmall
-                                        ),
-                                    contentAlignment = Alignment.Center
+                                        ), contentAlignment = Alignment.Center
                                 ) {
                                     Text(
                                         text = "Retry Location",
@@ -250,26 +258,38 @@ fun IntakeScreen(
                 state.surveillanceForm.llinType?.let { current ->
                     DropdownField(
                         label = "LLIN Type",
-                        options = LlinTypeOption.entries,
-                        selectedOption = LlinTypeOption.entries.firstOrNull { it.label == current },
+                        options = IntakeDropdownOptions.LlinTypeOption.entries,
+                        selectedOption = IntakeDropdownOptions.LlinTypeOption.entries.firstOrNull { it.label == current },
                         onOptionSelected = {
                             onAction(IntakeAction.SelectLlinType(it))
                         },
-                        error = state.intakeErrors.llinType
-                    )
+                        error = state.intakeErrors.llinType,
+                    ) { llinType ->
+                        Text(
+                            text = llinType.label,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colors.textPrimary
+                        )
+                    }
                     Spacer(Modifier.height(MaterialTheme.dimensions.spacingMedium))
                 }
 
                 state.surveillanceForm.llinBrand?.let { current ->
                     DropdownField(
                         label = "LLIN Brand",
-                        options = LlinBrandOption.entries,
-                        selectedOption = LlinBrandOption.entries.firstOrNull { it.label == current },
+                        options = IntakeDropdownOptions.LlinBrandOption.entries,
+                        selectedOption = IntakeDropdownOptions.LlinBrandOption.entries.firstOrNull { it.label == current },
                         onOptionSelected = {
                             onAction(IntakeAction.SelectLlinBrand(it))
                         },
-                        error = state.intakeErrors.llinBrand
-                    )
+                        error = state.intakeErrors.llinBrand,
+                    ) { llinBrand ->
+                        Text(
+                            text = llinBrand.label,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colors.textPrimary
+                        )
+                    }
                     Spacer(Modifier.height(MaterialTheme.dimensions.spacingMedium))
                 }
 
@@ -296,8 +316,7 @@ fun IntakeScreen(
                                 it
                             )
                         )
-                    }
-                )
+                    })
                 Spacer(Modifier.height(MaterialTheme.dimensions.spacingMedium))
 
                 if (state.surveillanceForm.wasIrsConducted) {
@@ -321,8 +340,7 @@ fun IntakeScreen(
                 TextEntryField(
                     label = "Notes",
                     value = state.session.notes,
-                    onValueChange = { onAction(IntakeAction.EnterNotes(it)) }
-                )
+                    onValueChange = { onAction(IntakeAction.EnterNotes(it)) })
             }
         }
 
@@ -345,17 +363,14 @@ fun IntakeScreen(
                         .background(
                             brush = Brush.horizontalGradient(
                                 listOf(
-                                    colors.buttonGradientLeft,
-                                    colors.buttonGradientRight
+                                    colors.buttonGradientLeft, colors.buttonGradientRight
                                 )
                             ),
                             shape = RoundedCornerShape(MaterialTheme.dimensions.cornerRadiusMedium)
-                        ),
-                    contentAlignment = Alignment.Center
+                        ), contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        "Confirm",
-                        style = MaterialTheme.typography.titleMedium
+                        "Confirm", style = MaterialTheme.typography.titleMedium
                     )
                 }
             }
@@ -369,9 +384,7 @@ fun SurveillanceFormScreenPreview() {
     VectorcamappTheme {
         Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
             IntakeScreen(
-                state = IntakeState(),
-                onAction = { },
-                modifier = Modifier.padding(innerPadding)
+                state = IntakeState(), onAction = { }, modifier = Modifier.padding(innerPadding)
             )
         }
     }

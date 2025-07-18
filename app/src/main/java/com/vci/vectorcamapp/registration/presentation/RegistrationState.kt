@@ -5,6 +5,6 @@ import com.vci.vectorcamapp.core.domain.model.Program
 data class RegistrationState(
     val isLoading: Boolean = false,
     val programs: List<Program> = emptyList(),
-    val selectedProgramName: String = "",
+    val selectedProgram: Program? = null,
     val error: String? = null
 )
