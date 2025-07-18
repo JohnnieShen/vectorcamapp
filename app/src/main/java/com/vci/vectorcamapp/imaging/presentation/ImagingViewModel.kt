@@ -65,7 +65,6 @@ class ImagingViewModel @Inject constructor(
 ) : CoreViewModel() {
 
     companion object {
-        private const val SPECIMEN_IMAGE_ENDPOINT_TEMPLATE = "https://api.vectorcam.org/specimens/%s/images/tus"
         private const val UPLOAD_WORK_CHAIN_NAME = "vectorcam_session_upload_chain"
     }
 
