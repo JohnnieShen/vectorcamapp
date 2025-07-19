@@ -199,13 +199,9 @@ class ImagingViewModel @Inject constructor(
                                 TimeUnit.MILLISECONDS,
                             ).build()
 
-                        val sessionWithSpecimens =
-                            sessionRepository.getSessionWithSpecimensById(currentSession.localId)
-
-                        val imageUploadRequests = sessionWithSpecimens?.specimens?.map { specimen ->
+                        val sessionImageUploadRequest =
                             OneTimeWorkRequestBuilder<ImageUploadWorker>().setInputData(
                                 workDataOf(
-                                    ImageUploadWorker.KEY_SPECIMEN_ID to specimen.id,
                                     ImageUploadWorker.KEY_SESSION_ID to currentSession.localId.toString()
                                 )
                             )
@@ -214,16 +210,17 @@ class ImagingViewModel @Inject constructor(
                                     BackoffPolicy.LINEAR,
                                     WorkRequest.MIN_BACKOFF_MILLIS,
                                     TimeUnit.MILLISECONDS
-                                )
-                                .build()
-                        }
+                                ).build()
 
-                        if (!imageUploadRequests.isNullOrEmpty()) {
+                        val sessionWithSpecimens =
+                            sessionRepository.getSessionWithSpecimensById(currentSession.localId)
+
+                        if (sessionWithSpecimens?.specimens?.isNotEmpty() == true) {
                             workManager.beginUniqueWork(
                                 UPLOAD_WORK_CHAIN_NAME,
                                 ExistingWorkPolicy.APPEND_OR_REPLACE,
                                 metadataUploadRequest
-                            ).then(imageUploadRequests).enqueue()
+                            ).then(sessionImageUploadRequest).enqueue()
                         } else {
                             workManager.enqueueUniqueWork(
                                 UPLOAD_WORK_CHAIN_NAME,

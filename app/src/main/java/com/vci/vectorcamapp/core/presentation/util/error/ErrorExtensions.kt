@@ -26,6 +26,7 @@ fun Error.toString(context: Context): String {
             NetworkError.CONFLICT -> R.string.network_error_conflict
             NetworkError.CLIENT_ERROR -> R.string.network_error_client_error
             NetworkError.UNKNOWN_ERROR -> R.string.roomdb_error_unknown_error
+            NetworkError.VERIFICATION_ERROR -> R.string.network_error_verification_error
         }
         is RoomDbError -> when (this) {
             RoomDbError.CONSTRAINT_VIOLATION -> R.string.roomdb_error_constraint_violation

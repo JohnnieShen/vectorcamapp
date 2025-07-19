@@ -17,6 +17,7 @@ import com.vci.vectorcamapp.R
 import com.vci.vectorcamapp.core.data.network.constructUrl
 import com.vci.vectorcamapp.core.domain.model.UploadStatus
 import com.vci.vectorcamapp.core.domain.network.api.ImageUploadDataSource
+import com.vci.vectorcamapp.core.domain.repository.SessionRepository
 import com.vci.vectorcamapp.core.domain.repository.SpecimenRepository
 import com.vci.vectorcamapp.core.domain.util.network.NetworkError
 import com.vci.vectorcamapp.core.domain.util.onError
@@ -46,12 +47,12 @@ class ImageUploadWorker @AssistedInject constructor(
     @Assisted private val context: Context,
     @Assisted workerParams: WorkerParameters,
     private val specimenRepository: SpecimenRepository,
+    private val sessionRepository: SessionRepository,
     private val imageUploadDataSource: ImageUploadDataSource,
     private val tusClient: TusClient
 ) : CoroutineWorker(context, workerParams) {
 
     companion object {
-        const val KEY_SPECIMEN_ID = "specimen_id"
         const val KEY_SESSION_ID = "session_id"
 
         const val KEY_PROGRESS_UPLOADED = "progress_uploaded"
@@ -70,85 +71,99 @@ class ImageUploadWorker @AssistedInject constructor(
         private const val CHANNEL_ID = "image_upload_channel"
         private const val CHANNEL_NAME = "Image Upload Channel"
         private const val NOTIFICATION_ID = 1001
-        private const val STATUS_NOTIFICATION_ID = 1002
     }
 
     private val notificationManager =
         context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
-    private data class UploadInput(val specimenId: String, val sessionId: UUID)
-
     override suspend fun doWork(): WorkerResult {
-        val input = getUploadInput() ?: return WorkerResult.failure()
-        updateStatus(input.specimenId, input.sessionId, UploadStatus.IN_PROGRESS)
+        val sessionId = getSessionId() ?: return WorkerResult.failure(
+            workDataOf("error" to "Invalid Session ID provided.")
+        )
+
+        val sessionWithSpecimens = sessionRepository.getSessionWithSpecimensById(sessionId)
+        if (sessionWithSpecimens == null) {
+            Log.e("ImageUploadWorker", "Session $sessionId not found in the database.")
+            return WorkerResult.failure(workDataOf("error" to "Session not found."))
+        }
+
+        val specimensToUpload = sessionWithSpecimens.specimens.filter {
+            it.imageUploadStatus != UploadStatus.COMPLETED
+        }
+
+        if (specimensToUpload.isEmpty()) {
+            Log.d("ImageUploadWorker", "No images to upload for session $sessionId.")
+            return WorkerResult.success()
+        }
+
         createNotificationChannel()
-        setForeground(showInitialNotification())
+        val shortSessionId = sessionId.toString().substring(0, 8)
+        setForeground(showInitialSessionNotification(shortSessionId, specimensToUpload.size))
 
-        var temporaryFile: File? = null
+        var successfulUploads = 0
 
-        val specimenToUpload = specimenRepository.getSpecimenById(input.specimenId) ?: return WorkerResult.failure()
+        specimensToUpload.forEachIndexed { index, specimen ->
+            val currentIndex = index + 1
 
-        return try {
-            val (file, contentType) = prepareFile(context.contentResolver, specimenToUpload.imageUri)
-            temporaryFile = file
+            var imageUploadSuccess = false
+            var attempt = 0
+            var permanentErrorOccurred = false
 
-            return when (val result = performUpload(input, file, contentType)) {
-                is DomainResult.Success -> {
-                    notificationManager.cancel(NOTIFICATION_ID)
-                    updateStatus(input.specimenId, input.sessionId, UploadStatus.COMPLETED)
-                    WorkerResult.success()
-                }
-                is DomainResult.Error -> {
-                    handleUploadError(result.error, input)
+            updateStatus(specimen.id, sessionId, UploadStatus.IN_PROGRESS)
+
+            while (attempt < MAX_RETRIES && !imageUploadSuccess && !permanentErrorOccurred) {
+                attempt++
+                var temporaryFile: File? = null
+
+                try {
+                    Log.d("ImageUploadWorker", "Uploading specimen ${specimen.id} (Attempt $attempt/$MAX_RETRIES)")
+                    updateSessionProgressNotification(
+                        shortSessionId,
+                        currentIndex,
+                        specimensToUpload.size,
+                        "Preparing (Attempt $attempt)..."
+                    )
+
+                    val (file, contentType) = prepareFile(context.contentResolver, specimen.imageUri)
+                    temporaryFile = file
+
+                    when (val result = performUpload(file, contentType, sessionId, currentIndex, specimensToUpload.size, shortSessionId, specimen.id)) {
+                        is DomainResult.Success -> {
+                            successfulUploads++
+                            imageUploadSuccess = true
+                            updateStatus(specimen.id, sessionId, UploadStatus.COMPLETED)
+                            Log.d("ImageUploadWorker", "Success for specimen ${specimen.id} on attempt $attempt")
+                        }
+                        is DomainResult.Error -> {
+                            val error = result.error
+                            Log.w("ImageUploadWorker", "Failed attempt $attempt for specimen ${specimen.id} with error: $error")
+                            if (error != NetworkError.REQUEST_TIMEOUT && error != NetworkError.NO_INTERNET) {
+                                permanentErrorOccurred = true
+                            }
+                        }
+                    }
+                } catch (e: Exception) {
+                    Log.e("ImageUploadWorker", "Exception on attempt $attempt for specimen ${specimen.id}. This is a permanent failure for this image.", e)
+                    permanentErrorOccurred = true
+                } finally {
+                    temporaryFile?.delete()
                 }
             }
-        } catch (e: IOException) {
-            Log.w("ImageUploadWorker", "Transient I/O failure, will retry.", e)
-            return handleUploadError(NetworkError.NO_INTERNET, input)
-        } catch (e: Exception) {
-            val responseCode = (e as? io.tus.java.client.ProtocolException)?.causingConnection?.responseCode
-            Log.e("ImageUploadWorker", "Permanent or unexpected failure (Code: $responseCode).", e)
-            return handleUploadError(NetworkError.UNKNOWN_ERROR, input)
-        } finally {
-            temporaryFile?.delete()
-            notificationManager.cancel(NOTIFICATION_ID)
+
+            if (!imageUploadSuccess) {
+                Log.e("ImageUploadWorker", "All attempts failed or a permanent error occurred for specimen ${specimen.id}. Moving to next image.")
+                updateStatus(specimen.id, sessionId, UploadStatus.FAILED)
+            }
         }
+
+        showFinalStatusNotification(shortSessionId, successfulUploads, specimensToUpload.size)
+        return WorkerResult.success()
     }
 
-    private suspend fun handleUploadError(error: NetworkError, input: UploadInput): WorkerResult {
-        val isRetryable = when (error) {
-            NetworkError.NO_INTERNET,
-            NetworkError.REQUEST_TIMEOUT -> true
-            else -> false
-        }
-
-        val errorMessage = when (error) {
-            NetworkError.NO_INTERNET -> "Connection issue, retrying..."
-            NetworkError.REQUEST_TIMEOUT -> "Connection timed out, retrying..."
-            NetworkError.SERVER_ERROR -> "Server protocol error."
-            NetworkError.VERIFICATION_ERROR -> "Upload failed: file could not be verified."
-            NetworkError.UNKNOWN_ERROR -> "An unknown upload error occurred."
-            else -> "An unknown upload error occurred."
-        }
-
-        if (isRetryable && runAttemptCount < MAX_RETRIES) {
-            Log.w("ImageUploadWorker", "Retryable error occurred: $error. Attempt ${runAttemptCount + 1}.")
-            showUploadErrorNotification(errorMessage)
-            updateStatus(input.specimenId, input.sessionId, UploadStatus.FAILED)
-            return WorkerResult.retry()
-        } else {
-            Log.e("ImageUploadWorker", "Permanent or max-retry error: $error, $errorMessage.")
-            showUploadErrorNotification(errorMessage)
-            updateStatus(input.specimenId, input.sessionId, UploadStatus.FAILED)
-            return WorkerResult.failure()
-        }
-    }
-
-    private suspend fun performUpload(input: UploadInput, file: File, contentType: String?): DomainResult<String, NetworkError> {
+    private suspend fun performUpload(file: File, contentType: String?, sessionId: UUID, currentIndex: Int, totalImages: Int, shortSessionId: String, uploadSpecimenId: String): DomainResult<String, NetworkError> {
         val md5 = calculateMD5(file)
-        val uniqueFingerprint = "${input.specimenId}-$md5"
-
-        val tusPath = "specimens/${input.specimenId}/images/tus"
+        val uniqueFingerprint = "$uploadSpecimenId-$md5"
+        val tusPath = "specimens/$uploadSpecimenId/images/tus"
 
         tusClient.uploadCreationURL = URL(constructUrl(tusPath))
         val upload = createTusUpload(file, uniqueFingerprint, contentType, md5)
@@ -160,7 +175,7 @@ class ImageUploadWorker @AssistedInject constructor(
         } catch (e: io.tus.java.client.ProtocolException) {
             if (e.causingConnection?.responseCode == HttpURLConnection.HTTP_CONFLICT) {
                 Log.w("ImageUploadWorker", "resumeOrCreateUpload failed with 409 Conflict. Verifying by MD5.", e)
-                return when (val existingUrlResult = imageUploadDataSource.imageExists(input.specimenId, md5)) {
+                return when (val existingUrlResult = imageUploadDataSource.imageExists(uploadSpecimenId, md5)) {
                     is DomainResult.Success -> DomainResult.Success(existingUrlResult.data.toString())
                     is DomainResult.Error -> {
                         Log.e("ImageUploadWorker", "MD5 check failed despite 409. Upload initialization failed.", e)
@@ -172,18 +187,19 @@ class ImageUploadWorker @AssistedInject constructor(
                 return DomainResult.Error(NetworkError.SERVER_ERROR)
             }
         } catch (e: IOException) {
+            Log.e("ImageUploadWorker", "resumeOrCreateUpload failed with IOException", e)
             return DomainResult.Error(NetworkError.NO_INTERNET)
         }
 
         val uploader = uploaderResult.successOrNull() ?: return DomainResult.Error(NetworkError.UNKNOWN_ERROR)
 
-        executeUploadLoop(uploader, tusClient, upload).onError {
+        executeUploadLoop(uploader, tusClient, upload, sessionId, currentIndex, totalImages, shortSessionId).onError {
             return DomainResult.Error(it)
         }
 
-        return when (val finalUrlResult = safeFinish(uploader, input.specimenId, md5)) {
+        return when (val finalUrlResult = safeFinish(uploader, uploadSpecimenId, md5)) {
             is DomainResult.Success -> {
-                updateWorkerProgress(upload.size, upload.size)
+                updateSessionProgressNotification(shortSessionId, currentIndex, totalImages, "Verifying...")
                 Log.d("ImageUploadWorker", "Upload finished successfully: ${finalUrlResult.data}")
                 DomainResult.Success(finalUrlResult.data.toString())
             }
@@ -191,7 +207,7 @@ class ImageUploadWorker @AssistedInject constructor(
         }
     }
 
-    private suspend fun executeUploadLoop(initialUploader: TusUploader, client: TusClient, upload: TusUpload): DomainResult<Unit, NetworkError> {
+    private suspend fun executeUploadLoop(initialUploader: TusUploader, client: TusClient, upload: TusUpload, sessionId: UUID, currentIndex: Int, totalImages: Int, shortSessionId: String): DomainResult<Unit, NetworkError> {
         var uploader = initialUploader
         var currentChunkSize = INITIAL_CHUNK_SIZE_BYTES
         var successfulUploadsInARow = 0
@@ -218,8 +234,10 @@ class ImageUploadWorker @AssistedInject constructor(
                         Log.w("ImageUploadWorker", "File stream ended unexpectedly.")
                         break
                     }
+                    val percent = if (upload.size > 0) (uploader.offset * 100 / upload.size).toInt() else 0
+                    updateSessionProgressNotification(shortSessionId, currentIndex, totalImages, "$percent%")
+                    setProgress(workDataOf(KEY_PROGRESS_UPLOADED to uploader.offset, KEY_PROGRESS_TOTAL to upload.size))
 
-                    updateWorkerProgress(uploader.offset, upload.size)
                     successfulUploadsInARow++
                     if (successfulUploadsInARow >= SUCCESS_STREAK_FOR_INCREASE) {
                         currentChunkSize = (currentChunkSize * SUCCESS_CHUNK_SIZE_MULTIPLIER).coerceAtMost(MAX_CHUNK_SIZE_BYTES)
@@ -250,15 +268,26 @@ class ImageUploadWorker @AssistedInject constructor(
         return DomainResult.Success(Unit)
     }
 
-    private fun getUploadInput(): UploadInput? {
+    private fun getSessionId(): UUID? {
         return try {
-            val specimenId = inputData.getString(KEY_SPECIMEN_ID) ?: return null
             val sessionIdStr = inputData.getString(KEY_SESSION_ID) ?: return null
-            val sessionId = UUID.fromString(sessionIdStr)
-            UploadInput(specimenId, sessionId)
+            UUID.fromString(sessionIdStr)
         } catch (e: IllegalArgumentException) {
-            Log.e("ImageUploadWorker", "Invalid input data provided.", e)
+            Log.e("ImageUploadWorker", "Invalid session ID provided.", e)
             null
+        }
+    }
+
+    private suspend fun updateStatus(specimenId: String, sessionId: UUID, status: UploadStatus) {
+        try {
+            val specimen = specimenRepository.getSpecimenById(specimenId)
+            specimen?.let {
+                val updatedSpecimen = it.copy(imageUploadStatus = status)
+                specimenRepository.updateSpecimen(updatedSpecimen, sessionId)
+                Log.d("ImageUploadWorker", "Updated status for specimen $specimenId to $status")
+            } ?: Log.w("ImageUploadWorker", "Could not find specimen $specimenId to update status.")
+        } catch (e: Exception) {
+            Log.e("ImageUploadWorker", "Failed to update specimen status for $specimenId", e)
         }
     }
 
@@ -315,20 +344,8 @@ class ImageUploadWorker @AssistedInject constructor(
                 is DomainResult.Error -> DomainResult.Error(NetworkError.VERIFICATION_ERROR)
             }
         } catch (e: IOException) {
+            Log.e("ImageUploadWorker", "finish() failed due to IOException", e)
             DomainResult.Error(NetworkError.NO_INTERNET)
-        }
-    }
-
-    private suspend fun updateStatus(specimenId: String, sessionId: UUID, status: UploadStatus) {
-        try {
-            val specimen = specimenRepository.getSpecimenById(specimenId)
-            specimen?.let {
-                val updatedSpecimen = it.copy(imageUploadStatus = status)
-                specimenRepository.updateSpecimen(updatedSpecimen, sessionId)
-                Log.d("ImageUploadWorker", "Updated status for specimen $specimenId to $status")
-            } ?: Log.w("ImageUploadWorker", "Could not find specimen $specimenId to update status.")
-        } catch (e: Exception) {
-            Log.e("ImageUploadWorker", "Failed to update specimen status for $specimenId", e)
         }
     }
 
@@ -337,36 +354,40 @@ class ImageUploadWorker @AssistedInject constructor(
         notificationManager.createNotificationChannel(channel)
     }
 
-    private fun showInitialNotification(): ForegroundInfo {
+    private fun showInitialSessionNotification(sessionId: String, total: Int): ForegroundInfo {
         val notification = NotificationCompat.Builder(context, CHANNEL_ID)
-            .setContentTitle("Uploading image")
-            .setContentText("Preparing upload…")
+            .setContentTitle("Session: $sessionId")
+            .setContentText("Preparing to upload $total images…")
             .setSmallIcon(R.drawable.ic_cloud_upload)
-            .setProgress(0, 0, true)
+            .setProgress(total, 0, true)
             .setOngoing(true)
             .build()
         return ForegroundInfo(NOTIFICATION_ID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC)
     }
 
-    private suspend fun updateWorkerProgress(uploaded: Long, total: Long) {
-        setProgress(workDataOf(KEY_PROGRESS_UPLOADED to uploaded, KEY_PROGRESS_TOTAL to total))
-        val percent = if (total > 0) (uploaded * 100 / total).toInt() else 0
+    private fun updateSessionProgressNotification(sessionId: String, currentIndex: Int, totalImages: Int, progressText: String) {
+        val filesCompleted = currentIndex - 1
+
         val notification = NotificationCompat.Builder(context, CHANNEL_ID)
-            .setContentTitle("Uploading image")
-            .setContentText("$percent %")
+            .setContentTitle("Session: $sessionId")
+            .setContentText("Uploading image $currentIndex of $totalImages")
+            .setSubText(progressText)
             .setSmallIcon(R.drawable.ic_cloud_upload)
-            .setProgress(100, percent, false)
+            .setProgress(totalImages, filesCompleted, false)
             .setOngoing(true)
             .build()
         notificationManager.notify(NOTIFICATION_ID, notification)
     }
 
-    private fun showUploadErrorNotification(message: String) {
+    private fun showFinalStatusNotification(sessionId: String, successful: Int, total: Int) {
+        val title = if (successful == total) "Upload complete" else "Upload error"
+        val message = "Session $sessionId: $successful of $total images uploaded."
+
         val notification = NotificationCompat.Builder(context, CHANNEL_ID)
-            .setContentTitle("Upload failed")
-            .setSmallIcon(R.drawable.ic_cloud_upload)
+            .setContentTitle(title)
             .setContentText(message)
+            .setSmallIcon(R.drawable.ic_cloud_upload)
             .build()
-        notificationManager.notify(STATUS_NOTIFICATION_ID, notification)
+        notificationManager.notify(NOTIFICATION_ID, notification)
     }
 }
