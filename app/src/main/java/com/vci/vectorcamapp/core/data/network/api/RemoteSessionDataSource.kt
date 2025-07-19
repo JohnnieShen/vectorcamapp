@@ -44,6 +44,8 @@ class RemoteSessionDataSource @Inject constructor(
                         createdAt = session.createdAt,
                         completedAt = session.completedAt,
                         notes = session.notes,
+                        latitude = session.latitude,
+                        longitude = session.longitude,
                         siteId = siteId,
                         deviceId = deviceId,
                     )

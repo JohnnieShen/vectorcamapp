@@ -5,7 +5,7 @@ import com.vci.vectorcamapp.core.data.mappers.toDomain
 import com.vci.vectorcamapp.core.data.mappers.toEntity
 import com.vci.vectorcamapp.core.data.room.dao.SpecimenDao
 import com.vci.vectorcamapp.core.domain.model.Specimen
-import com.vci.vectorcamapp.core.domain.model.composites.SpecimenAndBoundingBox
+import com.vci.vectorcamapp.core.domain.model.composites.SpecimenAndInferenceResult
 import com.vci.vectorcamapp.core.domain.repository.SpecimenRepository
 import com.vci.vectorcamapp.core.domain.util.Result
 import com.vci.vectorcamapp.core.domain.util.room.RoomDbError
@@ -47,22 +47,22 @@ class SpecimenRepositoryImplementation @Inject constructor(
         return specimenDao.deleteSpecimen(specimen.toEntity(sessionId)) > 0
     }
 
-    override suspend fun getSpecimensAndBoundingBoxesBySession(sessionId: UUID): List<SpecimenAndBoundingBox> {
-        return specimenDao.getSpecimensAndBoundingBoxesBySession(sessionId).map {
-            SpecimenAndBoundingBox(
+    override suspend fun getSpecimensAndInferenceResultsBySession(sessionId: UUID): List<SpecimenAndInferenceResult> {
+        return specimenDao.getSpecimensAndInferenceResultsBySession(sessionId).map {
+            SpecimenAndInferenceResult(
                 specimen = it.specimenEntity.toDomain(),
-                boundingBox = it.boundingBoxEntity.toDomain()
+                inferenceResult = it.inferenceResultEntity.toDomain()
             )
         }
     }
 
-    override fun observeSpecimensAndBoundingBoxesBySession(sessionId: UUID): Flow<List<SpecimenAndBoundingBox>> {
-        return specimenDao.observeSpecimensAndBoundingBoxesBySession(sessionId)
-            .map { specimenAndBoundingBoxRelations ->
-                specimenAndBoundingBoxRelations.map {
-                    SpecimenAndBoundingBox(
+    override fun observeSpecimensAndInferenceResultsBySession(sessionId: UUID): Flow<List<SpecimenAndInferenceResult>> {
+        return specimenDao.observeSpecimensAndInferenceResultsBySession(sessionId)
+            .map { specimenAndInferenceResultRelations ->
+                specimenAndInferenceResultRelations.map {
+                    SpecimenAndInferenceResult(
                         specimen = it.specimenEntity.toDomain(),
-                        boundingBox = it.boundingBoxEntity.toDomain()
+                        inferenceResult = it.inferenceResultEntity.toDomain()
                     )
                 }
             }

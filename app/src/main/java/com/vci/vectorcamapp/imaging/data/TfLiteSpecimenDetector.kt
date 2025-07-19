@@ -5,7 +5,7 @@ import android.graphics.Bitmap
 import android.os.Handler
 import android.os.HandlerThread
 import android.util.Log
-import com.vci.vectorcamapp.core.domain.model.BoundingBox
+import com.vci.vectorcamapp.core.domain.model.InferenceResult
 import com.vci.vectorcamapp.imaging.domain.SpecimenDetector
 import org.opencv.android.Utils
 import org.opencv.core.CvType
@@ -90,7 +90,7 @@ class TfLiteSpecimenDetector(
 
     override fun getOutputTensorShape(): Pair<Int, Int> = outputNumChannels to outputNumElements
 
-    override suspend fun detect(bitmap: Bitmap): List<BoundingBox> {
+    override suspend fun detect(bitmap: Bitmap): List<InferenceResult> {
         if (!isReady()) return emptyList()
 
         return suspendCoroutine { continuation ->
@@ -123,7 +123,7 @@ class TfLiteSpecimenDetector(
                     val result = synchronized(detectorLock) {
                         if (!isReady()) return@post continuation.resume(emptyList())
                         detector?.run(inputTensor.buffer, outputTensor.buffer)
-                        getDetectedBoxes(outputTensor.floatArray)
+                        getDetectedResults(outputTensor.floatArray)
                     }
 
                     continuation.resume(result)
@@ -170,7 +170,7 @@ class TfLiteSpecimenDetector(
         return paddedMatrix
     }
 
-    private fun getDetectedBoxes(boxes: FloatArray): List<BoundingBox> {
+    private fun getDetectedResults(boxes: FloatArray): List<InferenceResult> {
         val predictions = mutableListOf<FloatArray>()
 
         for (i in 0 until outputNumChannels) {
@@ -221,7 +221,7 @@ class TfLiteSpecimenDetector(
         if (indicesMatrix.empty()) return emptyList()
 
         val selectedIndices = indicesMatrix.toArray()
-        val finalBoundingBoxes = mutableListOf<BoundingBox>()
+        val finalInferenceResults = mutableListOf<InferenceResult>()
 
         for (index in selectedIndices) {
             val prediction = predictions[index]
@@ -242,20 +242,23 @@ class TfLiteSpecimenDetector(
             val topLeftX = (centerX - width / 2f).coerceAtLeast(0f)
             val topLeftY = (centerY - height / 2f).coerceAtLeast(0f)
 
-            val boundingBox = BoundingBox(
-                topLeftX = topLeftX,
-                topLeftY = topLeftY,
-                width = width,
-                height = height,
-                confidence = confidence,
-                classId = classId
+            val inferenceResult = InferenceResult(
+                bboxTopLeftX = topLeftX,
+                bboxTopLeftY = topLeftY,
+                bboxWidth = width,
+                bboxHeight = height,
+                bboxConfidence = confidence,
+                bboxClassId = classId,
+                speciesLogits = null,
+                sexLogits = null,
+                abdomenStatusLogits = null,
             )
-            Log.d("BoundingBox", "($topLeftX, $topLeftY) -> ($width, $height)")
+            Log.d("InferenceResult", "($topLeftX, $topLeftY) -> ($width, $height)")
 
-            finalBoundingBoxes.add(boundingBox)
+            finalInferenceResults.add(inferenceResult)
         }
 
-        return finalBoundingBoxes
+        return finalInferenceResults
     }
 
     override fun close() {

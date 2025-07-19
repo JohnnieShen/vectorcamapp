@@ -17,8 +17,8 @@ import com.vci.vectorcamapp.core.data.dto.specimen.SpecimenDto
 import com.vci.vectorcamapp.core.data.dto.surveillance_form.SurveillanceFormDto
 import com.vci.vectorcamapp.core.data.room.TransactionHelper
 import com.vci.vectorcamapp.core.domain.cache.DeviceCache
-import com.vci.vectorcamapp.core.domain.model.BoundingBox
 import com.vci.vectorcamapp.core.domain.model.Device
+import com.vci.vectorcamapp.core.domain.model.InferenceResult
 import com.vci.vectorcamapp.core.domain.model.Session
 import com.vci.vectorcamapp.core.domain.model.Specimen
 import com.vci.vectorcamapp.core.domain.model.SurveillanceForm
@@ -26,7 +26,7 @@ import com.vci.vectorcamapp.core.domain.network.api.DeviceDataSource
 import com.vci.vectorcamapp.core.domain.network.api.SessionDataSource
 import com.vci.vectorcamapp.core.domain.network.api.SpecimenDataSource
 import com.vci.vectorcamapp.core.domain.network.api.SurveillanceFormDataSource
-import com.vci.vectorcamapp.core.domain.repository.BoundingBoxRepository
+import com.vci.vectorcamapp.core.domain.repository.InferenceResultRepository
 import com.vci.vectorcamapp.core.domain.repository.SessionRepository
 import com.vci.vectorcamapp.core.domain.repository.SpecimenRepository
 import com.vci.vectorcamapp.core.domain.repository.SurveillanceFormRepository
@@ -50,7 +50,7 @@ class MetadataUploadWorker @AssistedInject constructor(
     private val sessionRepository: SessionRepository,
     private val surveillanceFormRepository: SurveillanceFormRepository,
     private val specimenRepository: SpecimenRepository,
-    private val boundingBoxRepository: BoundingBoxRepository,
+    private val inferenceResultRepository: InferenceResultRepository,
     private val deviceDataSource: DeviceDataSource,
     private val sessionDataSource: SessionDataSource,
     private val surveillanceFormDataSource: SurveillanceFormDataSource,
@@ -61,7 +61,6 @@ class MetadataUploadWorker @AssistedInject constructor(
     private val notificationManager: NotificationManager =
         context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
-    // TODO: Update once Inference Result data points become available
     override suspend fun doWork(): WorkerResult {
         createNotificationChannel()
         setForeground(showInitialMetadataNotification())
@@ -115,13 +114,13 @@ class MetadataUploadWorker @AssistedInject constructor(
                 }
             }
 
-            val specimensAndBoundingBoxes =
-                specimenRepository.getSpecimensAndBoundingBoxesBySession(syncedSession.localId)
-            specimensAndBoundingBoxes.forEachIndexed { index, (specimen, boundingBox) ->
+            val specimensAndInferenceResults =
+                specimenRepository.getSpecimensAndInferenceResultsBySession(syncedSession.localId)
+            specimensAndInferenceResults.forEachIndexed { index, (specimen, inferenceResult) ->
                 syncSpecimenAndInferenceResultIfNeeded(
-                    specimen, boundingBox, syncedSession.localId, syncedSession.remoteId
+                    specimen, inferenceResult, syncedSession.localId, syncedSession.remoteId
                 ).onSuccess {
-                    showSpecimenUploadProgress(index + 1, specimensAndBoundingBoxes.size)
+                    showSpecimenUploadProgress(index + 1, specimensAndInferenceResults.size)
                 }.onError { error ->
                     return retryOrFailure(error.toString(context))
                 }
@@ -215,6 +214,8 @@ class MetadataUploadWorker @AssistedInject constructor(
                 completedAt = localSession.completedAt,
                 submittedAt = localSession.submittedAt,
                 notes = localSession.notes,
+                latitude = localSession.latitude,
+                longitude = localSession.longitude,
                 siteId = localSiteId,
                 deviceId = syncedDeviceId
             )
@@ -252,6 +253,8 @@ class MetadataUploadWorker @AssistedInject constructor(
                 completedAt = remoteSessionDto.completedAt,
                 submittedAt = remoteSessionDto.submittedAt,
                 notes = remoteSessionDto.notes,
+                latitude = remoteSessionDto.latitude,
+                longitude = remoteSessionDto.longitude
             )
 
             if (localSessionDto != remoteSessionDto) {
@@ -338,7 +341,7 @@ class MetadataUploadWorker @AssistedInject constructor(
 
     private suspend fun syncSpecimenAndInferenceResultIfNeeded(
         localSpecimen: Specimen,
-        localBoundingBox: BoundingBox,
+        localInferenceResult: InferenceResult,
         syncedLocalSessionId: UUID,
         syncedRemoteSessionId: Int
     ): DomainResult<Unit, NetworkError> {
@@ -352,13 +355,15 @@ class MetadataUploadWorker @AssistedInject constructor(
                 capturedAt = localSpecimen.capturedAt,
                 submittedAt = localSpecimen.submittedAt,
                 inferenceResult = InferenceResultDto(
-                    bboxTopLeftX = localBoundingBox.topLeftX,
-                    bboxTopLeftY = localBoundingBox.topLeftY,
-                    bboxWidth = localBoundingBox.width,
-                    bboxHeight = localBoundingBox.height,
-                    speciesProbabilities = listOf(0f, 0f, 0f, 0f, 0f, 0f, 0f),
-                    sexProbabilities = listOf(0f, 0f),
-                    abdomenStatusProbabilities = listOf(0f, 0f, 0f)
+                    bboxTopLeftX = localInferenceResult.bboxTopLeftX,
+                    bboxTopLeftY = localInferenceResult.bboxTopLeftY,
+                    bboxWidth = localInferenceResult.bboxWidth,
+                    bboxHeight = localInferenceResult.bboxHeight,
+                    bboxConfidence = localInferenceResult.bboxConfidence,
+                    bboxClassId = localInferenceResult.bboxClassId,
+                    speciesProbabilities = localInferenceResult.speciesLogits,
+                    sexProbabilities = localInferenceResult.sexLogits,
+                    abdomenStatusProbabilities = localInferenceResult.abdomenStatusLogits
                 )
             )
 
@@ -369,7 +374,7 @@ class MetadataUploadWorker @AssistedInject constructor(
                     when (remoteSpecimenResult.error) {
                         NetworkError.NOT_FOUND -> {
                             val postSpecimenResult = specimenDataSource.postSpecimen(
-                                localSpecimen, localBoundingBox, syncedRemoteSessionId
+                                localSpecimen, localInferenceResult, syncedRemoteSessionId
                             )
                             when (postSpecimenResult) {
                                 is DomainResult.Success -> postSpecimenResult.data.specimen
@@ -396,13 +401,16 @@ class MetadataUploadWorker @AssistedInject constructor(
                 submittedAt = remoteSpecimenDto.submittedAt,
             )
 
-            val remoteBoundingBox = BoundingBox(
-                topLeftX = remoteSpecimenDto.inferenceResult.bboxTopLeftX,
-                topLeftY = remoteSpecimenDto.inferenceResult.bboxTopLeftY,
-                width = remoteSpecimenDto.inferenceResult.bboxWidth,
-                height = remoteSpecimenDto.inferenceResult.bboxHeight,
-                confidence = localBoundingBox.confidence, // TODO: REPLACE WHEN WE INCORPORATE CONFIDENCE INTO BACKEND
-                classId = localBoundingBox.classId, // TODO: REPLACE WHEN WE INCORPORATE CLASS ID INTO BACKEND
+            val remoteInferenceResult = InferenceResult(
+                bboxTopLeftX = remoteSpecimenDto.inferenceResult.bboxTopLeftX,
+                bboxTopLeftY = remoteSpecimenDto.inferenceResult.bboxTopLeftY,
+                bboxWidth = remoteSpecimenDto.inferenceResult.bboxWidth,
+                bboxHeight = remoteSpecimenDto.inferenceResult.bboxHeight,
+                bboxConfidence = remoteSpecimenDto.inferenceResult.bboxConfidence,
+                bboxClassId = remoteSpecimenDto.inferenceResult.bboxClassId,
+                speciesLogits = remoteSpecimenDto.inferenceResult.speciesProbabilities,
+                sexLogits = remoteSpecimenDto.inferenceResult.sexProbabilities,
+                abdomenStatusLogits = remoteSpecimenDto.inferenceResult.abdomenStatusProbabilities,
             )
 
             if (remoteSpecimenDto != localSpecimenDto) {
@@ -411,8 +419,8 @@ class MetadataUploadWorker @AssistedInject constructor(
                         .onError {
                             return@runAsTransaction DomainResult.Error(NetworkError.CLIENT_ERROR)
                         }
-                    boundingBoxRepository.updateBoundingBox(
-                        remoteBoundingBox, remoteSpecimenDto.specimenId
+                    inferenceResultRepository.updateInferenceResult(
+                        remoteInferenceResult, remoteSpecimenDto.specimenId
                     ).onError {
                         return@runAsTransaction DomainResult.Error(NetworkError.CLIENT_ERROR)
                     }

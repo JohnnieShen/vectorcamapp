@@ -10,8 +10,6 @@ import java.util.UUID
 
 data class IntakeState(
     val isLoading: Boolean = false,
-    val latitude: Float? = null,
-    val longitude: Float? = null,
     val locationError: IntakeError? = null,
     val allSitesInProgram: List<Site> = emptyList(),
     val selectedDistrict: String = "",
@@ -28,6 +26,8 @@ data class IntakeState(
         createdAt = System.currentTimeMillis(),
         completedAt = null,
         submittedAt = null,
+        latitude = null,
+        longitude = null,
         notes = ""
     ),
     val surveillanceForm: SurveillanceForm = SurveillanceForm(

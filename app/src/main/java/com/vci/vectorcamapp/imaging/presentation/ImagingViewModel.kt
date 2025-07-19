@@ -3,6 +3,7 @@ package com.vci.vectorcamapp.imaging.presentation
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.net.Uri
 import android.view.OrientationEventListener
 import androidx.compose.material3.SnackbarDuration
 import androidx.lifecycle.viewModelScope
@@ -18,10 +19,11 @@ import com.vci.vectorcamapp.core.data.room.TransactionHelper
 import com.vci.vectorcamapp.core.data.upload.image.ImageUploadWorker
 import com.vci.vectorcamapp.core.data.upload.metadata.MetadataUploadWorker
 import com.vci.vectorcamapp.core.domain.cache.CurrentSessionCache
+import com.vci.vectorcamapp.core.domain.model.InferenceResult
 import com.vci.vectorcamapp.core.domain.model.Specimen
 import com.vci.vectorcamapp.core.domain.model.UploadStatus
-import com.vci.vectorcamapp.core.domain.model.composites.SpecimenAndBoundingBox
-import com.vci.vectorcamapp.core.domain.repository.BoundingBoxRepository
+import com.vci.vectorcamapp.core.domain.model.composites.SpecimenAndInferenceResult
+import com.vci.vectorcamapp.core.domain.repository.InferenceResultRepository
 import com.vci.vectorcamapp.core.domain.repository.SessionRepository
 import com.vci.vectorcamapp.core.domain.repository.SpecimenRepository
 import com.vci.vectorcamapp.core.domain.util.Result
@@ -59,7 +61,7 @@ class ImagingViewModel @Inject constructor(
     private val currentSessionCache: CurrentSessionCache,
     private val sessionRepository: SessionRepository,
     private val specimenRepository: SpecimenRepository,
-    private val boundingBoxRepository: BoundingBoxRepository,
+    private val inferenceResultRepository: InferenceResultRepository,
     private val cameraRepository: CameraRepository,
     private val inferenceRepository: InferenceRepository
 ) : CoreViewModel() {
@@ -68,17 +70,17 @@ class ImagingViewModel @Inject constructor(
     lateinit var transactionHelper: TransactionHelper
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    private val _specimensAndBoundingBoxes: Flow<List<SpecimenAndBoundingBox>> = flow {
+    private val _specimensAndInferenceResults: Flow<List<SpecimenAndInferenceResult>> = flow {
         emit(currentSessionCache.getSession())
     }.flatMapLatest { session ->
         if (session == null) {
             flowOf(emptyList())
         } else {
-            specimenRepository.observeSpecimensAndBoundingBoxesBySession(session.localId)
+            specimenRepository.observeSpecimensAndInferenceResultsBySession(session.localId)
                 .map { relations ->
                     relations.map { relation ->
-                        SpecimenAndBoundingBox(
-                            specimen = relation.specimen, boundingBox = relation.boundingBox
+                        SpecimenAndInferenceResult(
+                            specimen = relation.specimen, inferenceResult = relation.inferenceResult
                         )
                     }
                 }
@@ -96,9 +98,9 @@ class ImagingViewModel @Inject constructor(
 
     private val _state = MutableStateFlow(ImagingState())
     val state: StateFlow<ImagingState> = combine(
-        _specimensAndBoundingBoxes, _state
-    ) { specimens, state ->
-        state.copy(capturedSpecimensAndBoundingBoxes = specimens)
+        _specimensAndInferenceResults, _state
+    ) { specimensAndInferenceResults, state ->
+        state.copy(capturedSpecimensAndInferenceResults = specimensAndInferenceResults)
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000L),
@@ -146,12 +148,12 @@ class ImagingViewModel @Inject constructor(
                         val bitmap = action.frame.toUprightBitmap(displayOrientation)
 
                         val specimenId = inferenceRepository.readSpecimenId(bitmap)
-                        val boundingBoxes = inferenceRepository.detectSpecimen(bitmap)
+                        val previewInferenceResults = inferenceRepository.detectSpecimen(bitmap)
 
                         _state.update {
                             it.copy(
                                 currentSpecimen = it.currentSpecimen.copy(id = specimenId),
-                                previewBoundingBoxes = boundingBoxes
+                                previewInferenceResults = previewInferenceResults
                             )
                         }
                     } catch (e: Exception) {
@@ -229,19 +231,19 @@ class ImagingViewModel @Inject constructor(
                             BitmapFactory.decodeByteArray(jpegByteArray, 0, jpegByteArray.size)
 
                         // Avoid issuing error if preview bounding boxes are not yet ready
-                        val boundingBoxesList = inferenceRepository.detectSpecimen(jpegBitmap)
+                        val captureInferenceResults = inferenceRepository.detectSpecimen(jpegBitmap)
 
-                        when (boundingBoxesList.size) {
+                        when (captureInferenceResults.size) {
                             0 -> {
                                 emitError(ImagingError.NO_SPECIMEN_FOUND, SnackbarDuration.Short)
                             }
 
                             1 -> {
-                                val boundingBox = boundingBoxesList.first()
-                                val topLeftXFloat = boundingBox.topLeftX * bitmap.width
-                                val topLeftYFloat = boundingBox.topLeftY * bitmap.height
-                                val widthFloat = boundingBox.width * bitmap.width
-                                val heightFloat = boundingBox.height * bitmap.height
+                                val captureInferenceResult = captureInferenceResults.first()
+                                val topLeftXFloat = captureInferenceResult.bboxTopLeftX * bitmap.width
+                                val topLeftYFloat = captureInferenceResult.bboxTopLeftY * bitmap.height
+                                val widthFloat = captureInferenceResult.bboxWidth * bitmap.width
+                                val heightFloat = captureInferenceResult.bboxHeight * bitmap.height
 
                                 val topLeftXAbsolute = topLeftXFloat.toInt()
                                 val topLeftYAbsolute = topLeftYFloat.toInt()
@@ -274,8 +276,15 @@ class ImagingViewModel @Inject constructor(
                                                 abdomenStatus = abdomenStatus?.label,
                                             ),
                                             currentImageBytes = jpegByteArray,
-                                            captureBoundingBox = boundingBox,
-                                            previewBoundingBoxes = emptyList()
+                                            currentInferenceResult = it.currentInferenceResult.copy(
+                                                bboxTopLeftX = captureInferenceResult.bboxTopLeftX,
+                                                bboxTopLeftY = captureInferenceResult.bboxTopLeftY,
+                                                bboxWidth = captureInferenceResult.bboxWidth,
+                                                bboxHeight = captureInferenceResult.bboxHeight,
+                                                bboxConfidence = captureInferenceResult.bboxConfidence,
+                                                bboxClassId = captureInferenceResult.bboxClassId,
+                                            ),
+                                            previewInferenceResults = emptyList()
                                         )
                                     }
                                 } else {
@@ -335,23 +344,22 @@ class ImagingViewModel @Inject constructor(
                         )
 
                         val success = transactionHelper.runAsTransaction {
-                            val boundingBox =
-                                _state.value.captureBoundingBox ?: return@runAsTransaction false
+                            val inferenceResult = _state.value.currentInferenceResult
 
-                            val specimenResult =
+                            val specimenInsertionResult =
                                 specimenRepository.insertSpecimen(specimen, currentSession.localId)
-                            val boundingBoxResult =
-                                boundingBoxRepository.insertBoundingBox(boundingBox, specimen.id)
+                            val inferenceResultInsertionResult =
+                                inferenceResultRepository.insertInferenceResult(inferenceResult, specimen.id)
 
-                            specimenResult.onError { error ->
+                            specimenInsertionResult.onError { error ->
                                 emitError(error)
                             }
 
-                            boundingBoxResult.onError { error ->
+                            inferenceResultInsertionResult.onError { error ->
                                 emitError(error)
                             }
 
-                            (specimenResult !is Result.Error) && (boundingBoxResult !is Result.Error)
+                            (specimenInsertionResult !is Result.Error) && (inferenceResultInsertionResult !is Result.Error)
                         }
 
                         if (success) {
@@ -372,11 +380,29 @@ class ImagingViewModel @Inject constructor(
         _state.update {
             it.copy(
                 currentSpecimen = it.currentSpecimen.copy(
-                    id = "", species = null, sex = null, abdomenStatus = null
+                    id = "",
+                    species = null,
+                    sex = null,
+                    abdomenStatus = null,
+                    imageUri = Uri.EMPTY,
+                    metadataUploadStatus = UploadStatus.NOT_STARTED,
+                    imageUploadStatus = UploadStatus.NOT_STARTED,
+                    capturedAt = 0L,
+                    submittedAt = null
+                ),
+                currentInferenceResult = InferenceResult(
+                    bboxTopLeftX = 0f,
+                    bboxTopLeftY = 0f,
+                    bboxWidth = 0f,
+                    bboxHeight = 0f,
+                    bboxConfidence = 0f,
+                    bboxClassId = 0,
+                    speciesLogits = null,
+                    sexLogits = null,
+                    abdomenStatusLogits = null
                 ),
                 currentImageBytes = null,
-                captureBoundingBox = null,
-                previewBoundingBoxes = emptyList(),
+                previewInferenceResults = emptyList(),
             )
         }
     }

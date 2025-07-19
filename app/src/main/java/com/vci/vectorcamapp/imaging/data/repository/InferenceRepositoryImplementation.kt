@@ -4,7 +4,7 @@ import android.graphics.Bitmap
 import android.util.Log
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.text.TextRecognizer
-import com.vci.vectorcamapp.core.domain.model.BoundingBox
+import com.vci.vectorcamapp.core.domain.model.InferenceResult
 import com.vci.vectorcamapp.imaging.data.GpuDelegateManager
 import com.vci.vectorcamapp.imaging.di.AbdomenStatusClassifier
 import com.vci.vectorcamapp.imaging.di.Detector
@@ -51,7 +51,7 @@ class InferenceRepositoryImplementation @Inject constructor(
         }
     }
 
-    override suspend fun detectSpecimen(bitmap: Bitmap): List<BoundingBox> =
+    override suspend fun detectSpecimen(bitmap: Bitmap): List<InferenceResult> =
         withContext(Dispatchers.Default) {
             specimenDetector.detect(bitmap)
         }

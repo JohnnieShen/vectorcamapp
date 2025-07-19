@@ -29,4 +29,6 @@ data class SessionEntity(
     val completedAt: Long? = null,
     val submittedAt: Long? = null,
     val notes: String = "",
+    val latitude: Float? = null,
+    val longitude: Float? = null,
 )

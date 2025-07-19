@@ -4,14 +4,14 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Update
-import com.vci.vectorcamapp.core.data.room.entities.BoundingBoxEntity
+import com.vci.vectorcamapp.core.data.room.entities.InferenceResultEntity
 
 @Dao
-interface BoundingBoxDao {
+interface InferenceResultDao {
 
     @Insert(onConflict = OnConflictStrategy.ABORT)
-    suspend fun insertBoundingBox(boundingBoxEntity: BoundingBoxEntity)
+    suspend fun insertInferenceResult(inferenceResultEntity: InferenceResultEntity)
 
     @Update(onConflict = OnConflictStrategy.ABORT)
-    suspend fun updateBoundingBox(boundingBoxEntity: BoundingBoxEntity)
+    suspend fun updateInferenceResult(inferenceResultEntity: InferenceResultEntity)
 }

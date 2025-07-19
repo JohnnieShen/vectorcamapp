@@ -1,14 +1,10 @@
 package com.vci.vectorcamapp.imaging.domain.camera
 
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.unit.Density
-import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.IntSize
-import androidx.lifecycle.LifecycleOwner
-import com.vci.vectorcamapp.core.domain.model.BoundingBox
+import com.vci.vectorcamapp.core.domain.model.InferenceResult
 
 interface CameraFocusController {
     fun manualFocusAt(offset: Offset)
-    fun autoFocusAt(box: BoundingBox)
+    fun autoFocusAt(inferenceResult: InferenceResult)
     fun cancelFocus()
 }

@@ -1,9 +1,9 @@
 package com.vci.vectorcamapp.core.domain.model.composites
 
-import com.vci.vectorcamapp.core.domain.model.BoundingBox
+import com.vci.vectorcamapp.core.domain.model.InferenceResult
 import com.vci.vectorcamapp.core.domain.model.Specimen
 
-data class SpecimenAndBoundingBox(
+data class SpecimenAndInferenceResult(
     val specimen: Specimen,
-    val boundingBox: BoundingBox
+    val inferenceResult: InferenceResult
 )

@@ -6,8 +6,7 @@ import androidx.camera.view.LifecycleCameraController
 import androidx.camera.view.PreviewView
 import androidx.camera.view.PreviewView.StreamState
 import androidx.compose.ui.geometry.Offset
-import androidx.lifecycle.LifecycleOwner
-import com.vci.vectorcamapp.core.domain.model.BoundingBox
+import com.vci.vectorcamapp.core.domain.model.InferenceResult
 import com.vci.vectorcamapp.imaging.domain.camera.CameraFocusController
 
 class CameraFocusControllerImplementation (
@@ -21,10 +20,10 @@ class CameraFocusControllerImplementation (
             ?: Log.w("CameraFocusManager", "focusAt(): cameraControl not ready yet")
     }
 
-    override fun autoFocusAt(box: BoundingBox) {
+    override fun autoFocusAt(inferenceResult: InferenceResult) {
         if (previewView.previewStreamState.value == StreamState.STREAMING) {
-            val focusX = (box.topLeftX + box.width / 2f) * previewView.width
-            val focusY = (box.topLeftY + box.height / 2f) * previewView.height
+            val focusX = (inferenceResult.bboxTopLeftX + inferenceResult.bboxWidth / 2f) * previewView.width
+            val focusY = (inferenceResult.bboxTopLeftY + inferenceResult.bboxHeight / 2f) * previewView.height
 
             controller.cameraControl
                 ?.startFocusAndMetering(buildFocusAction(focusX, focusY))

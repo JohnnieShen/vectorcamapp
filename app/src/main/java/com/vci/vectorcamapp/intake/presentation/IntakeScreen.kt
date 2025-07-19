@@ -187,16 +187,16 @@ fun IntakeScreen(
                 )
 
                 when {
-                    state.latitude != null && state.longitude != null -> {
+                    state.session.latitude != null && state.session.longitude != null -> {
                         Row(
                             horizontalArrangement = Arrangement.spacedBy(MaterialTheme.dimensions.spacingMedium),
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             InfoPill(
-                                text = "Latitude: ${state.latitude}", modifier = Modifier.weight(1f)
+                                text = "Latitude: ${state.session.latitude}", modifier = Modifier.weight(1f)
                             )
                             InfoPill(
-                                text = "Longitude: ${state.longitude}",
+                                text = "Longitude: ${state.session.longitude}",
                                 modifier = Modifier.weight(1f)
                             )
                         }

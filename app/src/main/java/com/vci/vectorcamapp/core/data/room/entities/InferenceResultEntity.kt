@@ -5,7 +5,7 @@ import androidx.room.ForeignKey
 import androidx.room.PrimaryKey
 
 @Entity(
-    tableName = "bounding_box", foreignKeys = [
+    tableName = "inference_result", foreignKeys = [
         ForeignKey(
             entity = SpecimenEntity::class,
             parentColumns = ["id"],
@@ -15,12 +15,15 @@ import androidx.room.PrimaryKey
         )
     ]
 )
-data class BoundingBoxEntity(
+data class InferenceResultEntity(
     @PrimaryKey val specimenId: String = "",
-    val topLeftX: Float = 0F,
-    val topLeftY: Float = 0F,
-    val width: Float = 0F,
-    val height: Float = 0F,
-    val confidence: Float = 0F,
-    val classId: Int = 0,
+    val bboxTopLeftX: Float = 0F,
+    val bboxTopLeftY: Float = 0F,
+    val bboxWidth: Float = 0F,
+    val bboxHeight: Float = 0F,
+    val bboxConfidence: Float = 0F,
+    val bboxClassId: Int = 0,
+    val speciesLogits: List<Float>? = null,
+    val sexLogits: List<Float>? = null,
+    val abdomenStatusLogits: List<Float>? = null,
 )

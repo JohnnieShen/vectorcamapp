@@ -1,6 +1,5 @@
 package com.vci.vectorcamapp.intake.presentation
 
-import android.util.Log
 import androidx.lifecycle.viewModelScope
 import com.vci.vectorcamapp.core.data.room.TransactionHelper
 import com.vci.vectorcamapp.core.domain.cache.CurrentSessionCache
@@ -352,7 +351,13 @@ class IntakeViewModel @Inject constructor(
 
                 is IntakeAction.RetryLocation -> {
                     _state.update { it.copy(locationError = null) }
-                    _state.update { it.copy(latitude = null, longitude = null) }
+                    _state.update {
+                        it.copy(
+                            session = it.session.copy(
+                                latitude = null, longitude = null
+                            )
+                        )
+                    }
                     getLocation()
                 }
             }
@@ -406,7 +411,7 @@ class IntakeViewModel @Inject constructor(
     }
 
     private suspend fun getLocation() {
-        if (_state.value.latitude == null || _state.value.longitude == null) {
+        if (_state.value.session.latitude == null || _state.value.session.longitude == null) {
             val locationResult = try {
                 withTimeout(LOCATION_TIMEOUT_MS) {
                     locationRepository.getCurrentLocation()
@@ -422,8 +427,10 @@ class IntakeViewModel @Inject constructor(
             locationResult.onSuccess { location ->
                 _state.update {
                     it.copy(
-                        latitude = location.latitude.toFloat(),
-                        longitude = location.longitude.toFloat(),
+                        session = it.session.copy(
+                            latitude = location.latitude.toFloat(),
+                            longitude = location.longitude.toFloat(),
+                        ),
                         locationError = null
                     )
                 }

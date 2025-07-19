@@ -29,14 +29,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.vci.vectorcamapp.R
-import com.vci.vectorcamapp.core.domain.model.BoundingBox
+import com.vci.vectorcamapp.core.domain.model.InferenceResult
 import com.vci.vectorcamapp.imaging.data.camera.CameraFocusControllerImplementation
 import com.vci.vectorcamapp.imaging.presentation.ImagingAction
 
 @Composable
 fun LiveCameraPreviewPage(
     controller: LifecycleCameraController,
-    boundingBoxes: List<BoundingBox>,
+    inferenceResults: List<InferenceResult>,
     manualFocusPoint: Offset?,
     onImageCaptured: () -> Unit,
     onSaveSessionProgress: () -> Unit,
@@ -63,10 +63,10 @@ fun LiveCameraPreviewPage(
         )
     }
 
-    LaunchedEffect(boundingBoxes, manualFocusPoint) {
+    LaunchedEffect(inferenceResults, manualFocusPoint) {
         if (manualFocusPoint == null) {
-            if (boundingBoxes.isNotEmpty()) {
-                cameraFocusController.autoFocusAt(boundingBoxes.first())
+            if (inferenceResults.isNotEmpty()) {
+                cameraFocusController.autoFocusAt(inferenceResults.first())
             } else {
                 cameraFocusController.cancelFocus()
             }
@@ -89,8 +89,8 @@ fun LiveCameraPreviewPage(
                 }, modifier = Modifier.fillMaxSize()
             )
 
-            boundingBoxes.map {
-                BoundingBoxOverlay(it, overlaySize = containerSize, Modifier.fillMaxSize())
+            inferenceResults.map {
+                BoundingBoxOverlay(inferenceResult = it, overlaySize = containerSize, Modifier.fillMaxSize())
             }
 
             Box(
