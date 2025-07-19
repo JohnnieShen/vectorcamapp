@@ -414,11 +414,12 @@ class ImageUploadWorker @AssistedInject constructor(
     private fun showFinalStatusNotification(sessionId: String, successful: Int, total: Int) {
         val title = if (successful == total) "Upload complete" else "Upload error"
         val message = "Session $sessionId: $successful of $total images uploaded."
+        val icon = if (successful == total) R.drawable.ic_cloud_upload else R.drawable.ic_info
 
         val notification = NotificationCompat.Builder(context, CHANNEL_ID)
             .setContentTitle(title)
             .setContentText(message)
-            .setSmallIcon(R.drawable.ic_cloud_upload)
+            .setSmallIcon(icon)
             .build()
         notificationManager.notify(NOTIFICATION_ID, notification)
     }
