@@ -65,7 +65,7 @@ class ImagingViewModel @Inject constructor(
 ) : CoreViewModel() {
 
     companion object {
-        private const val UPLOAD_WORK_CHAIN_NAME = "vectorcam_session_upload_chain"
+        private const val UPLOAD_WORK_CHAIN_NAME = "session_upload_chain"
     }
 
     @Inject
@@ -199,7 +199,7 @@ class ImagingViewModel @Inject constructor(
                                 TimeUnit.MILLISECONDS,
                             ).build()
 
-                        val sessionImageUploadRequest =
+                        val imageUploadRequest =
                             OneTimeWorkRequestBuilder<ImageUploadWorker>().setInputData(
                                 workDataOf(
                                     ImageUploadWorker.KEY_SESSION_ID to currentSession.localId.toString()
@@ -212,22 +212,11 @@ class ImagingViewModel @Inject constructor(
                                     TimeUnit.MILLISECONDS
                                 ).build()
 
-                        val sessionWithSpecimens =
-                            sessionRepository.getSessionWithSpecimensById(currentSession.localId)
-
-                        if (sessionWithSpecimens?.specimens?.isNotEmpty() == true) {
-                            workManager.beginUniqueWork(
-                                UPLOAD_WORK_CHAIN_NAME,
-                                ExistingWorkPolicy.APPEND_OR_REPLACE,
-                                metadataUploadRequest
-                            ).then(sessionImageUploadRequest).enqueue()
-                        } else {
-                            workManager.enqueueUniqueWork(
-                                UPLOAD_WORK_CHAIN_NAME,
-                                ExistingWorkPolicy.APPEND_OR_REPLACE,
-                                metadataUploadRequest
-                            )
-                        }
+                        workManager.beginUniqueWork(
+                            UPLOAD_WORK_CHAIN_NAME,
+                            ExistingWorkPolicy.APPEND_OR_REPLACE,
+                            metadataUploadRequest
+                        ).then(imageUploadRequest).enqueue()
 
                         currentSessionCache.clearSession()
                         _events.send(ImagingEvent.NavigateBackToLandingScreen)

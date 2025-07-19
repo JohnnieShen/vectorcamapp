@@ -16,5 +16,4 @@ enum class NetworkError : Error {
 
     // Endpoint-Specific Errors
     SESSION_NOT_COMPLETED,
-    VERIFICATION_ERROR;
 }

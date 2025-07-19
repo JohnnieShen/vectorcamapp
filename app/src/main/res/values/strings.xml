@@ -31,9 +31,6 @@
     <!-- Network error: Client Error -->
     <string name="network_error_client_error">The request was invalid. Please check your input and try again.</string>
 
-    <!-- Network error: Verification Error -->
-    <string name="network_error_verification_error">Image upload verification failed.</string>
-
     <!-- Network error: Unknown error -->
     <string name="network_error_unknown_error">An unknown error occurred. Please try again or contact support if the issue persists.</string>
 

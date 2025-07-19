@@ -47,10 +47,6 @@ class SpecimenRepositoryImplementation @Inject constructor(
         return specimenDao.deleteSpecimen(specimen.toEntity(sessionId)) > 0
     }
 
-    override suspend fun getSpecimenById(id: String): Specimen? {
-        return specimenDao.getSpecimenById(id)?.toDomain()
-    }
-
     override suspend fun getSpecimensAndBoundingBoxesBySession(sessionId: UUID): List<SpecimenAndBoundingBox> {
         return specimenDao.getSpecimensAndBoundingBoxesBySession(sessionId).map {
             SpecimenAndBoundingBox(

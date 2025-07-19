@@ -1,6 +1,5 @@
 package com.vci.vectorcamapp.core.data.network.api
 
-import android.util.Log
 import com.vci.vectorcamapp.core.data.network.constructUrl
 import com.vci.vectorcamapp.core.data.network.safeCall
 import com.vci.vectorcamapp.core.domain.network.api.ImageUploadDataSource
@@ -23,25 +22,20 @@ class RemoteImageUploadDataSource @Inject constructor(
     override suspend fun imageExists(
         specimenId: String,
         md5: String
-    ): Result<URL, NetworkError> = withContext(Dispatchers.IO) {
-
+    ): Result<Unit, NetworkError> {
         val path = "specimens/$specimenId/images/$md5"
 
-        val callResult: Result<HttpResponse, NetworkError> =
-            safeCall { httpClient.head(constructUrl(path)) }
+        val callResult = safeCall<HttpResponse> { httpClient.head(constructUrl(path)) }
 
-        when (callResult) {
+            return when (callResult) {
             is Result.Success -> {
                 val response = callResult.data
-                val finalUrl = URL(response.request.url.toString())
-
                 if (response.status == HttpStatusCode.OK) {
-                    Result.Success(finalUrl)
+                    Result.Success(Unit)
                 } else {
-                    Result.Error(NetworkError.VERIFICATION_ERROR)
+                    Result.Error(NetworkError.CLIENT_ERROR)
                 }
             }
-
             is Result.Error -> {
                 Result.Error(callResult.error)
             }

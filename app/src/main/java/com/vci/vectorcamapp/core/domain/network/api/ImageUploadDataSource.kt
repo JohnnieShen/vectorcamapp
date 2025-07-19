@@ -5,5 +5,5 @@ import com.vci.vectorcamapp.core.domain.util.network.NetworkError
 import java.net.URL
 
 interface ImageUploadDataSource {
-    suspend fun imageExists(specimenId: String, md5: String): Result<URL, NetworkError>
+    suspend fun imageExists(specimenId: String, md5: String): Result<Unit, NetworkError>
 }

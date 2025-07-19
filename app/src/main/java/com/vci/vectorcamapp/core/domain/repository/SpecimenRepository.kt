@@ -11,7 +11,6 @@ interface SpecimenRepository {
     suspend fun insertSpecimen(specimen: Specimen, sessionId: UUID): Result<Unit, RoomDbError>
     suspend fun updateSpecimen(specimen: Specimen, sessionId: UUID): Result<Unit, RoomDbError>
     suspend fun deleteSpecimen(specimen: Specimen, sessionId: UUID): Boolean
-    suspend fun getSpecimenById(id: String): Specimen?
     suspend fun getSpecimensAndBoundingBoxesBySession(sessionId: UUID): List<SpecimenAndBoundingBox>
     fun observeSpecimensAndBoundingBoxesBySession(sessionId: UUID): Flow<List<SpecimenAndBoundingBox>>
 }
