@@ -24,7 +24,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight
 import com.vci.vectorcamapp.R
 import com.vci.vectorcamapp.core.presentation.util.error.toString
 import com.vci.vectorcamapp.intake.domain.util.FormValidationError
@@ -35,10 +34,10 @@ import java.util.Locale
 
 @Composable
 fun DatePickerField(
-    label: String,
     selectedDateInMillis: Long,
     onDateSelected: (Long) -> Unit,
     modifier: Modifier = Modifier,
+    label: String? = null,
     error: FormValidationError? = null
 ) {
     val context = LocalContext.current
@@ -48,7 +47,7 @@ fun DatePickerField(
             timeInMillis = selectedDateInMillis
         }
     }
-    
+
     val dateFormatter = remember {
         SimpleDateFormat("MMM dd, yyyy", Locale.getDefault())
     }
@@ -57,15 +56,20 @@ fun DatePickerField(
         dateFormatter.format(selectedDateInMillis)
     }
 
-    Column(modifier = modifier.fillMaxWidth()) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colors.textSecondary,
-        )
+    Column(
+        verticalArrangement = Arrangement.spacedBy(MaterialTheme.dimensions.spacingExtraSmall),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        label?.let {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colors.textSecondary,
+            )
+        }
 
         Box(
-            modifier = Modifier
+            modifier = modifier
                 .fillMaxWidth()
                 .background(
                     color = MaterialTheme.colors.cardBackground,

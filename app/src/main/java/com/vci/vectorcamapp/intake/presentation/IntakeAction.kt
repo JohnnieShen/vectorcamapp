@@ -1,9 +1,9 @@
 package com.vci.vectorcamapp.intake.presentation
 
-import com.vci.vectorcamapp.intake.domain.enums.IntakeDropdownOptions.CollectionMethodOption
-import com.vci.vectorcamapp.intake.domain.enums.IntakeDropdownOptions.LlinBrandOption
-import com.vci.vectorcamapp.intake.domain.enums.IntakeDropdownOptions.LlinTypeOption
-import com.vci.vectorcamapp.intake.domain.enums.IntakeDropdownOptions.SpecimenConditionOption
+import com.vci.vectorcamapp.intake.domain.model.IntakeDropdownOptions.CollectionMethodOption
+import com.vci.vectorcamapp.intake.domain.model.IntakeDropdownOptions.LlinBrandOption
+import com.vci.vectorcamapp.intake.domain.model.IntakeDropdownOptions.LlinTypeOption
+import com.vci.vectorcamapp.intake.domain.model.IntakeDropdownOptions.SpecimenConditionOption
 
 sealed interface IntakeAction {
     data object ReturnToLandingScreen: IntakeAction

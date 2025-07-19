@@ -2,6 +2,7 @@ package com.vci.vectorcamapp.core.presentation.components.form
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
@@ -22,10 +23,10 @@ import com.vci.vectorcamapp.ui.extensions.dimensions
 
 @Composable
 fun TextEntryField(
-    label: String,
     value: String,
     onValueChange: (String) -> Unit,
     modifier: Modifier = Modifier,
+    label: String? = null,
     singleLine: Boolean = false,
     keyboardType: KeyboardType = KeyboardType.Text,
     error: FormValidationError? = null,
@@ -34,13 +35,16 @@ fun TextEntryField(
     val context = LocalContext.current
 
     Column(
-        modifier = modifier.fillMaxWidth()
+        verticalArrangement = Arrangement.spacedBy(MaterialTheme.dimensions.spacingExtraSmall),
+        modifier = Modifier.fillMaxWidth()
     ) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colors.textSecondary,
-        )
+        label?.let {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colors.textSecondary,
+            )
+        }
 
         OutlinedTextField(
             value = value,
@@ -63,7 +67,7 @@ fun TextEntryField(
                 errorBorderColor = MaterialTheme.colors.transparent,
                 cursorColor = MaterialTheme.colors.primary,
             ),
-            modifier = Modifier
+            modifier = modifier
                 .fillMaxWidth()
                 .background(
                     color = MaterialTheme.colors.cardBackground,

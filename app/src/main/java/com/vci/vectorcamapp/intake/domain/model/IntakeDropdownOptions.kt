@@ -1,4 +1,4 @@
-package com.vci.vectorcamapp.intake.domain.enums
+package com.vci.vectorcamapp.intake.domain.model
 
 object IntakeDropdownOptions {
 

@@ -2,7 +2,9 @@ package com.vci.vectorcamapp.intake.presentation
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -10,7 +12,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -24,17 +26,21 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.PreviewLightDark
+import com.vci.vectorcamapp.R
+import com.vci.vectorcamapp.core.presentation.components.button.ActionButton
 import com.vci.vectorcamapp.core.presentation.components.form.DatePickerField
 import com.vci.vectorcamapp.core.presentation.components.form.DropdownField
 import com.vci.vectorcamapp.core.presentation.components.form.TextEntryField
 import com.vci.vectorcamapp.core.presentation.components.form.ToggleField
 import com.vci.vectorcamapp.core.presentation.components.header.ScreenHeader
+import com.vci.vectorcamapp.core.presentation.components.pill.InfoPill
 import com.vci.vectorcamapp.core.presentation.util.error.toString
-import com.vci.vectorcamapp.intake.domain.enums.IntakeDropdownOptions
+import com.vci.vectorcamapp.intake.domain.model.IntakeDropdownOptions
 import com.vci.vectorcamapp.intake.domain.util.IntakeError
-import com.vci.vectorcamapp.intake.presentation.components.SectionCard
+import com.vci.vectorcamapp.intake.presentation.components.IntakeTile
 import com.vci.vectorcamapp.ui.extensions.colors
 import com.vci.vectorcamapp.ui.extensions.dimensions
 import com.vci.vectorcamapp.ui.theme.LocalColors
@@ -44,15 +50,23 @@ import com.vci.vectorcamapp.ui.theme.VectorcamappTheme
 fun IntakeScreen(
     state: IntakeState, onAction: (IntakeAction) -> Unit, modifier: Modifier = Modifier
 ) {
+    val context = LocalContext.current
+
     BackHandler {
         onAction(IntakeAction.ReturnToLandingScreen)
     }
 
     ScreenHeader(
-        title = "Session Intake", subtitle = "Fill out the information below", modifier = modifier
+        title = "Session Intake",
+        subtitle = "Please fill out the information below",
+        modifier = modifier
     ) {
         item {
-            SectionCard(sectionTitle = "General Information") {
+            IntakeTile(
+                title = "General Information",
+                iconPainter = painterResource(R.drawable.ic_info),
+                iconDescription = "General Information Icon"
+            ) {
                 TextEntryField(
                     label = "Collector Name",
                     value = state.session.collectorName,
@@ -60,7 +74,6 @@ fun IntakeScreen(
                     singleLine = true,
                     error = state.intakeErrors.collectorName
                 )
-                Spacer(Modifier.height(MaterialTheme.dimensions.spacingMedium))
 
                 TextEntryField(
                     label = "Collector Title",
@@ -69,7 +82,6 @@ fun IntakeScreen(
                     singleLine = true,
                     error = state.intakeErrors.collectorTitle
                 )
-                Spacer(Modifier.height(MaterialTheme.dimensions.spacingMedium))
 
                 DatePickerField(
                     label = "Collection Date",
@@ -78,7 +90,6 @@ fun IntakeScreen(
                     error = state.intakeErrors.collectionDate,
                     modifier = Modifier.fillMaxWidth()
                 )
-                Spacer(Modifier.height(MaterialTheme.dimensions.spacingMedium))
 
                 DropdownField(
                     label = "Collection Method",
@@ -100,19 +111,12 @@ fun IntakeScreen(
                         color = MaterialTheme.colors.textPrimary
                     )
                 }
-                Spacer(Modifier.height(MaterialTheme.dimensions.spacingMedium))
 
                 DropdownField(
                     label = "Specimen Condition",
                     options = IntakeDropdownOptions.SpecimenConditionOption.entries,
                     selectedOption = IntakeDropdownOptions.SpecimenConditionOption.entries.firstOrNull { it.label == state.session.specimenCondition },
-                    onOptionSelected = {
-                        onAction(
-                            IntakeAction.SelectSpecimenCondition(
-                                it
-                            )
-                        )
-                    },
+                    onOptionSelected = { onAction(IntakeAction.SelectSpecimenCondition(it)) },
                     error = state.intakeErrors.specimenCondition,
                     modifier = Modifier.fillMaxWidth()
                 ) { specimenCondition ->
@@ -126,7 +130,11 @@ fun IntakeScreen(
         }
 
         item {
-            SectionCard(sectionTitle = "Geographical Information") {
+            IntakeTile(
+                title = "Geographical Information",
+                iconPainter = painterResource(id = R.drawable.ic_pin),
+                iconDescription = "Geographical Information Icon"
+            ) {
                 DropdownField(
                     label = "District",
                     options = state.allSitesInProgram.map { it.district }.distinct(),
@@ -140,7 +148,6 @@ fun IntakeScreen(
                         color = MaterialTheme.colors.textPrimary
                     )
                 }
-                Spacer(Modifier.height(MaterialTheme.dimensions.spacingMedium))
 
                 if (state.selectedDistrict.isNotBlank()) {
                     DropdownField(
@@ -160,7 +167,6 @@ fun IntakeScreen(
                             color = MaterialTheme.colors.textPrimary
                         )
                     }
-                    Spacer(Modifier.height(MaterialTheme.dimensions.spacingMedium))
                 }
 
                 TextEntryField(
@@ -170,71 +176,65 @@ fun IntakeScreen(
                     singleLine = true,
                     error = state.intakeErrors.houseNumber
                 )
-                Spacer(Modifier.height(MaterialTheme.dimensions.spacingMedium))
 
                 TextEntryField(
-                    label = "Number of House Occupants",
+                    label = "Number of People Living in the House",
                     value = if (state.surveillanceForm.numPeopleSleptInHouse == 0) "" else state.surveillanceForm.numPeopleSleptInHouse.toString(),
-                    onValueChange = {
-                        onAction(IntakeAction.EnterNumPeopleSleptInHouse(it.filter { character -> character.isDigit() }))
-                    },
+                    onValueChange = { onAction(IntakeAction.EnterNumPeopleSleptInHouse(it.filter { character -> character.isDigit() })) },
                     placeholder = "0",
                     singleLine = true,
                     keyboardType = KeyboardType.Number,
                 )
-                Spacer(Modifier.height(MaterialTheme.dimensions.spacingMedium))
 
                 when {
                     state.latitude != null && state.longitude != null -> {
-                        Text("Latitude: ${state.latitude}")
-                        Spacer(Modifier.height(MaterialTheme.dimensions.spacingSmall))
-                        Text("Longitude: ${state.longitude}")
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(MaterialTheme.dimensions.spacingMedium),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            InfoPill(
+                                text = "Latitude: ${state.latitude}", modifier = Modifier.weight(1f)
+                            )
+                            InfoPill(
+                                text = "Longitude: ${state.longitude}",
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
                     }
 
                     state.locationError != null -> {
-                        val context = LocalContext.current
-                        Text(
-                            text = "Could not get location: " + state.locationError.toString(context)
-                        )
-                        if (state.locationError == IntakeError.LOCATION_GPS_TIMEOUT) {
-                            Spacer(Modifier.height(MaterialTheme.dimensions.spacingSmall))
+                        Column(verticalArrangement = Arrangement.spacedBy(MaterialTheme.dimensions.spacingSmall)) {
+                            Text(
+                                text = "Could not get location: ${state.locationError.toString(context)}",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colors.error
+                            )
 
-                            val colors = LocalColors.current
-                            Button(
-                                onClick = { onAction(IntakeAction.RetryLocation) },
-                                colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
-                                contentPadding = PaddingValues()
-                            ) {
-                                Box(
-                                    modifier = Modifier
-                                        .background(
-                                            brush = Brush.horizontalGradient(
-                                                listOf(
-                                                    colors.buttonGradientLeft,
-                                                    colors.buttonGradientRight
-                                                )
-                                            ),
-                                            shape = RoundedCornerShape(MaterialTheme.dimensions.cornerRadiusMedium)
-                                        )
-                                        .padding(
-                                            horizontal = MaterialTheme.dimensions.paddingMedium,
-                                            vertical = MaterialTheme.dimensions.paddingSmall
-                                        ), contentAlignment = Alignment.Center
-                                ) {
-                                    Text(
-                                        text = "Retry Location",
-                                        style = MaterialTheme.typography.labelLarge
-                                    )
-                                }
+                            if (state.locationError == IntakeError.LOCATION_GPS_TIMEOUT) {
+                                ActionButton(
+                                    label = "Retry Location",
+                                    onClick = { onAction(IntakeAction.RetryLocation) },
+                                    modifier = Modifier.fillMaxWidth()
+                                )
                             }
                         }
                     }
 
                     else -> {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            CircularProgressIndicator()
-                            Spacer(Modifier.width(MaterialTheme.dimensions.spacingSmall))
-                            Text("Getting location…")
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(MaterialTheme.dimensions.spacingMedium),
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            CircularProgressIndicator(
+                                color = MaterialTheme.colors.secondary,
+                                modifier = Modifier.size(MaterialTheme.dimensions.iconSizeMedium)
+                            )
+                            Text(
+                                "Getting location…",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colors.textPrimary
+                            )
                         }
                     }
                 }
@@ -242,18 +242,44 @@ fun IntakeScreen(
         }
 
         item {
-            SectionCard(sectionTitle = "Surveillance Form") {
+            IntakeTile(
+                title = "Surveillance Form",
+                iconPainter = painterResource(id = R.drawable.ic_clipboard),
+                iconDescription = "Surveillance Form Icon"
+            ) {
+                ToggleField(
+                    label = "Was IRS conducted in this household?",
+                    checked = state.surveillanceForm.wasIrsConducted,
+                    onCheckedChange = {
+                        onAction(
+                            IntakeAction.ToggleIrsConducted(
+                                it
+                            )
+                        )
+                    })
+
+                if (state.surveillanceForm.wasIrsConducted) {
+                    TextEntryField(
+                        label = "Months Since IRS",
+                        value = state.surveillanceForm.monthsSinceIrs?.let { if (it == 0) "" else it.toString() }
+                            .orEmpty(),
+                        onValueChange = {
+                            onAction(IntakeAction.EnterMonthsSinceIrs(it.filter { character -> character.isDigit() }))
+                        },
+                        placeholder = "0",
+                        singleLine = true,
+                        keyboardType = KeyboardType.Number,
+                    )
+                }
+
                 TextEntryField(
                     label = "Number of LLINs Available",
                     value = if (state.surveillanceForm.numLlinsAvailable == 0) "" else state.surveillanceForm.numLlinsAvailable.toString(),
-                    onValueChange = {
-                        onAction(IntakeAction.EnterNumLlinsAvailable(it.filter { character -> character.isDigit() }))
-                    },
+                    onValueChange = { onAction(IntakeAction.EnterNumLlinsAvailable(it.filter { character -> character.isDigit() })) },
                     placeholder = "0",
                     singleLine = true,
                     keyboardType = KeyboardType.Number
                 )
-                Spacer(Modifier.height(MaterialTheme.dimensions.spacingMedium))
 
                 state.surveillanceForm.llinType?.let { current ->
                     DropdownField(
@@ -271,7 +297,6 @@ fun IntakeScreen(
                             color = MaterialTheme.colors.textPrimary
                         )
                     }
-                    Spacer(Modifier.height(MaterialTheme.dimensions.spacingMedium))
                 }
 
                 state.surveillanceForm.llinBrand?.let { current ->
@@ -290,7 +315,6 @@ fun IntakeScreen(
                             color = MaterialTheme.colors.textPrimary
                         )
                     }
-                    Spacer(Modifier.height(MaterialTheme.dimensions.spacingMedium))
                 }
 
                 state.surveillanceForm.numPeopleSleptUnderLlin?.let { current ->
@@ -304,39 +328,16 @@ fun IntakeScreen(
                         singleLine = true,
                         keyboardType = KeyboardType.Number
                     )
-                    Spacer(Modifier.height(MaterialTheme.dimensions.spacingMedium))
-                }
-
-                ToggleField(
-                    label = "Was IRS conducted in this household?",
-                    checked = state.surveillanceForm.wasIrsConducted,
-                    onCheckedChange = {
-                        onAction(
-                            IntakeAction.ToggleIrsConducted(
-                                it
-                            )
-                        )
-                    })
-                Spacer(Modifier.height(MaterialTheme.dimensions.spacingMedium))
-
-                if (state.surveillanceForm.wasIrsConducted) {
-                    TextEntryField(
-                        label = "Months Since IRS",
-                        value = state.surveillanceForm.monthsSinceIrs?.let { if (it == 0) "" else it.toString() }
-                            .orEmpty(),
-                        onValueChange = {
-                            onAction(IntakeAction.EnterMonthsSinceIrs(it.filter { character -> character.isDigit() }))
-                        },
-                        placeholder = "0",
-                        singleLine = true,
-                        keyboardType = KeyboardType.Number,
-                    )
                 }
             }
         }
 
         item {
-            SectionCard(sectionTitle = "Optional") {
+            IntakeTile(
+                title = "Additional Notes",
+                iconPainter = painterResource(id = R.drawable.ic_notes),
+                iconDescription = "Additional Notes Icon"
+            ) {
                 TextEntryField(
                     label = "Notes",
                     value = state.session.notes,
@@ -345,35 +346,11 @@ fun IntakeScreen(
         }
 
         item {
-            val colors = LocalColors.current
-            Button(
+            ActionButton(
+                label = "Continue",
                 onClick = { onAction(IntakeAction.SubmitIntakeForm) },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = MaterialTheme.dimensions.paddingLarge)
-                    .height(MaterialTheme.dimensions.componentHeightLarge),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color.Transparent
-                ),
-                contentPadding = PaddingValues()
-            ) {
-                Box(
-                    Modifier
-                        .fillMaxSize()
-                        .background(
-                            brush = Brush.horizontalGradient(
-                                listOf(
-                                    colors.buttonGradientLeft, colors.buttonGradientRight
-                                )
-                            ),
-                            shape = RoundedCornerShape(MaterialTheme.dimensions.cornerRadiusMedium)
-                        ), contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        "Confirm", style = MaterialTheme.typography.titleMedium
-                    )
-                }
-            }
+                modifier = Modifier.padding(MaterialTheme.dimensions.paddingMedium)
+            )
         }
     }
 }
