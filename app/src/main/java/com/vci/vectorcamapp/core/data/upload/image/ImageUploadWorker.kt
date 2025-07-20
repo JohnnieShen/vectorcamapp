@@ -171,11 +171,7 @@ class ImageUploadWorker @AssistedInject constructor(
         specimenId: String,
         md5: String
     ): DomainResult<String, NetworkError> {
-        var attempt = 0
-        var lastResult: DomainResult.Error<NetworkError>? = null
-
-        while (attempt < MAX_RETRIES) {
-            attempt++
+        for (attempt in 1..MAX_RETRIES) {
             try {
                 val result = performUpload(file, contentType, specimenId, md5)
 
@@ -185,12 +181,22 @@ class ImageUploadWorker @AssistedInject constructor(
                 }
 
                 result as DomainResult.Error<NetworkError>
-                lastResult = result
-                Log.w("ImageUploadWorker", "Failed attempt $attempt for specimen $specimenId with error: ${result.error}")
+                Log.w(
+                    "ImageUploadWorker",
+                    "Failed attempt $attempt for specimen $specimenId with error: ${result.error}"
+                )
 
-                if (result.error !in listOf(NetworkError.REQUEST_TIMEOUT, NetworkError.NO_INTERNET, NetworkError.SERVER_ERROR)) {
-                    Log.e("ImageUploadWorker", "Non-retryable error for specimen $specimenId.")
-                    break
+                val isRetryable = result.error in listOf(
+                    NetworkError.REQUEST_TIMEOUT,
+                    NetworkError.NO_INTERNET,
+                    NetworkError.SERVER_ERROR
+                )
+
+                if (!isRetryable || attempt == MAX_RETRIES) {
+                    if (!isRetryable) {
+                        Log.e("ImageUploadWorker", "Non-retryable error for specimen $specimenId.")
+                    }
+                    return result
                 }
 
             } catch (e: Exception) {
@@ -199,7 +205,7 @@ class ImageUploadWorker @AssistedInject constructor(
             }
         }
 
-        return lastResult ?: DomainResult.Error(NetworkError.UNKNOWN_ERROR)
+        return DomainResult.Error(NetworkError.UNKNOWN_ERROR)
     }
 
     private suspend fun performUpload(
@@ -219,36 +225,42 @@ class ImageUploadWorker @AssistedInject constructor(
         val uploaderResult = try {
             DomainResult.Success(tusClient.resumeOrCreateUpload(upload))
         } catch (e: TusProtocolException) {
-            if (e.causingConnection?.responseCode == HttpURLConnection.HTTP_CONFLICT) {
-                Log.w(
-                    "ImageUploadWorker",
-                    "resumeOrCreateUpload failed with 409 Conflict. Verifying by MD5.",
-                    e
-                )
-                val location = e.causingConnection.getHeaderField("Location")
-                return if (location != null) {
-                    DomainResult.Success(location)
-                } else {
-                    Log.e(
+            return when {
+                e.causingConnection?.responseCode == HttpURLConnection.HTTP_CONFLICT -> {
+                    Log.w(
                         "ImageUploadWorker",
-                        "Conflict response received without a Location header."
+                        "resumeOrCreateUpload returned with 409 Conflict.",
+                        e
+                    )
+                    val location = e.causingConnection.getHeaderField("Location")
+                    if (location != null) {
+                        DomainResult.Success(location)
+                    } else {
+                        Log.e(
+                            "ImageUploadWorker",
+                            "Conflict response received without a Location header."
+                        )
+                        DomainResult.Error(NetworkError.SERVER_ERROR)
+                    }
+                }
+
+                e.shouldRetry() -> {
+                    Log.w(
+                        "ImageUploadWorker",
+                        "resumeOrCreateUpload failed with a retryable server error.",
+                        e
                     )
                     DomainResult.Error(NetworkError.SERVER_ERROR)
                 }
-            } else if (e.shouldRetry()) {
-                Log.w(
-                    "ImageUploadWorker",
-                    "resumeOrCreateUpload failed with a retryable server error.",
-                    e
-                )
-                return DomainResult.Error(NetworkError.SERVER_ERROR)
-            } else {
-                Log.e(
-                    "ImageUploadWorker",
-                    "resumeOrCreateUpload failed with a non-retryable client error.",
-                    e
-                )
-                return DomainResult.Error(NetworkError.CLIENT_ERROR)
+
+                else -> {
+                    Log.e(
+                        "ImageUploadWorker",
+                        "resumeOrCreateUpload failed with a non-retryable client error.",
+                        e
+                    )
+                    DomainResult.Error(NetworkError.CLIENT_ERROR)
+                }
             }
         } catch (e: IOException) {
             Log.e("ImageUploadWorker", "resumeOrCreateUpload failed with IOException", e)
