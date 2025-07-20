@@ -35,6 +35,7 @@ import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.io.IOException
 import java.net.HttpURLConnection
+import java.net.SocketTimeoutException
 import java.net.URL
 import java.security.MessageDigest
 import java.util.UUID
@@ -135,17 +136,24 @@ class ImageUploadWorker @AssistedInject constructor(
             val (file, contentType) = try {
                 prepareFile(context.contentResolver, specimen.imageUri)
             } catch (e: IOException) {
-                Log.e("ImageUploadWorker", "Failed to prepare file for specimen ${specimen.id}. This is a permanent failure for this image.", e)
+                Log.e(
+                    "ImageUploadWorker",
+                    "Failed to prepare file for specimen ${specimen.id}. This is a permanent failure for this image.",
+                    e
+                )
                 return@forEachIndexed
             }
 
-            while (attempt < MAX_RETRIES && !imageUploadSuccess && !permanentErrorOccurred) {
-                attempt++
-                try {
-                    updateProgressNotification("Preparing (Attempt $attempt)...")
-                    Log.d("ImageUploadWorker", "Uploading specimen ${specimen.id} (Attempt $attempt/$MAX_RETRIES)")
-
+            try {
+                while (attempt < MAX_RETRIES && !imageUploadSuccess && !permanentErrorOccurred) {
+                    attempt++
                     try {
+                        updateProgressNotification("Preparing (Attempt $attempt)...")
+                        Log.d(
+                            "ImageUploadWorker",
+                            "Uploading specimen ${specimen.id} (Attempt $attempt/$MAX_RETRIES)"
+                        )
+
                         when (val result = performUpload(
                             file,
                             contentType,
@@ -154,7 +162,8 @@ class ImageUploadWorker @AssistedInject constructor(
                             is DomainResult.Success -> {
                                 successfulUploads++
                                 imageUploadSuccess = true
-                                val updatedSpecimen = specimen.copy(imageUploadStatus = UploadStatus.COMPLETED)
+                                val updatedSpecimen =
+                                    specimen.copy(imageUploadStatus = UploadStatus.COMPLETED)
                                 specimenRepository.updateSpecimen(updatedSpecimen, sessionId)
                                 Log.d(
                                     "ImageUploadWorker",
@@ -177,19 +186,26 @@ class ImageUploadWorker @AssistedInject constructor(
                                 }
                             }
                         }
-                    } finally {
-                        file.delete()
+                    } catch (e: Exception) {
+                        Log.e(
+                            "ImageUploadWorker",
+                            "Exception on attempt $attempt for specimen ${specimen.id}. This is a permanent failure for this image.",
+                            e
+                        )
+                        permanentErrorOccurred = true
                     }
-                } catch (e: Exception) {
-                    Log.e("ImageUploadWorker", "Exception on attempt $attempt for specimen ${specimen.id}. This is a permanent failure for this image.", e)
-                    permanentErrorOccurred = true
                 }
-            }
 
-            if (!imageUploadSuccess) {
-                Log.e("ImageUploadWorker", "All attempts failed or a permanent error occurred for specimen ${specimen.id}. Moving to next image.")
-                val updatedSpecimen = specimen.copy(imageUploadStatus = UploadStatus.FAILED)
-                specimenRepository.updateSpecimen(updatedSpecimen, sessionId)
+                if (!imageUploadSuccess) {
+                    Log.e(
+                        "ImageUploadWorker",
+                        "All attempts failed or a permanent error occurred for specimen ${specimen.id}. Moving to next image."
+                    )
+                    val updatedSpecimen = specimen.copy(imageUploadStatus = UploadStatus.FAILED)
+                    specimenRepository.updateSpecimen(updatedSpecimen, sessionId)
+                }
+            } finally {
+                file.delete()
             }
         }
 
@@ -197,7 +213,11 @@ class ImageUploadWorker @AssistedInject constructor(
         return WorkerResult.success()
     }
 
-    private suspend fun performUpload(file: File, contentType: String?, uploadSpecimenId: String): DomainResult<String, NetworkError> {
+    private suspend fun performUpload(
+        file: File,
+        contentType: String?,
+        uploadSpecimenId: String
+    ): DomainResult<String, NetworkError> {
         val md5 = calculateMD5(file)
         val uniqueFingerprint = "$uploadSpecimenId-$md5"
         val tusPath = "specimens/$uploadSpecimenId/images/tus"
@@ -211,19 +231,36 @@ class ImageUploadWorker @AssistedInject constructor(
             DomainResult.Success(tusClient.resumeOrCreateUpload(upload))
         } catch (e: TusProtocolException) {
             if (e.causingConnection?.responseCode == HttpURLConnection.HTTP_CONFLICT) {
-                Log.w("ImageUploadWorker", "resumeOrCreateUpload failed with 409 Conflict. Verifying by MD5.", e)
-                return when (val existingUrlResult = imageUploadDataSource.imageExists(uploadSpecimenId, md5)) {
+                Log.w(
+                    "ImageUploadWorker",
+                    "resumeOrCreateUpload failed with 409 Conflict. Verifying by MD5.",
+                    e
+                )
+                return when (val existingUrlResult =
+                    imageUploadDataSource.imageExists(uploadSpecimenId, md5)) {
                     is DomainResult.Success -> DomainResult.Success(existingUrlResult.data.toString())
                     is DomainResult.Error -> {
-                        Log.e("ImageUploadWorker", "MD5 check failed despite 409. Upload initialization failed.", e)
+                        Log.e(
+                            "ImageUploadWorker",
+                            "MD5 check failed despite 409. Upload initialization failed.",
+                            e
+                        )
                         DomainResult.Error(existingUrlResult.error)
                     }
                 }
             } else if (e.shouldRetry()) {
-                Log.w("ImageUploadWorker", "resumeOrCreateUpload failed with a retryable server error.", e)
+                Log.w(
+                    "ImageUploadWorker",
+                    "resumeOrCreateUpload failed with a retryable server error.",
+                    e
+                )
                 return DomainResult.Error(NetworkError.SERVER_ERROR)
             } else {
-                Log.e("ImageUploadWorker", "resumeOrCreateUpload failed with a non-retryable client error.", e)
+                Log.e(
+                    "ImageUploadWorker",
+                    "resumeOrCreateUpload failed with a non-retryable client error.",
+                    e
+                )
                 return DomainResult.Error(NetworkError.CLIENT_ERROR)
             }
         } catch (e: IOException) {
@@ -231,7 +268,8 @@ class ImageUploadWorker @AssistedInject constructor(
             return DomainResult.Error(NetworkError.NO_INTERNET)
         }
 
-        val uploader = uploaderResult.successOrNull() ?: return DomainResult.Error(NetworkError.UNKNOWN_ERROR)
+        val uploader =
+            uploaderResult.successOrNull() ?: return DomainResult.Error(NetworkError.UNKNOWN_ERROR)
 
         val loopResult = executeUploadLoop(uploader, tusClient, upload)
         if (loopResult is DomainResult.Error) {
@@ -244,11 +282,16 @@ class ImageUploadWorker @AssistedInject constructor(
                 Log.d("ImageUploadWorker", "Upload finished successfully: ${finalUrlResult.data}")
                 DomainResult.Success(finalUrlResult.data.toString())
             }
+
             is DomainResult.Error -> DomainResult.Error(finalUrlResult.error)
         }
     }
 
-    private suspend fun executeUploadLoop(initialUploader: TusUploader, client: TusClient, upload: TusUpload): DomainResult<Unit, NetworkError> {
+    private suspend fun executeUploadLoop(
+        initialUploader: TusUploader,
+        client: TusClient,
+        upload: TusUpload
+    ): DomainResult<Unit, NetworkError> {
         var uploader = initialUploader
         var currentChunkSize = INITIAL_CHUNK_SIZE_BYTES
         var successfulUploadsInARow = 0
@@ -262,6 +305,7 @@ class ImageUploadWorker @AssistedInject constructor(
                 withTimeout(NETWORK_TIMEOUT_MS) { DomainResult.Success(uploader.uploadChunk()) }
             } catch (e: Exception) {
                 when (e) {
+                    is SocketTimeoutException -> DomainResult.Error(NetworkError.REQUEST_TIMEOUT)
                     is TimeoutCancellationException -> DomainResult.Error(NetworkError.REQUEST_TIMEOUT)
                     is IOException -> DomainResult.Error(NetworkError.NO_INTERNET)
                     is TusProtocolException -> {
@@ -271,6 +315,7 @@ class ImageUploadWorker @AssistedInject constructor(
                             DomainResult.Error(NetworkError.CLIENT_ERROR)
                         }
                     }
+
                     else -> DomainResult.Error(NetworkError.UNKNOWN_ERROR)
                 }
             }
@@ -282,23 +327,42 @@ class ImageUploadWorker @AssistedInject constructor(
                         Log.w("ImageUploadWorker", "File stream ended unexpectedly.")
                         break
                     }
-                    val percent = if (upload.size > 0) (uploader.offset * 100 / upload.size).toInt() else 0
+                    val percent =
+                        if (upload.size > 0) (uploader.offset * 100 / upload.size).toInt() else 0
                     updateProgressNotification("$percent%")
-                    setProgress(workDataOf(KEY_PROGRESS_UPLOADED to uploader.offset, KEY_PROGRESS_TOTAL to upload.size))
+                    setProgress(
+                        workDataOf(
+                            KEY_PROGRESS_UPLOADED to uploader.offset,
+                            KEY_PROGRESS_TOTAL to upload.size
+                        )
+                    )
 
                     successfulUploadsInARow++
                     recoveryAttempts = 0
                     if (successfulUploadsInARow >= SUCCESS_STREAK_FOR_INCREASE) {
-                        currentChunkSize = (currentChunkSize * SUCCESS_CHUNK_SIZE_MULTIPLIER).coerceAtMost(MAX_CHUNK_SIZE_BYTES)
-                        Log.i("ImageUploadWorker", "Increasing chunk size to $currentChunkSize bytes.")
+                        currentChunkSize =
+                            (currentChunkSize * SUCCESS_CHUNK_SIZE_MULTIPLIER).coerceAtMost(
+                                MAX_CHUNK_SIZE_BYTES
+                            )
+                        Log.i(
+                            "ImageUploadWorker",
+                            "Increasing chunk size to $currentChunkSize bytes."
+                        )
                         successfulUploadsInARow = 0
                     }
                 }
+
                 is DomainResult.Error -> {
                     val error = chunkResult.error
                     successfulUploadsInARow = 0
-                    currentChunkSize = (currentChunkSize / FAILURE_CHUNK_SIZE_DIVIDER).coerceAtLeast(MIN_CHUNK_SIZE_BYTES)
-                    Log.w("ImageUploadWorker", "Upload error: $error. Reducing chunk size to $currentChunkSize bytes.")
+                    currentChunkSize =
+                        (currentChunkSize / FAILURE_CHUNK_SIZE_DIVIDER).coerceAtLeast(
+                            MIN_CHUNK_SIZE_BYTES
+                        )
+                    Log.w(
+                        "ImageUploadWorker",
+                        "Upload error: $error. Reducing chunk size to $currentChunkSize bytes."
+                    )
 
                     if (error != NetworkError.REQUEST_TIMEOUT && error != NetworkError.NO_INTERNET && error != NetworkError.SERVER_ERROR) {
                         return DomainResult.Error(error)
@@ -307,7 +371,10 @@ class ImageUploadWorker @AssistedInject constructor(
                     recoveryAttempts++
 
                     if (recoveryAttempts >= MAX_RETRIES) {
-                        Log.e("ImageUploadWorker", "Exceeded max recovery attempts for a single image upload. Failing.")
+                        Log.e(
+                            "ImageUploadWorker",
+                            "Exceeded max recovery attempts for a single image upload. Failing."
+                        )
                         return DomainResult.Error(error)
                     }
 
@@ -325,7 +392,12 @@ class ImageUploadWorker @AssistedInject constructor(
         return DomainResult.Success(Unit)
     }
 
-    private fun createTusUpload(file: File, fingerprint: String, contentType: String?, md5: String) = TusUpload(file).apply {
+    private fun createTusUpload(
+        file: File,
+        fingerprint: String,
+        contentType: String?,
+        md5: String
+    ) = TusUpload(file).apply {
         this.fingerprint = fingerprint
         metadata = mapOf(
             "filename" to file.name,
@@ -346,43 +418,50 @@ class ImageUploadWorker @AssistedInject constructor(
         return md.digest().joinToString("") { "%02x".format(it) }
     }
 
-    private suspend fun prepareFile(resolver: ContentResolver, source: Uri): Pair<File, String?> = withContext(Dispatchers.IO) {
-        val mimeType = resolver.getType(source)
-        val extension = when (mimeType) {
-            "image/jpeg" -> "jpg"
-            "image/png" -> "png"
-            else -> "bin"
-        }
-        val destination = File(context.cacheDir, "work_upload_${System.currentTimeMillis()}.$extension")
-        resolver.openInputStream(source)?.use { input ->
-            FileOutputStream(destination).use { output ->
-                input.copyTo(output)
+    private suspend fun prepareFile(resolver: ContentResolver, source: Uri): Pair<File, String?> =
+        withContext(Dispatchers.IO) {
+            val mimeType = resolver.getType(source)
+            val extension = when (mimeType) {
+                "image/jpeg" -> "jpg"
+                "image/png" -> "png"
+                else -> "bin"
             }
-        } ?: throw IOException("Unable to open $source")
-        Log.d("ImageUploadWorker", "Prepared ${destination.name} (${destination.length()} bytes)")
-        return@withContext destination to mimeType
-    }
+            val destination =
+                File(context.cacheDir, "work_upload_${System.currentTimeMillis()}.$extension")
+            resolver.openInputStream(source)?.use { input ->
+                FileOutputStream(destination).use { output ->
+                    input.copyTo(output)
+                }
+            } ?: throw IOException("Unable to open $source")
+            Log.d(
+                "ImageUploadWorker",
+                "Prepared ${destination.name} (${destination.length()} bytes)"
+            )
+            return@withContext destination to mimeType
+        }
 
-    private suspend fun safeFinish(uploader: TusUploader): DomainResult<URL, NetworkError> = withContext(Dispatchers.IO) {
-        try {
-            uploader.finish()
-            Log.d("ImageUploadWorker", "Tus finish() successful.")
-            DomainResult.Success(uploader.uploadURL)
-        } catch (e: TusProtocolException) {
-            Log.w("ImageUploadWorker", "finish() failed with TusProtocolException.", e)
-            if (e.shouldRetry()) {
-                DomainResult.Error(NetworkError.SERVER_ERROR)
-            } else {
-                DomainResult.Error(NetworkError.CLIENT_ERROR)
+    private suspend fun safeFinish(uploader: TusUploader): DomainResult<URL, NetworkError> =
+        withContext(Dispatchers.IO) {
+            try {
+                uploader.finish()
+                Log.d("ImageUploadWorker", "Tus finish() successful.")
+                DomainResult.Success(uploader.uploadURL)
+            } catch (e: TusProtocolException) {
+                Log.w("ImageUploadWorker", "finish() failed with TusProtocolException.", e)
+                if (e.shouldRetry()) {
+                    DomainResult.Error(NetworkError.SERVER_ERROR)
+                } else {
+                    DomainResult.Error(NetworkError.CLIENT_ERROR)
+                }
+            } catch (e: IOException) {
+                Log.e("ImageUploadWorker", "finish() failed due to IOException.", e)
+                DomainResult.Error(NetworkError.NO_INTERNET)
             }
-        } catch (e: IOException) {
-            Log.e("ImageUploadWorker", "finish() failed due to IOException.", e)
-            DomainResult.Error(NetworkError.NO_INTERNET)
         }
-    }
 
     private fun createNotificationChannel() {
-        val channel = NotificationChannel(CHANNEL_ID, CHANNEL_NAME, NotificationManager.IMPORTANCE_LOW)
+        val channel =
+            NotificationChannel(CHANNEL_ID, CHANNEL_NAME, NotificationManager.IMPORTANCE_LOW)
         notificationManager.createNotificationChannel(channel)
     }
 
@@ -394,7 +473,11 @@ class ImageUploadWorker @AssistedInject constructor(
             .setProgress(total, 0, true)
             .setOngoing(true)
             .build()
-        return ForegroundInfo(NOTIFICATION_ID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC)
+        return ForegroundInfo(
+            NOTIFICATION_ID,
+            notification,
+            ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC
+        )
     }
 
     private fun updateProgressNotification(progressText: String) {

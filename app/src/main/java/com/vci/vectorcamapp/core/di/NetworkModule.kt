@@ -1,6 +1,7 @@
 package com.vci.vectorcamapp.core.di
 
 import android.content.Context
+import com.vci.vectorcamapp.core.data.upload.image.util.TimeoutConfiguredTusClient
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -46,7 +47,7 @@ object NetworkModule {
     fun provideTusClient(
         @ApplicationContext context: Context
     ): TusClient {
-        return TusClient().apply {
+        return TimeoutConfiguredTusClient().apply {
             headers = mapOf("Content-Type" to "application/offset+octet-stream")
             enableResuming(TusPreferencesURLStore(context.getSharedPreferences("tus_worker", Context.MODE_PRIVATE)))
         }
