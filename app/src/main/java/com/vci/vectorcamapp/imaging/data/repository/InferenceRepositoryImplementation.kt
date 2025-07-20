@@ -13,7 +13,6 @@ import com.vci.vectorcamapp.imaging.di.SpeciesClassifier
 import com.vci.vectorcamapp.imaging.di.SpecimenIdRecognizer
 import com.vci.vectorcamapp.imaging.domain.SpecimenClassifier
 import com.vci.vectorcamapp.imaging.domain.SpecimenDetector
-import com.vci.vectorcamapp.imaging.domain.enums.AbdomenStatusLabel
 import com.vci.vectorcamapp.imaging.domain.enums.SexLabel
 import com.vci.vectorcamapp.imaging.domain.enums.SpeciesLabel
 import com.vci.vectorcamapp.imaging.domain.repository.InferenceRepository
@@ -56,32 +55,22 @@ class InferenceRepositoryImplementation @Inject constructor(
             specimenDetector.detect(bitmap)
         }
 
-    override suspend fun classifySpecimen(croppedBitmap: Bitmap): Triple<SpeciesLabel?, SexLabel?, AbdomenStatusLabel?> =
+    override suspend fun classifySpecimen(croppedBitmap: Bitmap): Triple<List<Float>?, List<Float>?, List<Float>?> =
         withContext(Dispatchers.Default) {
-            val speciesPromise = async { getClassification(croppedBitmap, speciesClassifier) }
-            val sexPromise = async { getClassification(croppedBitmap, sexClassifier) }
-            val abdomenStatusPromise =
-                async { getClassification(croppedBitmap, abdomenStatusClassifier) }
+            val speciesLogitsPromise = async { getClassification(croppedBitmap, speciesClassifier) }
+            val sexLogitsPromise = async { getClassification(croppedBitmap, sexClassifier) }
+            val abdomenStatusLogitsPromise = async { getClassification(croppedBitmap, abdomenStatusClassifier) }
+            
+            val speciesLogits = speciesLogitsPromise.await()
+            val sexLogits = sexLogitsPromise.await()
+            val abdomenStatusLogits = abdomenStatusLogitsPromise.await()
 
-            val species =
-                speciesPromise.await()?.let { index -> SpeciesLabel.entries.getOrNull(index) }
-            var sex = sexPromise.await()?.let { index -> SexLabel.entries.getOrNull(index) }
-            var abdomenStatus = abdomenStatusPromise.await()
-                ?.let { index -> AbdomenStatusLabel.entries.getOrNull(index) }
-
-            if (species == SpeciesLabel.NON_MOSQUITO || species == null) {
-                sex = null
-            }
-            if (sex == SexLabel.MALE || sex == null) {
-                abdomenStatus = null
-            }
-
-            Triple(species, sex, abdomenStatus)
+            Triple(speciesLogits, sexLogits, abdomenStatusLogits)
         }
 
     private suspend fun getClassification(
         croppedBitmap: Bitmap, classifier: SpecimenClassifier
-    ): Int? = classifier.classify(croppedBitmap)
+    ): List<Float>? = classifier.classify(croppedBitmap)
 
     override fun closeResources() {
         specimenIdRecognizer.close()

@@ -30,6 +30,9 @@ import com.vci.vectorcamapp.core.domain.util.Result
 import com.vci.vectorcamapp.core.domain.util.onError
 import com.vci.vectorcamapp.core.domain.util.onSuccess
 import com.vci.vectorcamapp.core.presentation.CoreViewModel
+import com.vci.vectorcamapp.imaging.domain.enums.AbdomenStatusLabel
+import com.vci.vectorcamapp.imaging.domain.enums.SexLabel
+import com.vci.vectorcamapp.imaging.domain.enums.SpeciesLabel
 import com.vci.vectorcamapp.imaging.domain.repository.CameraRepository
 import com.vci.vectorcamapp.imaging.domain.repository.InferenceRepository
 import com.vci.vectorcamapp.imaging.domain.util.ImagingError
@@ -264,16 +267,27 @@ class ImagingViewModel @Inject constructor(
                                         clampedWidth,
                                         clampedHeight
                                     )
-                                    val (species, sex, abdomenStatus) = inferenceRepository.classifySpecimen(
-                                        croppedBitmap
-                                    )
+                                    var (speciesLogits, sexLogits, abdomenStatusLogits) = inferenceRepository.classifySpecimen(croppedBitmap)
+
+                                    val speciesIndex = speciesLogits?.let { logits -> logits.indexOf(logits.max()) }
+                                    var sexIndex = sexLogits?.let { logits -> logits.indexOf(logits.max()) }
+                                    var abdomenStatusIndex = abdomenStatusLogits?.let { logits -> logits.indexOf(logits.max()) }
+
+                                    if (speciesLogits == null || speciesIndex == SpeciesLabel.NON_MOSQUITO.ordinal) {
+                                        sexLogits = null
+                                        sexIndex = null
+                                    }
+                                    if (sexLogits == null || sexIndex == SexLabel.MALE.ordinal) {
+                                        abdomenStatusLogits = null
+                                        abdomenStatusIndex = null
+                                    }
 
                                     _state.update {
                                         it.copy(
                                             currentSpecimen = it.currentSpecimen.copy(
-                                                species = species?.label,
-                                                sex = sex?.label,
-                                                abdomenStatus = abdomenStatus?.label,
+                                                species = speciesIndex?.let { index -> SpeciesLabel.entries[index].label },
+                                                sex = sexIndex?.let { index -> SexLabel.entries[index].label },
+                                                abdomenStatus = abdomenStatusIndex?.let { index -> AbdomenStatusLabel.entries[index].label },
                                             ),
                                             currentImageBytes = jpegByteArray,
                                             currentInferenceResult = it.currentInferenceResult.copy(
@@ -283,6 +297,9 @@ class ImagingViewModel @Inject constructor(
                                                 bboxHeight = captureInferenceResult.bboxHeight,
                                                 bboxConfidence = captureInferenceResult.bboxConfidence,
                                                 bboxClassId = captureInferenceResult.bboxClassId,
+                                                speciesLogits = speciesLogits,
+                                                sexLogits = sexLogits,
+                                                abdomenStatusLogits = abdomenStatusLogits
                                             ),
                                             previewInferenceResults = emptyList()
                                         )

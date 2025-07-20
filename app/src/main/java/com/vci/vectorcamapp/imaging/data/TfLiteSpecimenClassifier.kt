@@ -77,7 +77,7 @@ class TfLiteSpecimenClassifier(
 
     override fun getOutputTensorShape(): Int = outputNumClasses
 
-    override suspend fun classify(croppedBitmap: Bitmap): Int? {
+    override suspend fun classify(croppedBitmap: Bitmap): List<Float>? {
         if (!isReady()) return null
 
         return suspendCoroutine { continuation ->
@@ -119,7 +119,7 @@ class TfLiteSpecimenClassifier(
                     val result = synchronized(classifierLock) {
                         if (!isReady()) return@post continuation.resume(null)
                         classifier?.run(inputTensor.buffer, outputTensor.buffer)
-                        getClass(outputTensor.floatArray)
+                        outputTensor.floatArray.toList()
                     }
 
                     Log.d(TAG, "Inference result: $result")
@@ -166,12 +166,6 @@ class TfLiteSpecimenClassifier(
         Core.divide(resizedMatrix, stdDevMatrix, resizedMatrix)
 
         return resizedMatrix
-    }
-
-    private fun getClass(logits: FloatArray): Int {
-        if (logits.isEmpty()) return -1
-        Log.d(TAG, "Logits: ${logits.joinToString()}")
-        return logits.indices.maxByOrNull { logits[it] } ?: -1
     }
 
     override fun close() {
