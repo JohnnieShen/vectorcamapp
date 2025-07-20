@@ -116,15 +116,37 @@ class ImageUploadWorker @AssistedInject constructor(
         setForeground(showInitialSessionNotification(sessionId.toString(), specimensToUpload.size))
 
         var successfulUploads = 0
+        var encounteredPermanentFailure = false
 
         specimensToUpload.forEachIndexed { index, specimen ->
-            if (uploadSingleSpecimen(specimen, sessionId, index + 1, specimensToUpload.size) is DomainResult.Success) {
-                successfulUploads++
+            when (val result = uploadSingleSpecimen(specimen, sessionId, index + 1, specimensToUpload.size)) {
+                is DomainResult.Success -> {
+                    successfulUploads++
+                }
+                is DomainResult.Error -> {
+                    val isPermanentError = result.error !in listOf(
+                        NetworkError.REQUEST_TIMEOUT,
+                        NetworkError.NO_INTERNET,
+                        NetworkError.SERVER_ERROR
+                    )
+                    if (isPermanentError) {
+                        encounteredPermanentFailure = true
+                    }
+                }
             }
         }
 
         showFinalStatusNotification(sessionId.toString(), successfulUploads, specimensToUpload.size)
-        return WorkerResult.success()
+        return if (successfulUploads == specimensToUpload.size) {
+            Log.i("ImageUploadWorker", "Work finished: All images uploaded successfully.")
+            WorkerResult.success()
+        } else if (encounteredPermanentFailure) {
+            Log.w("ImageUploadWorker", "Work finished: Permanent failure encountered. Not retrying.")
+            WorkerResult.failure()
+        } else {
+            Log.i("ImageUploadWorker", "Work finished: Transient failures encountered. Requesting retry.")
+            WorkerResult.retry()
+        }
     }
 
     private suspend fun uploadSingleSpecimen(
