@@ -67,4 +67,8 @@ class SpecimenRepositoryImplementation @Inject constructor(
                 }
             }
     }
+
+    override suspend fun getSpecimensBySession(sessionId: UUID): List<Specimen> {
+        return specimenDao.getSpecimensBySession(sessionId).map { it.toDomain() }
+    }
 }

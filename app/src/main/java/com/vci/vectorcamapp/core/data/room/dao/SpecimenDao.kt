@@ -24,6 +24,9 @@ interface SpecimenDao {
     @Delete
     suspend fun deleteSpecimen(specimen: SpecimenEntity): Int
 
+    @Query("SELECT * FROM specimen WHERE sessionId = :sessionId")
+    suspend fun getSpecimensBySession(sessionId: UUID): List<SpecimenEntity>
+
     @Transaction
     @Query("SELECT * FROM specimen WHERE sessionId = :sessionId")
     fun getSpecimensAndInferenceResultsBySession(sessionId: UUID): List<SpecimenAndInferenceResultRelation>
