@@ -118,7 +118,7 @@ class ImageUploadWorker @AssistedInject constructor(
         var successfulUploads = 0
 
         specimensToUpload.forEachIndexed { index, specimen ->
-            if (uploadSingleSpecimen(specimen, sessionId, index + 1, specimensToUpload.size)) {
+            if (uploadSingleSpecimen(specimen, sessionId, index + 1, specimensToUpload.size) is DomainResult.Success) {
                 successfulUploads++
             }
         }
@@ -132,7 +132,7 @@ class ImageUploadWorker @AssistedInject constructor(
         sessionId: UUID,
         currentIndex: Int,
         totalImages: Int
-    ): Boolean {
+    ): DomainResult<String, NetworkError> {
         notificationSessionId = sessionId.toString()
         notificationTotalImages = totalImages
         notificationCurrentImageIndex = currentIndex
@@ -144,28 +144,25 @@ class ImageUploadWorker @AssistedInject constructor(
 
         val (file, contentType, md5) = try {
             val (tempFile, type) = prepareFile(context.contentResolver, specimen.imageUri, specimen.id)
-            val calculatedMd5 = calculateMD5(tempFile)
-            Triple(tempFile, type, calculatedMd5)
+            Triple(tempFile, type, calculateMD5(tempFile))
         } catch (e: Exception) {
-            Log.e("ImageUploadWorker", "Failed to prepare file or calculate MD5 for specimen ${specimen.id}. This is a permanent failure for this image.", e)
+            Log.e("ImageUploadWorker", "Failed to prepare file or calculate MD5 for specimen ${specimen.id}.", e)
             specimenRepository.updateSpecimen(specimen.copy(imageUploadStatus = UploadStatus.FAILED), sessionId)
-            return false
+            return DomainResult.Error(NetworkError.CLIENT_ERROR)
         }
 
-        var imageUploadSuccess = false
-        try {
-            imageUploadSuccess = attemptUploadWithRetries(file, contentType, specimen.id, md5)
-        } finally {
-            val finalStatus = if (imageUploadSuccess) UploadStatus.COMPLETED else UploadStatus.FAILED
-            if (!imageUploadSuccess) {
-                Log.e("ImageUploadWorker", "All attempts failed for specimen ${specimen.id}.")
-            }
-            specimenRepository.updateSpecimen(specimen.copy(imageUploadStatus = finalStatus), sessionId)
-            file.delete()
-            Log.d("ImageUploadWorker", "Cleaned up cache file: ${file.name}")
-        }
+        val uploadResult = attemptUploadWithRetries(file, contentType, specimen.id, md5)
 
-        return imageUploadSuccess
+        val finalStatus = if (uploadResult is DomainResult.Success) {
+            UploadStatus.COMPLETED
+        } else {
+            UploadStatus.FAILED
+        }
+        specimenRepository.updateSpecimen(specimen.copy(imageUploadStatus = finalStatus), sessionId)
+        file.delete()
+        Log.d("ImageUploadWorker", "Cleaned up cache file: ${file.name}")
+
+        return uploadResult
     }
 
     private suspend fun attemptUploadWithRetries(
@@ -173,36 +170,36 @@ class ImageUploadWorker @AssistedInject constructor(
         contentType: String?,
         specimenId: String,
         md5: String
-    ): Boolean {
+    ): DomainResult<String, NetworkError> {
         var attempt = 0
-        var permanentErrorOccurred = false
+        var lastResult: DomainResult.Error<NetworkError>? = null
 
-        while (attempt < MAX_RETRIES && !permanentErrorOccurred) {
+        while (attempt < MAX_RETRIES) {
             attempt++
             try {
-                updateProgressNotification("Preparing (Attempt $attempt)...")
-                Log.d("ImageUploadWorker", "Uploading specimen $specimenId (Attempt $attempt/$MAX_RETRIES)")
+                val result = performUpload(file, contentType, specimenId, md5)
 
-                when (val result = performUpload(file, contentType, specimenId, md5)) {
-                    is DomainResult.Success -> {
-                        Log.d("ImageUploadWorker", "Success for specimen $specimenId on attempt $attempt")
-                        return true
-                    }
-                    is DomainResult.Error -> {
-                        val error = result.error
-                        Log.w("ImageUploadWorker", "Failed attempt $attempt for specimen $specimenId with error: $error")
-                        if (error != NetworkError.REQUEST_TIMEOUT && error != NetworkError.NO_INTERNET && error != NetworkError.SERVER_ERROR) {
-                            Log.e("ImageUploadWorker", "Non-retryable error for specimen $specimenId. This is a permanent failure for this image.")
-                            permanentErrorOccurred = true
-                        }
-                    }
+                if (result is DomainResult.Success) {
+                    Log.d("ImageUploadWorker", "Success for specimen $specimenId on attempt $attempt")
+                    return result
                 }
+
+                result as DomainResult.Error<NetworkError>
+                lastResult = result
+                Log.w("ImageUploadWorker", "Failed attempt $attempt for specimen $specimenId with error: ${result.error}")
+
+                if (result.error !in listOf(NetworkError.REQUEST_TIMEOUT, NetworkError.NO_INTERNET, NetworkError.SERVER_ERROR)) {
+                    Log.e("ImageUploadWorker", "Non-retryable error for specimen $specimenId.")
+                    break
+                }
+
             } catch (e: Exception) {
-                Log.e("ImageUploadWorker", "Exception on attempt $attempt for specimen $specimenId. This is a permanent failure for this image.", e)
-                permanentErrorOccurred = true
+                Log.e("ImageUploadWorker", "Exception on attempt $attempt for specimen $specimenId.", e)
+                return DomainResult.Error(NetworkError.UNKNOWN_ERROR)
             }
         }
-        return false
+
+        return lastResult ?: DomainResult.Error(NetworkError.UNKNOWN_ERROR)
     }
 
     private suspend fun performUpload(

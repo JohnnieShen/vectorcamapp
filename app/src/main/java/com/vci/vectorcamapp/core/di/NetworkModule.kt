@@ -55,13 +55,15 @@ object NetworkModule {
     }
 
     @Provides
-    @Singleton
     fun provideTusClient(
-        @ApplicationContext context: Context
-    ): TusClient {
-        return TimeoutConfiguredTusClient().apply {
-            headers = mapOf("Content-Type" to "application/offset+octet-stream")
-            enableResuming(TusPreferencesURLStore(context.getSharedPreferences("tus_worker", Context.MODE_PRIVATE)))
-        }
+        @ApplicationContext ctx: Context,
+        client: TimeoutConfiguredTusClient
+    ): TusClient = client.apply {
+        headers = mapOf("Content-Type" to "application/offset+octet-stream")
+        enableResuming(
+            TusPreferencesURLStore(
+                ctx.getSharedPreferences("tus_worker", Context.MODE_PRIVATE)
+            )
+        )
     }
 }
