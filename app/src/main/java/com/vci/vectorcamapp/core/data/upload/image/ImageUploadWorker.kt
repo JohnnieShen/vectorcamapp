@@ -38,6 +38,7 @@ import java.net.SocketTimeoutException
 import java.net.URL
 import java.security.MessageDigest
 import java.util.UUID
+import kotlin.coroutines.cancellation.CancellationException
 import androidx.work.ListenableWorker.Result as WorkerResult
 import com.vci.vectorcamapp.core.domain.util.Result as DomainResult
 import io.tus.java.client.ProtocolException as TusProtocolException
@@ -168,6 +169,10 @@ class ImageUploadWorker @AssistedInject constructor(
             val (tempFile, type) = prepareFile(context.contentResolver, specimen.imageUri, specimen.id)
             Triple(tempFile, type, calculateMD5(tempFile))
         } catch (e: Exception) {
+            if (isStopped) {
+                Log.w("ImageUploadWorker", "Worker was stopped during file preparation.")
+                throw CancellationException("Worker was stopped during file preparation.", e)
+            }
             Log.e("ImageUploadWorker", "Failed to prepare file or calculate MD5 for specimen ${specimen.id}.", e)
             specimenRepository.updateSpecimen(specimen.copy(imageUploadStatus = UploadStatus.FAILED), sessionId)
             return DomainResult.Error(NetworkError.CLIENT_ERROR)
@@ -222,6 +227,10 @@ class ImageUploadWorker @AssistedInject constructor(
                 }
 
             } catch (e: Exception) {
+                if (isStopped) {
+                    Log.w("ImageUploadWorker", "Worker was stopped by the system during attempt $attempt.")
+                    throw CancellationException("Worker was stopped by the system.", e)
+                }
                 Log.e("ImageUploadWorker", "Exception on attempt $attempt for specimen $specimenId.", e)
                 return DomainResult.Error(NetworkError.UNKNOWN_ERROR)
             }
@@ -338,6 +347,10 @@ class ImageUploadWorker @AssistedInject constructor(
             } catch (e: IOException) {
                 DomainResult.Error(NetworkError.NO_INTERNET)
             } catch (e: Exception) {
+                if (isStopped) {
+                    Log.w("ImageUploadWorker", "Worker was stopped during chunk upload.")
+                    throw CancellationException("Worker was stopped during chunk upload.", e)
+                }
                 DomainResult.Error(NetworkError.UNKNOWN_ERROR)
             }
 
@@ -402,6 +415,10 @@ class ImageUploadWorker @AssistedInject constructor(
                     try {
                         uploader = tusClient.resumeOrCreateUpload(upload)
                     } catch (resumeException: Exception) {
+                        if (isStopped) {
+                            Log.w("ImageUploadWorker", "Worker was stopped by the system while trying to resume upload.")
+                            throw CancellationException("Worker was stopped by the system.", resumeException)
+                        }
                         Log.e("ImageUploadWorker", "Failed to resume upload.", resumeException)
                         return DomainResult.Error(NetworkError.UNKNOWN_ERROR)
                     }
@@ -487,6 +504,13 @@ class ImageUploadWorker @AssistedInject constructor(
             } catch (e: IOException) {
                 Log.e("ImageUploadWorker", "finish() failed due to IOException.", e)
                 DomainResult.Error(NetworkError.NO_INTERNET)
+            } catch (e: Exception) {
+                if (isStopped) {
+                    Log.w("ImageUploadWorker", "Worker was stopped during Tus finish().")
+                    throw CancellationException("Worker was stopped during Tus finish().", e)
+                }
+                Log.e("ImageUploadWorker", "finish() failed due to unexpected exception.", e)
+                DomainResult.Error(NetworkError.UNKNOWN_ERROR)
             }
         }
 
