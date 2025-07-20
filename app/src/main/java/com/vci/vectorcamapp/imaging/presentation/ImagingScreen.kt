@@ -90,7 +90,8 @@ fun ImagingScreen(
                     onSubmitSession = { onAction(ImagingAction.SubmitSession) },
                     manualFocusPoint = state.manualFocusPoint,
                     onAction = onAction,
-                    modifier = modifier
+                    modifier = modifier,
+                    captureEnabled = !state.isProcessing
                 )
             }
         }

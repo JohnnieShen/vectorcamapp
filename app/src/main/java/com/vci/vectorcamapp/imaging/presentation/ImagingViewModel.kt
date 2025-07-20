@@ -218,9 +218,8 @@ class ImagingViewModel @Inject constructor(
                 }
 
                 is ImagingAction.CaptureImage -> {
-                    _state.update { it.copy(isCapturing = true) }
+                    _state.update { it.copy(isProcessing = true) }
                     val captureResult = cameraRepository.captureImage(action.controller)
-                    _state.update { it.copy(isCapturing = false) }
 
                     captureResult.onSuccess { image ->
                         val displayOrientation = _state.value.displayOrientation
@@ -321,6 +320,7 @@ class ImagingViewModel @Inject constructor(
                         }
                         emitError(error)
                     }
+                    _state.update { it.copy(isProcessing = false) }
                 }
 
                 ImagingAction.RetakeImage -> {

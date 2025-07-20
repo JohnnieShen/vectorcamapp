@@ -42,7 +42,8 @@ fun LiveCameraPreviewPage(
     onSaveSessionProgress: () -> Unit,
     onSubmitSession: () -> Unit,
     onAction: (ImagingAction) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    captureEnabled: Boolean = true
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -101,7 +102,8 @@ fun LiveCameraPreviewPage(
                             cameraFocusController.manualFocusAt(offset)
                             onAction(ImagingAction.ManualFocusAt(offset))
                         }
-                    }) {
+                    }
+            ) {
                 manualFocusPoint?.let { focusPoint ->
                     if (containerSize != IntSize.Zero) {
                         AutofocusRingOverlay(
@@ -146,20 +148,22 @@ fun LiveCameraPreviewPage(
             )
         }
 
-        IconButton(
-            onClick = onImageCaptured,
-            modifier = Modifier
-                .padding(bottom = 48.dp)
-                .size(64.dp)
-                .background(MaterialTheme.colorScheme.primary, CircleShape)
-                .align(Alignment.BottomCenter)
-        ) {
-            Icon(
-                painter = painterResource(id = R.drawable.ic_camera),
-                contentDescription = "Capture Image",
-                modifier = Modifier.size(32.dp),
-                tint = MaterialTheme.colorScheme.onPrimary
-            )
+        if (captureEnabled) {
+            IconButton(
+                onClick = onImageCaptured,
+                modifier = Modifier
+                    .padding(bottom = 48.dp)
+                    .size(64.dp)
+                    .background(MaterialTheme.colorScheme.primary, CircleShape)
+                    .align(Alignment.BottomCenter)
+            ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_camera),
+                    contentDescription = "Capture Image",
+                    modifier = Modifier.size(32.dp),
+                    tint = MaterialTheme.colorScheme.onPrimary
+                )
+            }
         }
     }
 }

@@ -63,7 +63,8 @@ fun LandingScreen(
                         title = "View Incomplete Sessions",
                         description = "Resume and complete any unfinished sessions.",
                         icon = painterResource(R.drawable.ic_minus_circle),
-                        onClick = { onAction(LandingAction.ViewIncompleteSessions) })
+                        onClick = { onAction(LandingAction.ViewIncompleteSessions) },
+                        badgeCount = state.incompleteSessionsCount)
 
                     LandingActionTile(
                         title = "View Complete Sessions",

@@ -6,9 +6,12 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Badge
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -28,7 +31,8 @@ fun LandingActionTile(
     description: String,
     icon: Painter,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    badgeCount: Int = 0
 ) {
 
     ActionTile(
@@ -55,6 +59,23 @@ fun LandingActionTile(
                     tint = MaterialTheme.colors.icon,
                     modifier = Modifier.size(MaterialTheme.dimensions.iconSizeLarge)
                 )
+
+                if (badgeCount > 0) {
+                    Badge(
+                        modifier = Modifier
+                            .align(Alignment.TopEnd)
+                            .offset(
+                                x = MaterialTheme.dimensions.paddingExtraSmall,
+                                y = -MaterialTheme.dimensions.paddingExtraSmall
+                            ),
+                        containerColor = MaterialTheme.colors.error
+                    ) {
+                        Text(
+                            text = badgeCount.toString(),
+                            color = MaterialTheme.colors.buttonText
+                        )
+                    }
+                }
             }
 
             Column(

@@ -8,7 +8,7 @@ import com.vci.vectorcamapp.core.domain.model.UploadStatus
 import com.vci.vectorcamapp.core.domain.model.composites.SpecimenAndInferenceResult
 
 data class ImagingState(
-    val isCapturing: Boolean = false,
+    val isProcessing: Boolean = false,
     val currentSpecimen: Specimen = Specimen(
         id = "",
         species = null,
