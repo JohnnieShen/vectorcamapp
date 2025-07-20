@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.selection.TextSelectionColors
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
@@ -66,6 +67,10 @@ fun TextEntryField(
                 unfocusedBorderColor = MaterialTheme.colors.transparent,
                 errorBorderColor = MaterialTheme.colors.transparent,
                 cursorColor = MaterialTheme.colors.primary,
+                selectionColors = TextSelectionColors(
+                    handleColor = MaterialTheme.colors.primary,
+                    backgroundColor = MaterialTheme.colors.primary.copy(alpha = 0.25f)
+                )
             ),
             modifier = modifier
                 .fillMaxWidth()
