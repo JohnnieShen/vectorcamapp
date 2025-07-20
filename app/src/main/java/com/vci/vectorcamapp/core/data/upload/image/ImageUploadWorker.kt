@@ -118,109 +118,91 @@ class ImageUploadWorker @AssistedInject constructor(
         var successfulUploads = 0
 
         specimensToUpload.forEachIndexed { index, specimen ->
-            val currentIndex = index + 1
-
-            notificationSessionId = sessionId.toString()
-            notificationTotalImages = specimensToUpload.size
-            notificationCurrentImageIndex = currentIndex
-
-            var imageUploadSuccess = false
-            var attempt = 0
-            var permanentErrorOccurred = false
-
-            val updatedSpecimen = specimen.copy(imageUploadStatus = UploadStatus.IN_PROGRESS)
-            specimenRepository.updateSpecimen(updatedSpecimen, sessionId)
-
-            val (file, contentType) = try {
-                prepareFile(context.contentResolver, specimen.imageUri, specimen.id)
-            } catch (e: IOException) {
-                Log.e(
-                    "ImageUploadWorker",
-                    "Failed to prepare file for specimen ${specimen.id}. This is a permanent failure for this image.",
-                    e
-                )
-                return@forEachIndexed
-            }
-
-            val md5 = try {
-                calculateMD5(file)
-            } catch (e: Exception) {
-                Log.e(
-                    "ImageUploadWorker",
-                    "Failed to calculate MD5 for specimen ${specimen.id}. This is a permanent failure for this image.",
-                    e
-                )
-                specimenRepository.updateSpecimen(specimen.copy(imageUploadStatus = UploadStatus.FAILED), sessionId)
-                file.delete()
-                return@forEachIndexed
-            }
-
-
-            try {
-                while (attempt < MAX_RETRIES && !imageUploadSuccess && !permanentErrorOccurred) {
-                    attempt++
-                    try {
-                        updateProgressNotification("Preparing (Attempt $attempt)...")
-                        Log.d(
-                            "ImageUploadWorker",
-                            "Uploading specimen ${specimen.id} (Attempt $attempt/$MAX_RETRIES)"
-                        )
-
-                        when (val result = performUpload(
-                            file,
-                            contentType,
-                            specimen.id,
-                            md5
-                        )) {
-                            is DomainResult.Success -> {
-                                successfulUploads++
-                                imageUploadSuccess = true
-                                Log.d(
-                                    "ImageUploadWorker",
-                                    "Success for specimen ${specimen.id} on attempt $attempt"
-                                )
-                            }
-
-                            is DomainResult.Error -> {
-                                val error = result.error
-                                Log.w(
-                                    "ImageUploadWorker",
-                                    "Failed attempt $attempt for specimen ${specimen.id} with error: $error"
-                                )
-                                if (error != NetworkError.REQUEST_TIMEOUT && error != NetworkError.NO_INTERNET && error != NetworkError.SERVER_ERROR) {
-                                    Log.e(
-                                        "ImageUploadWorker",
-                                        "Non-retryable error for specimen ${specimen.id} on attempt $attempt. This is a permanent failure for this image.",
-                                    )
-                                    permanentErrorOccurred = true
-                                }
-                            }
-                        }
-                    } catch (e: Exception) {
-                        Log.e(
-                            "ImageUploadWorker",
-                            "Exception on attempt $attempt for specimen ${specimen.id}. This is a permanent failure for this image.",
-                            e
-                        )
-                        permanentErrorOccurred = true
-                    }
-                }
-            } finally {
-                val finalStatus = if (imageUploadSuccess) {
-                    UploadStatus.COMPLETED
-                } else {
-                    UploadStatus.FAILED
-                }
-                if(!imageUploadSuccess) {
-                    Log.e("ImageUploadWorker", "All attempts failed for specimen ${specimen.id}.")
-                }
-                specimenRepository.updateSpecimen(specimen.copy(imageUploadStatus = finalStatus), sessionId)
-                file.delete()
+            if (uploadSingleSpecimen(specimen, sessionId, index + 1, specimensToUpload.size)) {
+                successfulUploads++
             }
         }
 
         showFinalStatusNotification(sessionId.toString(), successfulUploads, specimensToUpload.size)
         return WorkerResult.success()
+    }
+
+    private suspend fun uploadSingleSpecimen(
+        specimen: com.vci.vectorcamapp.core.domain.model.Specimen,
+        sessionId: UUID,
+        currentIndex: Int,
+        totalImages: Int
+    ): Boolean {
+        notificationSessionId = sessionId.toString()
+        notificationTotalImages = totalImages
+        notificationCurrentImageIndex = currentIndex
+
+        specimenRepository.updateSpecimen(
+            specimen.copy(imageUploadStatus = UploadStatus.IN_PROGRESS),
+            sessionId
+        )
+
+        val (file, contentType, md5) = try {
+            val (tempFile, type) = prepareFile(context.contentResolver, specimen.imageUri, specimen.id)
+            val calculatedMd5 = calculateMD5(tempFile)
+            Triple(tempFile, type, calculatedMd5)
+        } catch (e: Exception) {
+            Log.e("ImageUploadWorker", "Failed to prepare file or calculate MD5 for specimen ${specimen.id}. This is a permanent failure for this image.", e)
+            specimenRepository.updateSpecimen(specimen.copy(imageUploadStatus = UploadStatus.FAILED), sessionId)
+            return false
+        }
+
+        var imageUploadSuccess = false
+        try {
+            imageUploadSuccess = attemptUploadWithRetries(file, contentType, specimen.id, md5)
+        } finally {
+            val finalStatus = if (imageUploadSuccess) UploadStatus.COMPLETED else UploadStatus.FAILED
+            if (!imageUploadSuccess) {
+                Log.e("ImageUploadWorker", "All attempts failed for specimen ${specimen.id}.")
+            }
+            specimenRepository.updateSpecimen(specimen.copy(imageUploadStatus = finalStatus), sessionId)
+            file.delete()
+            Log.d("ImageUploadWorker", "Cleaned up cache file: ${file.name}")
+        }
+
+        return imageUploadSuccess
+    }
+
+    private suspend fun attemptUploadWithRetries(
+        file: File,
+        contentType: String?,
+        specimenId: String,
+        md5: String
+    ): Boolean {
+        var attempt = 0
+        var permanentErrorOccurred = false
+
+        while (attempt < MAX_RETRIES && !permanentErrorOccurred) {
+            attempt++
+            try {
+                updateProgressNotification("Preparing (Attempt $attempt)...")
+                Log.d("ImageUploadWorker", "Uploading specimen $specimenId (Attempt $attempt/$MAX_RETRIES)")
+
+                when (val result = performUpload(file, contentType, specimenId, md5)) {
+                    is DomainResult.Success -> {
+                        Log.d("ImageUploadWorker", "Success for specimen $specimenId on attempt $attempt")
+                        return true
+                    }
+                    is DomainResult.Error -> {
+                        val error = result.error
+                        Log.w("ImageUploadWorker", "Failed attempt $attempt for specimen $specimenId with error: $error")
+                        if (error != NetworkError.REQUEST_TIMEOUT && error != NetworkError.NO_INTERNET && error != NetworkError.SERVER_ERROR) {
+                            Log.e("ImageUploadWorker", "Non-retryable error for specimen $specimenId. This is a permanent failure for this image.")
+                            permanentErrorOccurred = true
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e("ImageUploadWorker", "Exception on attempt $attempt for specimen $specimenId. This is a permanent failure for this image.", e)
+                permanentErrorOccurred = true
+            }
+        }
+        return false
     }
 
     private suspend fun performUpload(
@@ -250,7 +232,10 @@ class ImageUploadWorker @AssistedInject constructor(
                 return if (location != null) {
                     DomainResult.Success(location)
                 } else {
-                    Log.e("ImageUploadWorker", "Conflict response received without a Location header.")
+                    Log.e(
+                        "ImageUploadWorker",
+                        "Conflict response received without a Location header."
+                    )
                     DomainResult.Error(NetworkError.SERVER_ERROR)
                 }
             } else if (e.shouldRetry()) {
@@ -422,7 +407,11 @@ class ImageUploadWorker @AssistedInject constructor(
         return md.digest().joinToString("") { "%02x".format(it) }
     }
 
-    private suspend fun prepareFile(resolver: ContentResolver, source: Uri, specimenId: String): Pair<File, String?> =
+    private suspend fun prepareFile(
+        resolver: ContentResolver,
+        source: Uri,
+        specimenId: String
+    ): Pair<File, String?> =
         withContext(Dispatchers.IO) {
             val mimeType = resolver.getType(source)
             val extension = when (mimeType) {
@@ -433,7 +422,10 @@ class ImageUploadWorker @AssistedInject constructor(
             val filename = "upload_specimen_$specimenId.$extension"
             val destination = File(context.cacheDir, filename)
             if (destination.exists()) {
-                Log.d("ImageUploadWorker", "Found existing cache file, reusing: ${destination.name}")
+                Log.d(
+                    "ImageUploadWorker",
+                    "Found existing cache file, reusing: ${destination.name}"
+                )
             } else {
                 resolver.openInputStream(source)?.use { input ->
                     FileOutputStream(destination).use { output ->
