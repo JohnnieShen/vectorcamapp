@@ -6,7 +6,7 @@ import com.vci.vectorcamapp.core.data.dto.specimen.PostSpecimenResponseDto
 import com.vci.vectorcamapp.core.data.dto.specimen.SpecimenDto
 import com.vci.vectorcamapp.core.data.network.constructUrl
 import com.vci.vectorcamapp.core.data.network.safeCall
-import com.vci.vectorcamapp.core.domain.model.BoundingBox
+import com.vci.vectorcamapp.core.domain.model.InferenceResult
 import com.vci.vectorcamapp.core.domain.model.Specimen
 import com.vci.vectorcamapp.core.domain.network.api.SpecimenDataSource
 import com.vci.vectorcamapp.core.domain.util.Result
@@ -24,7 +24,7 @@ class RemoteSpecimenDataSource @Inject constructor(
 ) : SpecimenDataSource {
 
     override suspend fun postSpecimen(
-        specimen: Specimen, boundingBox: BoundingBox, sessionId: Int
+        specimen: Specimen, inferenceResult: InferenceResult, sessionId: Int
     ): Result<PostSpecimenResponseDto, NetworkError> {
         return safeCall<PostSpecimenResponseDto> {
             httpClient.post(constructUrl("specimens")) {
@@ -38,10 +38,15 @@ class RemoteSpecimenDataSource @Inject constructor(
                         abdomenStatus = specimen.abdomenStatus,
                         capturedAt = specimen.capturedAt,
                         inferenceResult = InferenceResultDto(
-                            bboxTopLeftX = boundingBox.topLeftX,
-                            bboxTopLeftY = boundingBox.topLeftY,
-                            bboxWidth = boundingBox.width,
-                            bboxHeight = boundingBox.height
+                            bboxTopLeftX = inferenceResult.bboxTopLeftX,
+                            bboxTopLeftY = inferenceResult.bboxTopLeftY,
+                            bboxWidth = inferenceResult.bboxWidth,
+                            bboxHeight = inferenceResult.bboxHeight,
+                            bboxConfidence = inferenceResult.bboxConfidence,
+                            bboxClassId = inferenceResult.bboxClassId,
+                            speciesProbabilities = inferenceResult.speciesLogits,
+                            sexProbabilities = inferenceResult.sexLogits,
+                            abdomenStatusProbabilities = inferenceResult.abdomenStatusLogits
                         )
                     )
                 )

@@ -3,7 +3,7 @@ package com.vci.vectorcamapp.incomplete_session.presentation
 import androidx.compose.foundation.lazy.items
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import com.vci.vectorcamapp.core.presentation.components.ui.ScreenHeader
+import com.vci.vectorcamapp.core.presentation.components.header.ScreenHeader
 import com.vci.vectorcamapp.incomplete_session.presentation.components.IncompleteSessionCard
 
 @Composable

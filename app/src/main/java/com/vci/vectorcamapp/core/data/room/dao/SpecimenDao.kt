@@ -8,7 +8,7 @@ import androidx.room.Query
 import androidx.room.Transaction
 import androidx.room.Update
 import com.vci.vectorcamapp.core.data.room.entities.SpecimenEntity
-import com.vci.vectorcamapp.core.data.room.entities.relations.SpecimenAndBoundingBoxRelation
+import com.vci.vectorcamapp.core.data.room.entities.relations.SpecimenAndInferenceResultRelation
 import kotlinx.coroutines.flow.Flow
 import java.util.UUID
 
@@ -26,9 +26,9 @@ interface SpecimenDao {
 
     @Transaction
     @Query("SELECT * FROM specimen WHERE sessionId = :sessionId")
-    fun getSpecimensAndBoundingBoxesBySession(sessionId: UUID): List<SpecimenAndBoundingBoxRelation>
+    fun getSpecimensAndInferenceResultsBySession(sessionId: UUID): List<SpecimenAndInferenceResultRelation>
 
     @Transaction
     @Query("SELECT * FROM specimen WHERE sessionId = :sessionId")
-    fun observeSpecimensAndBoundingBoxesBySession(sessionId: UUID): Flow<List<SpecimenAndBoundingBoxRelation>>
+    fun observeSpecimensAndInferenceResultsBySession(sessionId: UUID): Flow<List<SpecimenAndInferenceResultRelation>>
 }

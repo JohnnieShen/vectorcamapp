@@ -10,7 +10,7 @@ sealed interface Destination {
     data object Landing : Destination
 
     @Serializable
-    data object SurveillanceForm : Destination
+    data object Intake : Destination
 
     @Serializable
     data object Imaging : Destination

@@ -16,7 +16,7 @@ import com.vci.vectorcamapp.complete_session.details.presentation.CompleteSessio
 import com.vci.vectorcamapp.complete_session.list.presentation.CompleteSessionListEvent
 import com.vci.vectorcamapp.complete_session.list.presentation.CompleteSessionListScreen
 import com.vci.vectorcamapp.complete_session.list.presentation.CompleteSessionListViewModel
-import com.vci.vectorcamapp.core.presentation.components.BaseScaffold
+import com.vci.vectorcamapp.core.presentation.components.scaffold.BaseScaffold
 import com.vci.vectorcamapp.core.presentation.util.ObserveAsEvents
 import com.vci.vectorcamapp.imaging.presentation.ImagingEvent
 import com.vci.vectorcamapp.imaging.presentation.ImagingScreen
@@ -30,9 +30,9 @@ import com.vci.vectorcamapp.landing.presentation.LandingViewModel
 import com.vci.vectorcamapp.registration.presentation.RegistrationEvent
 import com.vci.vectorcamapp.registration.presentation.RegistrationScreen
 import com.vci.vectorcamapp.registration.presentation.RegistrationViewModel
-import com.vci.vectorcamapp.surveillance_form.presentation.SurveillanceFormEvent
-import com.vci.vectorcamapp.surveillance_form.presentation.SurveillanceFormScreen
-import com.vci.vectorcamapp.surveillance_form.presentation.SurveillanceFormViewModel
+import com.vci.vectorcamapp.intake.presentation.IntakeEvent
+import com.vci.vectorcamapp.intake.presentation.IntakeScreen
+import com.vci.vectorcamapp.intake.presentation.IntakeViewModel
 
 @Composable
 fun NavGraph(startDestination: Destination) {
@@ -70,8 +70,8 @@ fun NavGraph(startDestination: Destination) {
 
             ObserveAsEvents(events = viewModel.events) { event ->
                 when (event) {
-                    LandingEvent.NavigateToNewSurveillanceSessionScreen -> navController.navigate(
-                        Destination.SurveillanceForm
+                    LandingEvent.NavigateToNewSessionScreen -> navController.navigate(
+                        Destination.Intake
                     )
 
                     LandingEvent.NavigateToIncompleteSessionsScreen -> navController.navigate(
@@ -103,21 +103,21 @@ fun NavGraph(startDestination: Destination) {
             }
         }
 
-        composable<Destination.SurveillanceForm> {
-            val viewModel = hiltViewModel<SurveillanceFormViewModel>()
+        composable<Destination.Intake> {
+            val viewModel = hiltViewModel<IntakeViewModel>()
             val state by viewModel.state.collectAsStateWithLifecycle()
 
             ObserveAsEvents(events = viewModel.events) { event ->
                 when (event) {
-                    SurveillanceFormEvent.NavigateToImagingScreen -> navController.navigate(
+                    IntakeEvent.NavigateToImagingScreen -> navController.navigate(
                         Destination.Imaging
                     )
 
-                    SurveillanceFormEvent.NavigateBackToLandingScreen -> navController.popBackStack(
+                    IntakeEvent.NavigateBackToLandingScreen -> navController.popBackStack(
                         Destination.Landing, false
                     )
 
-                    SurveillanceFormEvent.NavigateBackToRegistrationScreen -> navController.popBackStack(
+                    IntakeEvent.NavigateBackToRegistrationScreen -> navController.popBackStack(
                         Destination.Registration, false
                     )
                 }
@@ -129,7 +129,7 @@ fun NavGraph(startDestination: Destination) {
                         text = "Loading...", modifier = Modifier.padding(innerPadding)
                     )
 
-                    false -> SurveillanceFormScreen(
+                    false -> IntakeScreen(
                         state = state,
                         onAction = viewModel::onAction,
                         modifier = Modifier.padding(innerPadding)
@@ -165,8 +165,8 @@ fun NavGraph(startDestination: Destination) {
 
             ObserveAsEvents(events = viewModel.events) { event ->
                 when (event) {
-                    IncompleteSessionEvent.NavigateToSurveillanceForm ->
-                        navController.navigate(Destination.SurveillanceForm)
+                    IncompleteSessionEvent.NavigateToIntakeScreen ->
+                        navController.navigate(Destination.Intake)
                     IncompleteSessionEvent.NavigateToLandingScreen -> navController.popBackStack()
                 }
             }

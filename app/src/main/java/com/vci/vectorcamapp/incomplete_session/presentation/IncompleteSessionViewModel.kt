@@ -41,7 +41,7 @@ class IncompleteSessionViewModel @Inject constructor(
                         val relation = sessionRepository.getSessionAndSiteById(action.sessionId)
                         if (relation != null) {
                             currentSessionCache.saveSession(relation.session, relation.site.id)
-                            _events.send(IncompleteSessionEvent.NavigateToSurveillanceForm)
+                            _events.send(IncompleteSessionEvent.NavigateToIntakeScreen)
                         } else {
                             emitError(IncompleteSessionError.SESSION_NOT_FOUND)
                         }

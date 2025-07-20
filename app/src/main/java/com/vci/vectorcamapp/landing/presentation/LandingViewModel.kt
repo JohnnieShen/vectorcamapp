@@ -53,14 +53,8 @@ class LandingViewModel @Inject constructor(
     fun onAction(action: LandingAction) {
         viewModelScope.launch {
             when (action) {
-                LandingAction.StartNewSurveillanceSession -> {
-                    _events.send(LandingEvent.NavigateToNewSurveillanceSessionScreen)
-                }
-
-                LandingAction.StartNewNonSurveillanceSession -> {
-                    Log.d(
-                        "Navigation", "StartNewNonSurveillanceSession"
-                    )
+                LandingAction.StartNewSession -> {
+                    _events.send(LandingEvent.NavigateToNewSessionScreen)
                 }
 
                 LandingAction.ViewIncompleteSessions -> {
@@ -73,7 +67,7 @@ class LandingViewModel @Inject constructor(
 
                 LandingAction.ResumeSession -> {
                     _state.update { it.copy(showResumeDialog = false) }
-                    _events.send(LandingEvent.NavigateToNewSurveillanceSessionScreen)
+                    _events.send(LandingEvent.NavigateToNewSessionScreen)
                 }
 
                 LandingAction.DismissResumePrompt -> {

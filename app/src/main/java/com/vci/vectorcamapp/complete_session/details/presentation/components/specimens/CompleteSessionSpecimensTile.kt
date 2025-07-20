@@ -27,7 +27,7 @@ import coil3.request.ImageRequest
 import com.vci.vectorcamapp.R
 import com.vci.vectorcamapp.core.domain.model.Session
 import com.vci.vectorcamapp.core.domain.model.Specimen
-import com.vci.vectorcamapp.core.presentation.components.ui.InfoTile
+import com.vci.vectorcamapp.core.presentation.components.tile.InfoTile
 import com.vci.vectorcamapp.ui.extensions.color
 import com.vci.vectorcamapp.ui.extensions.colors
 import com.vci.vectorcamapp.ui.extensions.dimensions
@@ -68,7 +68,7 @@ fun CompleteSessionSpecimensTile(
                 )
 
                 Icon(
-                    painter = painterResource(R.drawable.landing_surveillance_session_icon),
+                    painter = painterResource(R.drawable.ic_specimen),
                     contentDescription = "Mosquito",
                     tint = MaterialTheme.colors.icon,
                     modifier = Modifier.size(MaterialTheme.dimensions.iconSizeMedium)

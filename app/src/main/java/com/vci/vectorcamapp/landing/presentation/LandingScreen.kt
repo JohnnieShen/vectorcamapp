@@ -17,7 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import com.vci.vectorcamapp.R
-import com.vci.vectorcamapp.core.presentation.components.ui.ScreenHeader
+import com.vci.vectorcamapp.core.presentation.components.header.ScreenHeader
 import com.vci.vectorcamapp.landing.presentation.components.LandingActionTile
 import com.vci.vectorcamapp.landing.presentation.components.LandingSection
 import com.vci.vectorcamapp.ui.extensions.colors
@@ -41,20 +41,20 @@ fun LandingScreen(
                 LandingActionTile(
                     title = "Getting Started",
                     description = "Learn how to use the app and start your first session.",
-                    icon = painterResource(R.drawable.landing_getting_started_icon),
+                    icon = painterResource(R.drawable.ic_help),
                     onClick = { Log.d("LandingScreen", "Getting Started") })
 
                 LandingSection(title = "Imaging") {
                     LandingActionTile(
-                        title = "New Surveillance Session",
+                        title = "Start New Session",
                         description = "Begin a new household visit and capture mosquito images.",
-                        icon = painterResource(R.drawable.landing_surveillance_session_icon),
-                        onClick = { onAction(LandingAction.StartNewSurveillanceSession) })
+                        icon = painterResource(R.drawable.ic_specimen),
+                        onClick = { onAction(LandingAction.StartNewSession) })
 
                     LandingActionTile(
                         title = "Data Collection Mode",
                         description = "Capture and upload mosquito images without filling forms.",
-                        icon = painterResource(R.drawable.landing_data_collection_icon),
+                        icon = painterResource(R.drawable.ic_database),
                         onClick = { Log.d("LandingScreen", "Data Collection Mode") })
                 }
 
@@ -62,14 +62,14 @@ fun LandingScreen(
                     LandingActionTile(
                         title = "View Incomplete Sessions",
                         description = "Resume and complete any unfinished sessions.",
-                        icon = painterResource(R.drawable.landing_incomplete_sessions_icon),
+                        icon = painterResource(R.drawable.ic_minus_circle),
                         onClick = { onAction(LandingAction.ViewIncompleteSessions) },
                         badgeCount = state.incompleteSessionsCount)
 
                     LandingActionTile(
                         title = "View Complete Sessions",
                         description = "Review fully completed sessions and uploaded data.",
-                        icon = painterResource(R.drawable.landing_complete_sessions_icon),
+                        icon = painterResource(R.drawable.ic_complete),
                         onClick = { onAction(LandingAction.ViewCompleteSessions) })
                 }
             }

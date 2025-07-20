@@ -8,7 +8,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import com.vci.vectorcamapp.complete_session.list.presentation.components.CompleteSessionListTile
-import com.vci.vectorcamapp.core.presentation.components.ui.ScreenHeader
+import com.vci.vectorcamapp.core.presentation.components.header.ScreenHeader
 import com.vci.vectorcamapp.ui.theme.VectorcamappTheme
 
 @Composable

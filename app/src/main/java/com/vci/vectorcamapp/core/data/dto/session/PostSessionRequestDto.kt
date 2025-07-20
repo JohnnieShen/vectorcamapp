@@ -17,6 +17,8 @@ data class PostSessionRequestDto(
     val createdAt: Long = 0L,
     val completedAt: Long = 0L,
     val notes: String = "",
+    val latitude: Float?, // TODO: ADD DEFAULTS
+    val longitude: Float?, // TODO: ADD DEFAULTS
     val siteId: Int = -1,
     val deviceId: Int = -1,
 )

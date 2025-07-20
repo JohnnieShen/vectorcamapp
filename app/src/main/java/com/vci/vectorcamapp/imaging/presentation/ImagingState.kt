@@ -2,10 +2,10 @@ package com.vci.vectorcamapp.imaging.presentation
 
 import android.net.Uri
 import androidx.compose.ui.geometry.Offset
-import com.vci.vectorcamapp.core.domain.model.BoundingBox
+import com.vci.vectorcamapp.core.domain.model.InferenceResult
 import com.vci.vectorcamapp.core.domain.model.Specimen
 import com.vci.vectorcamapp.core.domain.model.UploadStatus
-import com.vci.vectorcamapp.core.domain.model.composites.SpecimenAndBoundingBox
+import com.vci.vectorcamapp.core.domain.model.composites.SpecimenAndInferenceResult
 
 data class ImagingState(
     val isProcessing: Boolean = false,
@@ -20,10 +20,20 @@ data class ImagingState(
         capturedAt = 0L,
         submittedAt = null
     ),
+    val currentInferenceResult: InferenceResult = InferenceResult(
+        bboxTopLeftX = 0f,
+        bboxTopLeftY = 0f,
+        bboxWidth = 0f,
+        bboxHeight = 0f,
+        bboxConfidence = 0f,
+        bboxClassId = 0,
+        speciesLogits = null,
+        sexLogits = null,
+        abdomenStatusLogits = null
+    ),
     val currentImageBytes: ByteArray? = null,
-    val captureBoundingBox: BoundingBox? = null,
-    val previewBoundingBoxes: List<BoundingBox> = emptyList(),
-    val capturedSpecimensAndBoundingBoxes: List<SpecimenAndBoundingBox> = emptyList(),
+    val previewInferenceResults: List<InferenceResult> = emptyList(),
+    val capturedSpecimensAndInferenceResults: List<SpecimenAndInferenceResult> = emptyList(),
     val displayOrientation: Int = 0,
     val manualFocusPoint: Offset? = null
 )

@@ -12,6 +12,7 @@ data class Colors(
     val buttonGradientLeft: Color = Color(0xFF57C88B),
     val buttonGradientRight: Color = Color(0xFF6EDB81),
     val buttonText: Color = Color(0xFFFFFFFF),
+    val disabled: Color = Color(0xFF828282),
     val successConfirm: Color = Color(0xFF43A047),
     val warning: Color = Color(0xFFFFCA1B),
     val error: Color = Color(0xFFE54848),
@@ -31,6 +32,7 @@ data class Colors(
     val segmentedTabBarInactiveText: Color = Color(0xFF64748B),
     val cardBackground: Color = Color(0xFFFFFFFF),
     val appBackground: Color = Color(0xFFF7F8F7),
+    val transparent: Color = Color(0x00000000),
 )
 
 val LocalColors = staticCompositionLocalOf { Colors() }

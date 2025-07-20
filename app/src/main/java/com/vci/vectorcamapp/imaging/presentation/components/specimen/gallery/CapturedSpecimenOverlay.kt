@@ -19,16 +19,11 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
@@ -38,7 +33,7 @@ import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
 import coil3.request.crossfade
 import com.vci.vectorcamapp.R
-import com.vci.vectorcamapp.core.domain.model.BoundingBox
+import com.vci.vectorcamapp.core.domain.model.InferenceResult
 import com.vci.vectorcamapp.core.domain.model.Specimen
 import com.vci.vectorcamapp.imaging.presentation.components.camera.BoundingBoxOverlay
 import com.vci.vectorcamapp.imaging.presentation.components.specimen.infocard.SpecimenInfoCard
@@ -46,7 +41,7 @@ import com.vci.vectorcamapp.imaging.presentation.components.specimen.infocard.Sp
 @Composable
 fun CapturedSpecimenOverlay(
     specimen: Specimen,
-    boundingBox: BoundingBox,
+    inferenceResult: InferenceResult,
     modifier: Modifier = Modifier,
     specimenBitmap: Bitmap? = null,
     onSpecimenIdCorrected: ((String) -> Unit)? = null,
@@ -85,7 +80,8 @@ fun CapturedSpecimenOverlay(
                     )
                 } else if (specimen.imageUri != Uri.EMPTY) {
                     AsyncImage(
-                        model = ImageRequest.Builder(context).data(specimen.imageUri).crossfade(true)
+                        model = ImageRequest.Builder(context).data(specimen.imageUri)
+                            .crossfade(true)
                             .build(),
                         contentDescription = specimen.id,
                         contentScale = ContentScale.FillBounds,
@@ -94,7 +90,9 @@ fun CapturedSpecimenOverlay(
                 }
 
                 BoundingBoxOverlay(
-                    boundingBox = boundingBox, overlaySize = containerSize, modifier = Modifier.fillMaxSize()
+                    inferenceResult = inferenceResult,
+                    overlaySize = containerSize,
+                    modifier = Modifier.fillMaxSize()
                 )
             }
         }
