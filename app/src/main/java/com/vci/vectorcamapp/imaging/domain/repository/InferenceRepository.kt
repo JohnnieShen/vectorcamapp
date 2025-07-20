@@ -1,14 +1,11 @@
 package com.vci.vectorcamapp.imaging.domain.repository
 
 import android.graphics.Bitmap
-import com.vci.vectorcamapp.core.domain.model.BoundingBox
-import com.vci.vectorcamapp.imaging.domain.enums.AbdomenStatusLabel
-import com.vci.vectorcamapp.imaging.domain.enums.SexLabel
-import com.vci.vectorcamapp.imaging.domain.enums.SpeciesLabel
+import com.vci.vectorcamapp.core.domain.model.InferenceResult
 
 interface InferenceRepository {
     suspend fun readSpecimenId(bitmap: Bitmap) : String
-    suspend fun detectSpecimen(bitmap: Bitmap) : List<BoundingBox>
-    suspend fun classifySpecimen(croppedBitmap: Bitmap) : Triple<SpeciesLabel?, SexLabel?, AbdomenStatusLabel?>
+    suspend fun detectSpecimen(bitmap: Bitmap) : List<InferenceResult>
+    suspend fun classifySpecimen(croppedBitmap: Bitmap) : Triple<List<Float>?, List<Float>?, List<Float>?>
     fun closeResources()
 }

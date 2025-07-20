@@ -6,7 +6,7 @@ import androidx.room.Room
 import com.vci.vectorcamapp.BuildConfig
 import com.vci.vectorcamapp.core.data.room.TransactionHelper
 import com.vci.vectorcamapp.core.data.room.VectorCamDatabase
-import com.vci.vectorcamapp.core.data.room.dao.BoundingBoxDao
+import com.vci.vectorcamapp.core.data.room.dao.InferenceResultDao
 import com.vci.vectorcamapp.core.data.room.dao.ProgramDao
 import com.vci.vectorcamapp.core.data.room.dao.SessionDao
 import com.vci.vectorcamapp.core.data.room.dao.SiteDao
@@ -45,7 +45,6 @@ object RoomDatabaseModule {
             if (BuildConfig.DEBUG) {
                 CoroutineScope(Dispatchers.IO).launch {
                     Log.w("VectorCamDatabase", "Clearing all tables (DEBUG only)")
-                    //clearAllTables()
 
                     val seededPrograms = listOf(
                         ProgramEntity(id = 1, name = "Test Program", country = "Singapore"),
@@ -111,7 +110,7 @@ object RoomDatabaseModule {
     fun provideSpecimenDao(db: VectorCamDatabase): SpecimenDao = db.specimenDao
 
     @Provides
-    fun provideBoundingBoxDao(db: VectorCamDatabase): BoundingBoxDao = db.boundingBoxDao
+    fun provideInferenceResultDao(db: VectorCamDatabase): InferenceResultDao = db.inferenceResultDao
 
     @Provides
     fun provideSurveillanceFormDao(db: VectorCamDatabase): SurveillanceFormDao = db.surveillanceFormDao

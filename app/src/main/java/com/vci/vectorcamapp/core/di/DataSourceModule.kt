@@ -38,7 +38,7 @@ abstract class DataSourceModule {
 
     @Binds
     @Singleton
-    abstract fun bindRemoteSpecimenDataSource(
+    abstract fun bindSpecimenDataSource(
         remoteSpecimenDataSource: RemoteSpecimenDataSource
     ): SpecimenDataSource
 }

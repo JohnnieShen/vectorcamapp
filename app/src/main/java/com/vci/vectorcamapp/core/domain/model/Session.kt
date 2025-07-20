@@ -14,5 +14,7 @@ data class Session(
     val createdAt: Long,
     val completedAt: Long?,
     val submittedAt: Long?,
-    val notes: String
+    val notes: String,
+    val latitude: Float?,
+    val longitude: Float?,
 )

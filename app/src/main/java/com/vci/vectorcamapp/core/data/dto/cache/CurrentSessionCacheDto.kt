@@ -19,7 +19,9 @@ data class CurrentSessionCacheDto(
     val createdAt: Long = 0L,
     val completedAt: Long? = null,
     val submittedAt: Long? = null,
-    val notes: String = ""
+    val notes: String = "",
+    val latitude: Float? = null,
+    val longitude: Float? = null,
 ) {
     fun isEmpty() = localId == UUID(0, 0) && createdAt == 0L
 }

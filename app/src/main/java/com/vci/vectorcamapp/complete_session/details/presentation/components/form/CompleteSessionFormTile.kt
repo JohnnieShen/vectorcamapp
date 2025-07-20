@@ -16,7 +16,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.painter.Painter
-import com.vci.vectorcamapp.core.presentation.components.ui.InfoTile
+import com.vci.vectorcamapp.core.presentation.components.tile.InfoTile
 import com.vci.vectorcamapp.ui.extensions.colors
 import com.vci.vectorcamapp.ui.extensions.dimensions
 

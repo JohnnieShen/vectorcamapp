@@ -39,12 +39,11 @@ class RegistrationViewModel @Inject constructor(
         viewModelScope.launch {
             when (action) {
                 is RegistrationAction.SelectProgram -> {
-                    _state.update { it.copy(selectedProgramName = action.option.label) }
+                    _state.update { it.copy(selectedProgram = action.program) }
                 }
 
                 RegistrationAction.ConfirmRegistration -> {
-                    val selectedProgram =
-                        _state.value.programs.find { it.name == _state.value.selectedProgramName }
+                    val selectedProgram = _state.value.selectedProgram
                     if (selectedProgram == null) {
                         emitError(RegistrationError.PROGRAM_NOT_FOUND)
                         return@launch

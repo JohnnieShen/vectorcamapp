@@ -25,7 +25,9 @@ class CurrentSessionCacheImplementation @Inject constructor(
                 createdAt = session.createdAt,
                 completedAt = session.completedAt,
                 submittedAt = session.submittedAt,
-                notes = session.notes
+                notes = session.notes,
+                latitude = session.latitude,
+                longitude = session.longitude
             )
         }
     }
@@ -47,7 +49,9 @@ class CurrentSessionCacheImplementation @Inject constructor(
                 createdAt = currentSessionCacheDto.createdAt,
                 completedAt = currentSessionCacheDto.completedAt,
                 submittedAt = currentSessionCacheDto.submittedAt,
-                notes = currentSessionCacheDto.notes
+                notes = currentSessionCacheDto.notes,
+                latitude = currentSessionCacheDto.latitude,
+                longitude = currentSessionCacheDto.longitude
             )
         }
     }

@@ -1,12 +1,12 @@
 package com.vci.vectorcamapp.core.di
 
-import com.vci.vectorcamapp.core.data.repository.BoundingBoxRepositoryImplementation
+import com.vci.vectorcamapp.core.data.repository.InferenceResultRepositoryImplementation
 import com.vci.vectorcamapp.core.data.repository.ProgramRepositoryImplementation
 import com.vci.vectorcamapp.core.data.repository.SessionRepositoryImplementation
 import com.vci.vectorcamapp.core.data.repository.SiteRepositoryImplementation
 import com.vci.vectorcamapp.core.data.repository.SpecimenRepositoryImplementation
 import com.vci.vectorcamapp.core.data.repository.SurveillanceFormRepositoryImplementation
-import com.vci.vectorcamapp.core.domain.repository.BoundingBoxRepository
+import com.vci.vectorcamapp.core.domain.repository.InferenceResultRepository
 import com.vci.vectorcamapp.core.domain.repository.ProgramRepository
 import com.vci.vectorcamapp.core.domain.repository.SessionRepository
 import com.vci.vectorcamapp.core.domain.repository.SiteRepository
@@ -36,9 +36,9 @@ abstract class CoreRepositoryModule {
 
     @Binds
     @Singleton
-    abstract fun bindBoundingBoxRepository(
-        boundingBoxRepositoryImplementation: BoundingBoxRepositoryImplementation
-    ): BoundingBoxRepository
+    abstract fun bindInferenceResultRepository(
+        inferenceResultRepositoryImplementation: InferenceResultRepositoryImplementation
+    ): InferenceResultRepository
 
     @Binds
     @Singleton

@@ -21,7 +21,9 @@ data class CompleteSessionDetailsState(
         createdAt = 0L,
         completedAt = null,
         submittedAt = null,
-        notes = ""
+        notes = "",
+        latitude = null,
+        longitude = null
     ),
     val site: Site = Site(
         id = -1,

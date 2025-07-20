@@ -23,9 +23,8 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import com.vci.vectorcamapp.R
 import com.vci.vectorcamapp.animation.presentation.LoadingAnimation
-import com.vci.vectorcamapp.core.presentation.components.ui.ActionButton
-import com.vci.vectorcamapp.registration.domain.enums.ProgramOption
-import com.vci.vectorcamapp.surveillance_form.presentation.components.DropdownField
+import com.vci.vectorcamapp.core.presentation.components.button.ActionButton
+import com.vci.vectorcamapp.core.presentation.components.form.DropdownField
 import com.vci.vectorcamapp.ui.extensions.colors
 import com.vci.vectorcamapp.ui.extensions.customShadow
 import com.vci.vectorcamapp.ui.extensions.dimensions
@@ -75,7 +74,8 @@ fun RegistrationScreen(
                         .padding(
                             horizontal = MaterialTheme.dimensions.paddingExtraLarge,
                             vertical = MaterialTheme.dimensions.paddingLarge
-                        ).fillMaxSize(), verticalArrangement = Arrangement.SpaceAround
+                        )
+                        .fillMaxSize(), verticalArrangement = Arrangement.SpaceAround
                 ) {
                     Column(
                         verticalArrangement = Arrangement.spacedBy(MaterialTheme.dimensions.spacingMedium)
@@ -94,11 +94,8 @@ fun RegistrationScreen(
                     }
 
                     DropdownField(
-                        label = "",
-                        highlightBorder = true,
-                        arrowAlwaysDown = false,
-                        options = state.programs.map { ProgramOption(it.name) },
-                        selectedOption = ProgramOption(state.selectedProgramName),
+                        options = state.programs,
+                        selectedOption = state.selectedProgram,
                         onOptionSelected = { onAction(RegistrationAction.SelectProgram(it)) },
                         modifier = modifier
                             .customShadow(
@@ -107,13 +104,26 @@ fun RegistrationScreen(
                                 spread = MaterialTheme.dimensions.shadowBlurSmall,
                                 cornerRadius = MaterialTheme.dimensions.cornerRadiusSmall,
                             )
-                            .height(MaterialTheme.dimensions.componentHeightExtraExtraLarge),
-                    )
+                            .height(MaterialTheme.dimensions.componentHeightExtraLarge),
+                    ) { program ->
+                        Column(verticalArrangement = Arrangement.SpaceEvenly, modifier = Modifier.fillMaxSize()) {
+                            Text(
+                                text = program.name,
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = MaterialTheme.colors.textPrimary
+                            )
+                            Text(
+                                text = program.country,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colors.textSecondary
+                            )
+                        }
+                    }
 
                     ActionButton(
                         label = "Confirm",
                         onClick = { onAction(RegistrationAction.ConfirmRegistration) },
-                        enabled = state.selectedProgramName.isNotEmpty(),
+                        enabled = state.selectedProgram != null,
                         modifier = modifier
                     )
                 }

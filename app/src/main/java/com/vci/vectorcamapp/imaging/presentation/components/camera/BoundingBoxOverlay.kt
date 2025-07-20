@@ -8,26 +8,26 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.unit.IntSize
-import com.vci.vectorcamapp.core.domain.model.BoundingBox
+import com.vci.vectorcamapp.core.domain.model.InferenceResult
 
 @Composable
 fun BoundingBoxOverlay(
-    boundingBox: BoundingBox,
+    inferenceResult: InferenceResult,
     overlaySize: IntSize,
     modifier: Modifier = Modifier
 ) {
     Canvas(modifier = modifier) {
         val topLeft = Offset(
-            x = boundingBox.topLeftX * overlaySize.width,
-            y = boundingBox.topLeftY * overlaySize.height
+            x = inferenceResult.bboxTopLeftX * overlaySize.width,
+            y = inferenceResult.bboxTopLeftY * overlaySize.height
         )
         val boxSize = Size(
-            width = boundingBox.width * overlaySize.width,
-            height = boundingBox.height * overlaySize.height
+            width = inferenceResult.bboxWidth * overlaySize.width,
+            height = inferenceResult.bboxHeight * overlaySize.height
         )
 
         drawRect(
-            color = if (boundingBox.confidence > 0.8) Color.Green else Color.Red,
+            color = if (inferenceResult.bboxConfidence > 0.8) Color.Green else Color.Red,
             topLeft = topLeft,
             size = boxSize,
             style = Stroke(width = 4f)
