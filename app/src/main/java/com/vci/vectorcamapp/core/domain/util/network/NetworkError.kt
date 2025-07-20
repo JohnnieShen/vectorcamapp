@@ -15,5 +15,5 @@ enum class NetworkError : Error {
     UNKNOWN_ERROR,
 
     // Endpoint-Specific Errors
-    SESSION_NOT_COMPLETED,
+    SESSION_NOT_COMPLETED;
 }
