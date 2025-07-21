@@ -255,7 +255,8 @@ class ImageUploadWorker @AssistedInject constructor(
         val tusPath = "specimens/${specimen.id}/images/tus"
 
         tusClient.uploadCreationURL = URL(constructUrl(tusPath))
-        val upload = createTusUpload(file, uniqueFingerprint, contentType, md5)
+
+        val upload = createTusUpload(file, uniqueFingerprint, contentType, md5, "50")
 
         Log.d("ImageUploadWorker", "Start/resume ${file.name} (fp=$uniqueFingerprint,md5=$md5)")
 
@@ -451,13 +452,15 @@ class ImageUploadWorker @AssistedInject constructor(
         file: File,
         fingerprint: String,
         contentType: String?,
-        md5: String
+        md5: String,
+        imageId: String
     ) = TusUpload(file).apply {
         this.fingerprint = fingerprint
         metadata = mapOf(
             "filename" to file.name,
             "contentType" to (contentType ?: "application/octet-stream"),
-            "filemd5" to md5
+            "filemd5" to md5,
+            "imageId" to imageId
         )
     }
 
