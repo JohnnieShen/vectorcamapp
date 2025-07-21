@@ -256,6 +256,7 @@ class ImageUploadWorker @AssistedInject constructor(
 
         tusClient.uploadCreationURL = URL(constructUrl(tusPath))
 
+        // TODO: UPDATE HERE WHEN WE GET REAL IMAGEID
         val upload = createTusUpload(file, uniqueFingerprint, contentType, md5, "50")
 
         Log.d("ImageUploadWorker", "Start/resume ${file.name} (fp=$uniqueFingerprint,md5=$md5)")
