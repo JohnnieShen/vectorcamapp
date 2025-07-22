@@ -146,6 +146,10 @@ class ImagingViewModel @Inject constructor(
                 }
 
                 is ImagingAction.ProcessFrame -> {
+                    if (!_state.value.isCameraReady) {
+                        _state.update { it.copy(isCameraReady = true) }
+                    }
+
                     try {
                         val displayOrientation = _state.value.displayOrientation
                         val bitmap = action.frame.toUprightBitmap(displayOrientation)
@@ -218,6 +222,8 @@ class ImagingViewModel @Inject constructor(
                 }
 
                 is ImagingAction.CaptureImage -> {
+                    if (!_state.value.isCameraReady) return@launch
+                    
                     _state.update { it.copy(isProcessing = true) }
                     val captureResult = cameraRepository.captureImage(action.controller)
 
@@ -419,6 +425,7 @@ class ImagingViewModel @Inject constructor(
                     abdomenStatusLogits = null
                 ),
                 currentImageBytes = null,
+                isCameraReady = false,
                 previewInferenceResults = emptyList(),
             )
         }
