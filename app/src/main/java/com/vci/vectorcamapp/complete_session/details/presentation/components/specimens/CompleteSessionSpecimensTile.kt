@@ -75,7 +75,7 @@ fun CompleteSessionSpecimensTile(
                 )
 
                 Text(
-                    text = "Specimen ${specimen.id}",
+                    text = "Specimen ID: ${specimen.id}",
                     style = MaterialTheme.typography.headlineMedium,
                     color = MaterialTheme.colors.textPrimary
                 )

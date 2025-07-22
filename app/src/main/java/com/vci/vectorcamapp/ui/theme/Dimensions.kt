@@ -60,6 +60,9 @@ data class Dimensions(
     val lineHeightSmall: Dp = 16.dp,
     val lineHeightMedium: Dp = 24.dp,
     val lineHeightLarge: Dp = 32.dp,
+
+    // Aspect Ratio Height to Width
+    val aspectRatio: Float = 4f / 3f
 )
 
 val LocalDimensions = staticCompositionLocalOf { Dimensions() }

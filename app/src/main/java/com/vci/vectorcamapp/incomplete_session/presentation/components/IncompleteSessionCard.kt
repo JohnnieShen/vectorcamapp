@@ -22,6 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import com.vci.vectorcamapp.R
 import com.vci.vectorcamapp.core.domain.model.Session
+import com.vci.vectorcamapp.core.presentation.components.pill.InfoPill
 import com.vci.vectorcamapp.core.presentation.components.tile.ActionTile
 import com.vci.vectorcamapp.ui.extensions.colors
 import com.vci.vectorcamapp.ui.extensions.dimensions
@@ -57,23 +58,7 @@ fun IncompleteSessionCard(
 
                 Spacer(Modifier.height(MaterialTheme.dimensions.spacingSmall))
 
-                Box(
-                    modifier = Modifier
-                        .background(
-                            color = MaterialTheme.colors.pillBackground,
-                            shape = RoundedCornerShape(MaterialTheme.dimensions.cornerRadiusSmall)
-                        )
-                        .padding(
-                            horizontal = MaterialTheme.dimensions.paddingMedium,
-                            vertical = MaterialTheme.dimensions.paddingSmall
-                        )
-                ) {
-                    Text(
-                        text = "Session ID: ${session.localId}",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colors.pillText
-                    )
-                }
+                InfoPill(text = "Session ID: ${session.localId}", color = MaterialTheme.colors.info)
 
                 Spacer(Modifier.height(MaterialTheme.dimensions.spacingSmall))
 

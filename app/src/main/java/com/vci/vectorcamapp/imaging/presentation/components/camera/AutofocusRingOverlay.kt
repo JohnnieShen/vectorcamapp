@@ -25,21 +25,20 @@ fun AutofocusRingOverlay(
     modifier: Modifier = Modifier,
 ) {
     val density = LocalDensity.current
-    val ringDiameterDp = MaterialTheme.dimensions.componentHeightLarge
-    val ringDiameterPx = with(density) { ringDiameterDp.toPx() }
+    val ringDiameter = with(density) { MaterialTheme.dimensions.componentHeightLarge.toPx() }
 
-    val offsetX = (focusPoint.x - ringDiameterPx / 2f)
-        .coerceIn(0f, overlaySize.width - ringDiameterPx)
-    val offsetY = (focusPoint.y - ringDiameterPx / 2f)
-        .coerceIn(0f, overlaySize.height - ringDiameterPx)
+    val offsetX = (focusPoint.x - ringDiameter / 2f)
+        .coerceIn(0f, overlaySize.width - ringDiameter)
+    val offsetY = (focusPoint.y - ringDiameter / 2f)
+        .coerceIn(0f, overlaySize.height - ringDiameter)
 
     Box(
         modifier = modifier
             .offset { IntOffset(offsetX.toInt(), offsetY.toInt()) }
-            .size(ringDiameterDp)
+            .size(MaterialTheme.dimensions.componentHeightLarge)
             .border(
                 width = MaterialTheme.dimensions.borderThicknessThick,
-                color = MaterialTheme.colors.warning,
+                color = MaterialTheme.colors.info,
                 shape = CircleShape
             )
             .clickable(onClick = onCancel)

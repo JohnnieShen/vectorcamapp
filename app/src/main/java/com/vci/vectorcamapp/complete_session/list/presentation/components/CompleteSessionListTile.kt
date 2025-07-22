@@ -73,7 +73,7 @@ fun CompleteSessionListTile(
                     }
                 }
 
-                InfoPill(text = "Session ID: ${session.localId}")
+                InfoPill(text = "Session ID: ${session.localId}", color = MaterialTheme.colors.info)
             }
 
             Column(
