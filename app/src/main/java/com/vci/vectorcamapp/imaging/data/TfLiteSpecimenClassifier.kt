@@ -188,8 +188,8 @@ class TfLiteSpecimenClassifier(
 
     companion object {
         private const val TAG = "TfLiteSpeciesClassifier"
-        private const val DEFAULT_TENSOR_HEIGHT = 300
-        private const val DEFAULT_TENSOR_WIDTH = 300
+        private const val DEFAULT_TENSOR_HEIGHT = 512
+        private const val DEFAULT_TENSOR_WIDTH = 512
         private const val DEFAULT_NUM_CLASSES = 1
 
         private const val PIXEL_NORMALIZATION_SCALE = 1f / 255f
