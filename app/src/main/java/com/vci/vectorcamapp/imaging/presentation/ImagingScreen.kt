@@ -33,6 +33,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -85,7 +86,13 @@ fun ImagingScreen(
     }
 
     val pagerState = rememberPagerState(
-        initialPage = 0, pageCount = { state.specimensWithImagesAndInferenceResults.size + 1 })
+        initialPage = state.specimensWithImagesAndInferenceResults.size,
+        pageCount = { state.specimensWithImagesAndInferenceResults.size + 1 }
+    )
+
+    LaunchedEffect(state.specimensWithImagesAndInferenceResults.size) {
+        pagerState.scrollToPage(state.specimensWithImagesAndInferenceResults.size)
+    }
 
     HorizontalPager(
         state = pagerState, modifier = modifier.fillMaxSize()

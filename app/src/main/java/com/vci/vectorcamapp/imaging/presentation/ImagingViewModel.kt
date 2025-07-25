@@ -41,12 +41,16 @@ import com.vci.vectorcamapp.imaging.presentation.extensions.toUprightBitmap
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
@@ -99,26 +103,20 @@ class ImagingViewModel @Inject constructor(
     val state: StateFlow<ImagingState> = combine(
         _specimensWithImagesAndInferenceResults, _state
     ) { specimensWithImagesAndInferenceResults, state ->
-        state.copy(specimensWithImagesAndInferenceResults = specimensWithImagesAndInferenceResults)
+        state.copy(
+            specimensWithImagesAndInferenceResults = specimensWithImagesAndInferenceResults,
+            isLoading = false
+        )
+    }.onStart {
+        loadImagingDetails()
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000L),
-        initialValue = ImagingState()
+        initialValue = ImagingState(isLoading = true)
     )
 
     private val _events = Channel<ImagingEvent>()
     val events = _events.receiveAsFlow()
-
-    init {
-        orientationListener.enable()
-
-        viewModelScope.launch {
-            if (currentSessionCache.getSession() == null) {
-                _events.send(ImagingEvent.NavigateBackToLandingScreen)
-                emitError(ImagingError.NO_ACTIVE_SESSION)
-            }
-        }
-    }
 
     fun onAction(action: ImagingAction) {
         viewModelScope.launch {
@@ -490,6 +488,16 @@ class ImagingViewModel @Inject constructor(
                 isCameraReady = false,
                 previewInferenceResults = emptyList(),
             )
+        }
+    }
+
+    private fun loadImagingDetails() {
+        viewModelScope.launch {
+            orientationListener.enable()
+            if (currentSessionCache.getSession() == null) {
+                _events.send(ImagingEvent.NavigateBackToLandingScreen)
+                emitError(ImagingError.NO_ACTIVE_SESSION)
+            }
         }
     }
 
