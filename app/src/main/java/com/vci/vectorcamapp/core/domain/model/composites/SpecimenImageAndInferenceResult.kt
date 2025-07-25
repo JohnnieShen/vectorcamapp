@@ -1,9 +1,9 @@
 package com.vci.vectorcamapp.core.domain.model.composites
 
 import com.vci.vectorcamapp.core.domain.model.InferenceResult
-import com.vci.vectorcamapp.core.domain.model.Specimen
+import com.vci.vectorcamapp.core.domain.model.SpecimenImage
 
-data class SpecimenAndInferenceResult(
-    val specimen: Specimen,
+data class SpecimenImageAndInferenceResult(
+    val specimenImage: SpecimenImage,
     val inferenceResult: InferenceResult
 )

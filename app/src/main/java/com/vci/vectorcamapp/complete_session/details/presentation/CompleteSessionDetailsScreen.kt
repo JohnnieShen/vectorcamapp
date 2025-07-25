@@ -43,7 +43,7 @@ fun CompleteSessionDetailsScreen(
                 )
 
                 CompleteSessionDetailsTab.SESSION_SPECIMENS -> CompleteSessionSpecimens(
-                    session = state.session, specimens = state.specimens, modifier = modifier
+                    session = state.session, specimensWithImagesAndInferenceResults = state.specimensWithImagesAndInferenceResults, modifier = modifier
                 )
             }
         }

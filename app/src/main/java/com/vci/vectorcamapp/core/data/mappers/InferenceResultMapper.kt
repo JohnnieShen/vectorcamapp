@@ -2,6 +2,7 @@ package com.vci.vectorcamapp.core.data.mappers
 
 import com.vci.vectorcamapp.core.data.room.entities.InferenceResultEntity
 import com.vci.vectorcamapp.core.domain.model.InferenceResult
+import java.util.UUID
 
 fun InferenceResultEntity.toDomain() : InferenceResult {
     return InferenceResult(
@@ -17,9 +18,9 @@ fun InferenceResultEntity.toDomain() : InferenceResult {
     )
 }
 
-fun InferenceResult.toEntity(specimenId: String) : InferenceResultEntity {
+fun InferenceResult.toEntity(specimenImageId: UUID) : InferenceResultEntity {
     return InferenceResultEntity(
-        specimenId = specimenId,
+        specimenImageId = specimenImageId,
         bboxTopLeftX = this.bboxTopLeftX,
         bboxTopLeftY = this.bboxTopLeftY,
         bboxWidth = this.bboxWidth,

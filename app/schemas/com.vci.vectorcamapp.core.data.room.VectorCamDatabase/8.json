@@ -1,0 +1,573 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 8,
+    "identityHash": "db8a77fa56b734bbbbd2137edcc35534",
+    "entities": [
+      {
+        "tableName": "program",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `name` TEXT NOT NULL, `country` TEXT NOT NULL, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "name",
+            "columnName": "name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "country",
+            "columnName": "country",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_program_country",
+            "unique": false,
+            "columnNames": [
+              "country"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_program_country` ON `${TABLE_NAME}` (`country`)"
+          }
+        ]
+      },
+      {
+        "tableName": "site",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `programId` INTEGER NOT NULL, `district` TEXT NOT NULL, `subCounty` TEXT NOT NULL, `parish` TEXT NOT NULL, `sentinelSite` TEXT NOT NULL, `healthCenter` TEXT NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`programId`) REFERENCES `program`(`id`) ON UPDATE CASCADE ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "programId",
+            "columnName": "programId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "district",
+            "columnName": "district",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "subCounty",
+            "columnName": "subCounty",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "parish",
+            "columnName": "parish",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sentinelSite",
+            "columnName": "sentinelSite",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "healthCenter",
+            "columnName": "healthCenter",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_site_programId",
+            "unique": false,
+            "columnNames": [
+              "programId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_site_programId` ON `${TABLE_NAME}` (`programId`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "program",
+            "onDelete": "CASCADE",
+            "onUpdate": "CASCADE",
+            "columns": [
+              "programId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "session",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`localId` TEXT NOT NULL, `siteId` INTEGER NOT NULL, `remoteId` INTEGER, `houseNumber` TEXT NOT NULL, `collectorTitle` TEXT NOT NULL, `collectorName` TEXT NOT NULL, `collectionDate` INTEGER NOT NULL, `collectionMethod` TEXT NOT NULL, `specimenCondition` TEXT NOT NULL, `createdAt` INTEGER NOT NULL, `completedAt` INTEGER, `submittedAt` INTEGER, `notes` TEXT NOT NULL, `latitude` REAL, `longitude` REAL, PRIMARY KEY(`localId`), FOREIGN KEY(`siteId`) REFERENCES `site`(`id`) ON UPDATE CASCADE ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "localId",
+            "columnName": "localId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "siteId",
+            "columnName": "siteId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "remoteId",
+            "columnName": "remoteId",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "houseNumber",
+            "columnName": "houseNumber",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "collectorTitle",
+            "columnName": "collectorTitle",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "collectorName",
+            "columnName": "collectorName",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "collectionDate",
+            "columnName": "collectionDate",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "collectionMethod",
+            "columnName": "collectionMethod",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "specimenCondition",
+            "columnName": "specimenCondition",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "createdAt",
+            "columnName": "createdAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "completedAt",
+            "columnName": "completedAt",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "submittedAt",
+            "columnName": "submittedAt",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "notes",
+            "columnName": "notes",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "latitude",
+            "columnName": "latitude",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "longitude",
+            "columnName": "longitude",
+            "affinity": "REAL"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "localId"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_session_submittedAt",
+            "unique": false,
+            "columnNames": [
+              "submittedAt"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_session_submittedAt` ON `${TABLE_NAME}` (`submittedAt`)"
+          },
+          {
+            "name": "index_session_siteId",
+            "unique": false,
+            "columnNames": [
+              "siteId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_session_siteId` ON `${TABLE_NAME}` (`siteId`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "site",
+            "onDelete": "CASCADE",
+            "onUpdate": "CASCADE",
+            "columns": [
+              "siteId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "specimen",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `sessionId` TEXT NOT NULL, PRIMARY KEY(`id`, `sessionId`), FOREIGN KEY(`sessionId`) REFERENCES `session`(`localId`) ON UPDATE CASCADE ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sessionId",
+            "columnName": "sessionId",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id",
+            "sessionId"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_specimen_sessionId",
+            "unique": false,
+            "columnNames": [
+              "sessionId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_specimen_sessionId` ON `${TABLE_NAME}` (`sessionId`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "session",
+            "onDelete": "CASCADE",
+            "onUpdate": "CASCADE",
+            "columns": [
+              "sessionId"
+            ],
+            "referencedColumns": [
+              "localId"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "specimen_image",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`localId` TEXT NOT NULL, `specimenId` TEXT NOT NULL, `sessionId` TEXT NOT NULL, `remoteId` INTEGER, `species` TEXT, `sex` TEXT, `abdomenStatus` TEXT, `imageUri` TEXT NOT NULL, `metadataUploadStatus` TEXT NOT NULL, `imageUploadStatus` TEXT NOT NULL, `capturedAt` INTEGER NOT NULL, `submittedAt` INTEGER, PRIMARY KEY(`localId`), FOREIGN KEY(`specimenId`, `sessionId`) REFERENCES `specimen`(`id`, `sessionId`) ON UPDATE CASCADE ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "localId",
+            "columnName": "localId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "specimenId",
+            "columnName": "specimenId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sessionId",
+            "columnName": "sessionId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "remoteId",
+            "columnName": "remoteId",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "species",
+            "columnName": "species",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "sex",
+            "columnName": "sex",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "abdomenStatus",
+            "columnName": "abdomenStatus",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "imageUri",
+            "columnName": "imageUri",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "metadataUploadStatus",
+            "columnName": "metadataUploadStatus",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "imageUploadStatus",
+            "columnName": "imageUploadStatus",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "capturedAt",
+            "columnName": "capturedAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "submittedAt",
+            "columnName": "submittedAt",
+            "affinity": "INTEGER"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "localId"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_specimen_image_specimenId_sessionId",
+            "unique": false,
+            "columnNames": [
+              "specimenId",
+              "sessionId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_specimen_image_specimenId_sessionId` ON `${TABLE_NAME}` (`specimenId`, `sessionId`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "specimen",
+            "onDelete": "CASCADE",
+            "onUpdate": "CASCADE",
+            "columns": [
+              "specimenId",
+              "sessionId"
+            ],
+            "referencedColumns": [
+              "id",
+              "sessionId"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "inference_result",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`specimenImageId` TEXT NOT NULL, `bboxTopLeftX` REAL NOT NULL, `bboxTopLeftY` REAL NOT NULL, `bboxWidth` REAL NOT NULL, `bboxHeight` REAL NOT NULL, `bboxConfidence` REAL NOT NULL, `bboxClassId` INTEGER NOT NULL, `speciesLogits` TEXT, `sexLogits` TEXT, `abdomenStatusLogits` TEXT, PRIMARY KEY(`specimenImageId`), FOREIGN KEY(`specimenImageId`) REFERENCES `specimen_image`(`localId`) ON UPDATE CASCADE ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "specimenImageId",
+            "columnName": "specimenImageId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "bboxTopLeftX",
+            "columnName": "bboxTopLeftX",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "bboxTopLeftY",
+            "columnName": "bboxTopLeftY",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "bboxWidth",
+            "columnName": "bboxWidth",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "bboxHeight",
+            "columnName": "bboxHeight",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "bboxConfidence",
+            "columnName": "bboxConfidence",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "bboxClassId",
+            "columnName": "bboxClassId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "speciesLogits",
+            "columnName": "speciesLogits",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "sexLogits",
+            "columnName": "sexLogits",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "abdomenStatusLogits",
+            "columnName": "abdomenStatusLogits",
+            "affinity": "TEXT"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "specimenImageId"
+          ]
+        },
+        "foreignKeys": [
+          {
+            "table": "specimen_image",
+            "onDelete": "CASCADE",
+            "onUpdate": "CASCADE",
+            "columns": [
+              "specimenImageId"
+            ],
+            "referencedColumns": [
+              "localId"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "surveillance_form",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`sessionId` TEXT NOT NULL, `numPeopleSleptInHouse` INTEGER NOT NULL, `wasIrsConducted` INTEGER NOT NULL, `monthsSinceIrs` INTEGER, `numLlinsAvailable` INTEGER NOT NULL, `llinType` TEXT, `llinBrand` TEXT, `numPeopleSleptUnderLlin` INTEGER, `submittedAt` INTEGER, PRIMARY KEY(`sessionId`), FOREIGN KEY(`sessionId`) REFERENCES `session`(`localId`) ON UPDATE CASCADE ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "sessionId",
+            "columnName": "sessionId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "numPeopleSleptInHouse",
+            "columnName": "numPeopleSleptInHouse",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "wasIrsConducted",
+            "columnName": "wasIrsConducted",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "monthsSinceIrs",
+            "columnName": "monthsSinceIrs",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "numLlinsAvailable",
+            "columnName": "numLlinsAvailable",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "llinType",
+            "columnName": "llinType",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "llinBrand",
+            "columnName": "llinBrand",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "numPeopleSleptUnderLlin",
+            "columnName": "numPeopleSleptUnderLlin",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "submittedAt",
+            "columnName": "submittedAt",
+            "affinity": "INTEGER"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "sessionId"
+          ]
+        },
+        "foreignKeys": [
+          {
+            "table": "session",
+            "onDelete": "CASCADE",
+            "onUpdate": "CASCADE",
+            "columns": [
+              "sessionId"
+            ],
+            "referencedColumns": [
+              "localId"
+            ]
+          }
+        ]
+      }
+    ],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'db8a77fa56b734bbbbd2137edcc35534')"
+    ]
+  }
+}

@@ -3,20 +3,21 @@ package com.vci.vectorcamapp.core.data.room.entities
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.PrimaryKey
+import java.util.UUID
 
 @Entity(
     tableName = "inference_result", foreignKeys = [
         ForeignKey(
-            entity = SpecimenEntity::class,
-            parentColumns = ["id"],
-            childColumns = ["specimenId"],
+            entity = SpecimenImageEntity::class,
+            parentColumns = ["localId"],
+            childColumns = ["specimenImageId"],
             onDelete = ForeignKey.CASCADE,
             onUpdate = ForeignKey.CASCADE
         )
     ]
 )
 data class InferenceResultEntity(
-    @PrimaryKey val specimenId: String = "",
+    @PrimaryKey val specimenImageId: UUID = UUID(0, 0),
     val bboxTopLeftX: Float = 0F,
     val bboxTopLeftY: Float = 0F,
     val bboxWidth: Float = 0F,

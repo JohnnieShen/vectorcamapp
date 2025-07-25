@@ -3,13 +3,13 @@ package com.vci.vectorcamapp.core.data.room.entities.relations
 import androidx.room.Embedded
 import androidx.room.Relation
 import com.vci.vectorcamapp.core.data.room.entities.InferenceResultEntity
-import com.vci.vectorcamapp.core.data.room.entities.SpecimenEntity
+import com.vci.vectorcamapp.core.data.room.entities.SpecimenImageEntity
 
-data class SpecimenAndInferenceResultRelation(
-    @Embedded val specimenEntity: SpecimenEntity,
+data class SpecimenImageAndInferenceResultRelation(
+    @Embedded val specimenImageEntity: SpecimenImageEntity,
     @Relation(
-        parentColumn = "id",
-        entityColumn = "specimenId"
+        parentColumn = "localId",
+        entityColumn = "specimenImageId"
     )
     val inferenceResultEntity: InferenceResultEntity
 )

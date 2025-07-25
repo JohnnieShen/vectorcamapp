@@ -10,7 +10,7 @@ data class InferenceResultDto(
     val bboxHeight: Float = 0f,
     val bboxConfidence: Float = 0f,
     val bboxClassId: Int = 0,
-    val speciesProbabilities: List<Float>? = null,
-    val sexProbabilities: List<Float>? = null,
-    val abdomenStatusProbabilities: List<Float>? = null,
+    val speciesLogits: List<Float>? = null,
+    val sexLogits: List<Float>? = null,
+    val abdomenStatusLogits: List<Float>? = null,
 )

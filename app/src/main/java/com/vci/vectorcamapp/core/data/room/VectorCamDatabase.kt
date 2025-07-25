@@ -12,17 +12,19 @@ import com.vci.vectorcamapp.core.data.room.dao.ProgramDao
 import com.vci.vectorcamapp.core.data.room.dao.SessionDao
 import com.vci.vectorcamapp.core.data.room.dao.SiteDao
 import com.vci.vectorcamapp.core.data.room.dao.SpecimenDao
+import com.vci.vectorcamapp.core.data.room.dao.SpecimenImageDao
 import com.vci.vectorcamapp.core.data.room.dao.SurveillanceFormDao
 import com.vci.vectorcamapp.core.data.room.entities.InferenceResultEntity
 import com.vci.vectorcamapp.core.data.room.entities.ProgramEntity
 import com.vci.vectorcamapp.core.data.room.entities.SessionEntity
 import com.vci.vectorcamapp.core.data.room.entities.SiteEntity
 import com.vci.vectorcamapp.core.data.room.entities.SpecimenEntity
+import com.vci.vectorcamapp.core.data.room.entities.SpecimenImageEntity
 import com.vci.vectorcamapp.core.data.room.entities.SurveillanceFormEntity
 
 @Database(
-    entities = [ProgramEntity::class, SiteEntity::class, SessionEntity::class, SpecimenEntity::class, InferenceResultEntity::class, SurveillanceFormEntity::class],
-    version = 7,
+    entities = [ProgramEntity::class, SiteEntity::class, SessionEntity::class, SpecimenEntity::class, SpecimenImageEntity::class, InferenceResultEntity::class, SurveillanceFormEntity::class],
+    version = 8,
 )
 @TypeConverters(
     UuidConverter::class,
@@ -33,6 +35,7 @@ import com.vci.vectorcamapp.core.data.room.entities.SurveillanceFormEntity
 abstract class VectorCamDatabase : RoomDatabase() {
     abstract val sessionDao: SessionDao
     abstract val specimenDao: SpecimenDao
+    abstract val specimenImageDao: SpecimenImageDao
     abstract val inferenceResultDao: InferenceResultDao
     abstract val surveillanceFormDao: SurveillanceFormDao
     abstract val programDao: ProgramDao

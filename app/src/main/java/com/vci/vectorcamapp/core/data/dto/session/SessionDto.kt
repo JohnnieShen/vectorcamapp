@@ -19,8 +19,8 @@ data class SessionDto(
     val completedAt: Long? = null,
     val submittedAt: Long? = null,
     val notes: String = "",
-    val latitude: Float? = 0f,
-    val longitude: Float? = 0f,
+    val latitude: Float? = null,
+    val longitude: Float? = null,
     val siteId: Int = -1,
     val deviceId: Int = -1,
 )

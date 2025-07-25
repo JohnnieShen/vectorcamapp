@@ -23,5 +23,5 @@ data class SurveillanceFormEntity(
     val llinType: String? = null,
     val llinBrand: String? = null,
     val numPeopleSleptUnderLlin: Int? = null,
-    val submittedAt: Long?
+    val submittedAt: Long? = null
 )

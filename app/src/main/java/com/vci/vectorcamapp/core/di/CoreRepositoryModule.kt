@@ -4,12 +4,14 @@ import com.vci.vectorcamapp.core.data.repository.InferenceResultRepositoryImplem
 import com.vci.vectorcamapp.core.data.repository.ProgramRepositoryImplementation
 import com.vci.vectorcamapp.core.data.repository.SessionRepositoryImplementation
 import com.vci.vectorcamapp.core.data.repository.SiteRepositoryImplementation
+import com.vci.vectorcamapp.core.data.repository.SpecimenImageRepositoryImplementation
 import com.vci.vectorcamapp.core.data.repository.SpecimenRepositoryImplementation
 import com.vci.vectorcamapp.core.data.repository.SurveillanceFormRepositoryImplementation
 import com.vci.vectorcamapp.core.domain.repository.InferenceResultRepository
 import com.vci.vectorcamapp.core.domain.repository.ProgramRepository
 import com.vci.vectorcamapp.core.domain.repository.SessionRepository
 import com.vci.vectorcamapp.core.domain.repository.SiteRepository
+import com.vci.vectorcamapp.core.domain.repository.SpecimenImageRepository
 import com.vci.vectorcamapp.core.domain.repository.SpecimenRepository
 import com.vci.vectorcamapp.core.domain.repository.SurveillanceFormRepository
 import dagger.Binds
@@ -33,6 +35,12 @@ abstract class CoreRepositoryModule {
     abstract fun bindSpecimenRepository(
         specimenRepositoryImplementation: SpecimenRepositoryImplementation
     ): SpecimenRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindSpecimenImageRepository(
+        specimenImageRepositoryImplementation: SpecimenImageRepositoryImplementation
+    ): SpecimenImageRepository
 
     @Binds
     @Singleton

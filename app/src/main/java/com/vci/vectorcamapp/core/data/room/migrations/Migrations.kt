@@ -6,6 +6,7 @@ import com.vci.vectorcamapp.core.data.room.migrations.versions.MIGRATION_3_4_SCH
 import com.vci.vectorcamapp.core.data.room.migrations.versions.MIGRATION_4_5_ADD_SUBMITTED_AT_COLUMNS_TO_SPECIMEN_AND_SURVEILLANCE_FORM_TABLES
 import com.vci.vectorcamapp.core.data.room.migrations.versions.MIGRATION_5_6_ADD_UPLOAD_STATUS_TO_SPECIMEN
 import com.vci.vectorcamapp.core.data.room.migrations.versions.MIGRATION_6_7_BOUNDING_BOX_TO_INFERENCE_RESULT
+import com.vci.vectorcamapp.core.data.room.migrations.versions.MIGRATION_7_8_SPECIMEN_IMAGE_SEPARATION
 
 val ALL_MIGRATIONS = arrayOf(
     MIGRATION_1_2_CREATE_BOUNDING_BOX_TABLE,
@@ -13,5 +14,6 @@ val ALL_MIGRATIONS = arrayOf(
     MIGRATION_3_4_SCHEMA_V2,
     MIGRATION_4_5_ADD_SUBMITTED_AT_COLUMNS_TO_SPECIMEN_AND_SURVEILLANCE_FORM_TABLES,
     MIGRATION_5_6_ADD_UPLOAD_STATUS_TO_SPECIMEN,
-    MIGRATION_6_7_BOUNDING_BOX_TO_INFERENCE_RESULT
+    MIGRATION_6_7_BOUNDING_BOX_TO_INFERENCE_RESULT,
+    MIGRATION_7_8_SPECIMEN_IMAGE_SEPARATION
 )

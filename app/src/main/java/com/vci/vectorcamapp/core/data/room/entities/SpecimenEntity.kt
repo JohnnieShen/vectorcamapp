@@ -1,11 +1,8 @@
 package com.vci.vectorcamapp.core.data.room.entities
 
-import android.net.Uri
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
-import androidx.room.PrimaryKey
-import com.vci.vectorcamapp.core.domain.model.UploadStatus
 import java.util.UUID
 
 @Entity(
@@ -15,17 +12,9 @@ import java.util.UUID
         childColumns = ["sessionId"],
         onDelete = ForeignKey.CASCADE,
         onUpdate = ForeignKey.CASCADE
-    )], indices = [Index("sessionId")]
+    )], indices = [Index("sessionId")], primaryKeys = ["id", "sessionId"]
 )
 data class SpecimenEntity(
-    @PrimaryKey val id: String = "",
+    val id: String = "",
     val sessionId: UUID = UUID(0, 0),
-    val species: String? = null,
-    val sex: String? = null,
-    val abdomenStatus: String? = null,
-    val imageUri: Uri = Uri.EMPTY,
-    val metadataUploadStatus: UploadStatus = UploadStatus.NOT_STARTED,
-    val imageUploadStatus: UploadStatus = UploadStatus.NOT_STARTED,
-    val capturedAt: Long = 0L,
-    val submittedAt: Long?
 )

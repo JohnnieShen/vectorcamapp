@@ -21,6 +21,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -76,13 +78,13 @@ fun ImagingScreen(
     }
 
     val pagerState = rememberPagerState(
-        initialPage = 0, pageCount = { state.capturedSpecimensAndInferenceResults.size + 1 })
+        initialPage = 0, pageCount = { state.specimensWithImagesAndInferenceResults.size + 1 })
 
     HorizontalPager(
         state = pagerState, modifier = modifier.fillMaxSize()
     ) { page ->
         when {
-            page < state.capturedSpecimensAndInferenceResults.size -> {
+            page < state.specimensWithImagesAndInferenceResults.size -> {
                 val infiniteTransition = rememberInfiniteTransition(label = "arrow_animation")
                 val arrowOffsetX by infiniteTransition.animateFloat(
                     initialValue = with(density) { MaterialTheme.dimensions.spacingSmall.toPx() },
@@ -123,7 +125,7 @@ fun ImagingScreen(
                             )
                         ) {
                             Text(
-                                text = "Specimen ${page + 1} of ${state.capturedSpecimensAndInferenceResults.size} in this Session",
+                                text = "Specimen ${page + 1} of ${state.specimensWithImagesAndInferenceResults.size} in this Session",
                                 style = MaterialTheme.typography.titleLarge,
                                 color = MaterialTheme.colors.textPrimary,
                                 modifier = Modifier.padding(MaterialTheme.dimensions.paddingMedium)
@@ -139,10 +141,15 @@ fun ImagingScreen(
                                 .size(MaterialTheme.dimensions.iconSizeLarge))
                     }
 
-                    CapturedSpecimenTile(
-                        specimen = state.capturedSpecimensAndInferenceResults[page].specimen,
-                        inferenceResult = state.capturedSpecimensAndInferenceResults[page].inferenceResult,
-                    )
+                    LazyColumn {
+                        items(state.specimensWithImagesAndInferenceResults[page].specimenImagesAndInferenceResults) { (specimenImage, inferenceResult) ->
+                            CapturedSpecimenTile(
+                                specimen = state.specimensWithImagesAndInferenceResults[page].specimen,
+                                specimenImage = specimenImage,
+                                inferenceResult = inferenceResult,
+                            )
+                        }
+                    }
                 }
             }
 
@@ -158,6 +165,7 @@ fun ImagingScreen(
                 ) {
                     CapturedSpecimenTile(
                         specimen = state.currentSpecimen,
+                        specimenImage = state.currentSpecimenImage,
                         inferenceResult = state.currentInferenceResult,
                         specimenBitmap = specimenBitmap,
                         onSpecimenIdCorrected = { onAction(ImagingAction.CorrectSpecimenId(it)) })

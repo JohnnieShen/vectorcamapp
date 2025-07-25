@@ -11,6 +11,7 @@ import com.vci.vectorcamapp.core.data.room.dao.ProgramDao
 import com.vci.vectorcamapp.core.data.room.dao.SessionDao
 import com.vci.vectorcamapp.core.data.room.dao.SiteDao
 import com.vci.vectorcamapp.core.data.room.dao.SpecimenDao
+import com.vci.vectorcamapp.core.data.room.dao.SpecimenImageDao
 import com.vci.vectorcamapp.core.data.room.dao.SurveillanceFormDao
 import com.vci.vectorcamapp.core.data.room.entities.ProgramEntity
 import com.vci.vectorcamapp.core.data.room.entities.SiteEntity
@@ -58,6 +59,15 @@ object RoomDatabaseModule {
                         SiteEntity(
                             id = 2,
                             programId = 2,
+                            district = "Adjumani",
+                            subCounty = "County3",
+                            parish = "Parish3",
+                            sentinelSite = "Ofua",
+                            healthCenter = "Health Center 3"
+                        ),
+                        SiteEntity(
+                            id = 3,
+                            programId = 2,
                             district = "Mayuge",
                             subCounty = "County1",
                             parish = "Parish1",
@@ -65,22 +75,13 @@ object RoomDatabaseModule {
                             healthCenter = "Health Center 1"
                         ),
                         SiteEntity(
-                            id = 3,
+                            id = 4,
                             programId = 2,
                             district = "Mayuge",
                             subCounty = "County2",
                             parish = "Parish2",
                             sentinelSite = "Namadhi",
                             healthCenter = "Health Center 2"
-                        ),
-                        SiteEntity(
-                            id = 4,
-                            programId = 2,
-                            district = "Adjumani",
-                            subCounty = "County3",
-                            parish = "Parish3",
-                            sentinelSite = "Ofua",
-                            healthCenter = "Health Center 3"
                         ),
                         SiteEntity(
                             id = 5,
@@ -108,6 +109,9 @@ object RoomDatabaseModule {
 
     @Provides
     fun provideSpecimenDao(db: VectorCamDatabase): SpecimenDao = db.specimenDao
+
+    @Provides
+    fun provideSpecimenImageDao(db: VectorCamDatabase): SpecimenImageDao = db.specimenImageDao
 
     @Provides
     fun provideInferenceResultDao(db: VectorCamDatabase): InferenceResultDao = db.inferenceResultDao

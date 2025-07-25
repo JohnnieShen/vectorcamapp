@@ -24,7 +24,7 @@ class RemoteSpecimenDataSource @Inject constructor(
 ) : SpecimenDataSource {
 
     override suspend fun postSpecimen(
-        specimen: Specimen, inferenceResult: InferenceResult, sessionId: Int
+        specimen: Specimen, sessionId: Int
     ): Result<PostSpecimenResponseDto, NetworkError> {
         return safeCall<PostSpecimenResponseDto> {
             httpClient.post(constructUrl("specimens")) {
@@ -32,22 +32,7 @@ class RemoteSpecimenDataSource @Inject constructor(
                 setBody(
                     PostSpecimenRequestDto(
                         specimenId = specimen.id,
-                        sessionId = sessionId,
-                        species = specimen.species,
-                        sex = specimen.sex,
-                        abdomenStatus = specimen.abdomenStatus,
-                        capturedAt = specimen.capturedAt,
-                        inferenceResult = InferenceResultDto(
-                            bboxTopLeftX = inferenceResult.bboxTopLeftX,
-                            bboxTopLeftY = inferenceResult.bboxTopLeftY,
-                            bboxWidth = inferenceResult.bboxWidth,
-                            bboxHeight = inferenceResult.bboxHeight,
-                            bboxConfidence = inferenceResult.bboxConfidence,
-                            bboxClassId = inferenceResult.bboxClassId,
-                            speciesProbabilities = inferenceResult.speciesLogits,
-                            sexProbabilities = inferenceResult.sexLogits,
-                            abdomenStatusProbabilities = inferenceResult.abdomenStatusLogits
-                        )
+                        sessionId = sessionId
                     )
                 )
             }

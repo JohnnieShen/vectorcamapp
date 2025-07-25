@@ -27,6 +27,7 @@ import coil3.request.ImageRequest
 import com.vci.vectorcamapp.R
 import com.vci.vectorcamapp.core.domain.model.Session
 import com.vci.vectorcamapp.core.domain.model.Specimen
+import com.vci.vectorcamapp.core.domain.model.SpecimenImage
 import com.vci.vectorcamapp.core.presentation.components.tile.InfoTile
 import com.vci.vectorcamapp.ui.extensions.color
 import com.vci.vectorcamapp.ui.extensions.colors
@@ -37,7 +38,10 @@ import java.util.Locale
 
 @Composable
 fun CompleteSessionSpecimensTile(
-    session: Session, specimen: Specimen, modifier: Modifier = Modifier
+    session: Session,
+    specimen: Specimen,
+    specimenImage: SpecimenImage,
+    modifier: Modifier = Modifier
 ) {
 
     val context = LocalContext.current
@@ -46,7 +50,7 @@ fun CompleteSessionSpecimensTile(
 
     InfoTile(modifier = modifier) {
         AsyncImage(
-            model = ImageRequest.Builder(context).data(specimen.imageUri).build(),
+            model = ImageRequest.Builder(context).data(specimenImage.imageUri).build(),
             contentDescription = "Specimen Image: ${specimen.id}",
             contentScale = ContentScale.Fit,
             modifier = Modifier.fillMaxSize()
@@ -81,53 +85,44 @@ fun CompleteSessionSpecimensTile(
                 )
             }
 
-            specimen.metadataUploadStatus.let { status ->
-                Text(
-                    text = buildAnnotatedString {
-                        append("Metadata Upload Status: ")
-                        withStyle(SpanStyle(color = status.color())) {
-                            append(status.displayName())
-                        }
-                    },
-                    style = MaterialTheme.typography.bodySmall
-                )
-            }
+            Text(
+                text = buildAnnotatedString {
+                    append("Metadata Upload Status: ")
+                    withStyle(SpanStyle(color = specimenImage.metadataUploadStatus.color())) {
+                        append(specimenImage.metadataUploadStatus.displayName())
+                    }
+                },
+                style = MaterialTheme.typography.bodySmall
+            )
 
-            specimen.imageUploadStatus.let { status ->
-                Text(
-                    text = buildAnnotatedString {
-                        append("Image Upload Status: ")
-                        withStyle(SpanStyle(color = status.color())) {
-                            append(status.displayName())
-                        }
-                    },
-                    style = MaterialTheme.typography.bodySmall
-                )
-            }
+            Text(
+                text = buildAnnotatedString {
+                    append("Image Upload Status: ")
+                    withStyle(SpanStyle(color = specimenImage.imageUploadStatus.color())) {
+                        append(specimenImage.imageUploadStatus.displayName())
+                    }
+                },
+                style = MaterialTheme.typography.bodySmall
+            )
 
-            specimen.species?.let { species ->
-                Text(
-                    text = "Species: $species",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colors.textPrimary
-                )
-            }
 
-            specimen.sex?.let { sex ->
-                Text(
-                    text = "Sex: $sex",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colors.textPrimary
-                )
-            }
+            Text(
+                text = if (specimenImage.species != null) "Species: ${specimenImage.species}" else "",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colors.textPrimary
+            )
 
-            specimen.abdomenStatus?.let { abdomenStatus ->
-                Text(
-                    text = "Abdomen Status: $abdomenStatus",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colors.textPrimary
-                )
-            }
+            Text(
+                text = if (specimenImage.sex != null) "Sex: ${specimenImage.sex}" else "",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colors.textPrimary
+            )
+
+            Text(
+                text = if (specimenImage.abdomenStatus != null) "Abdomen Status: ${specimenImage.abdomenStatus}" else "",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colors.textPrimary
+            )
 
             Text(
                 text = "Created At: ${dateTimeFormatter.format(session.createdAt)}",

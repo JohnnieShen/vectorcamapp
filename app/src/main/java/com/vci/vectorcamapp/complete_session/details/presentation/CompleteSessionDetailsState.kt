@@ -5,6 +5,8 @@ import com.vci.vectorcamapp.core.domain.model.Session
 import com.vci.vectorcamapp.core.domain.model.Site
 import com.vci.vectorcamapp.core.domain.model.Specimen
 import com.vci.vectorcamapp.core.domain.model.SurveillanceForm
+import com.vci.vectorcamapp.core.domain.model.composites.SpecimenImageAndInferenceResult
+import com.vci.vectorcamapp.core.domain.model.composites.SpecimenWithSpecimenImagesAndInferenceResults
 import java.util.UUID
 
 data class CompleteSessionDetailsState(
@@ -43,5 +45,5 @@ data class CompleteSessionDetailsState(
         numPeopleSleptUnderLlin = null,
         submittedAt = null
     ),
-    val specimens: List<Specimen> = emptyList(),
+    val specimensWithImagesAndInferenceResults: List<SpecimenWithSpecimenImagesAndInferenceResults> = emptyList(),
 )

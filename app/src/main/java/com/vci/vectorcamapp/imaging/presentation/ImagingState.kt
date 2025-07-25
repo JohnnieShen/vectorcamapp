@@ -4,13 +4,18 @@ import android.net.Uri
 import androidx.compose.ui.geometry.Offset
 import com.vci.vectorcamapp.core.domain.model.InferenceResult
 import com.vci.vectorcamapp.core.domain.model.Specimen
+import com.vci.vectorcamapp.core.domain.model.SpecimenImage
 import com.vci.vectorcamapp.core.domain.model.UploadStatus
-import com.vci.vectorcamapp.core.domain.model.composites.SpecimenAndInferenceResult
+import com.vci.vectorcamapp.core.domain.model.composites.SpecimenImageAndInferenceResult
+import com.vci.vectorcamapp.core.domain.model.composites.SpecimenWithSpecimenImagesAndInferenceResults
+import java.util.UUID
 
 data class ImagingState(
     val isProcessing: Boolean = false,
-    val currentSpecimen: Specimen = Specimen(
-        id = "",
+    val currentSpecimen: Specimen = Specimen(id = ""),
+    val currentSpecimenImage: SpecimenImage = SpecimenImage(
+        localId = UUID(0, 0),
+        remoteId = null,
         species = null,
         sex = null,
         abdomenStatus = null,
@@ -33,7 +38,7 @@ data class ImagingState(
     ),
     val currentImageBytes: ByteArray? = null,
     val previewInferenceResults: List<InferenceResult> = emptyList(),
-    val capturedSpecimensAndInferenceResults: List<SpecimenAndInferenceResult> = emptyList(),
+    val specimensWithImagesAndInferenceResults: List<SpecimenWithSpecimenImagesAndInferenceResults> = emptyList(),
     val displayOrientation: Int = 0,
     val manualFocusPoint: Offset? = null,
     val isCameraReady: Boolean = false
