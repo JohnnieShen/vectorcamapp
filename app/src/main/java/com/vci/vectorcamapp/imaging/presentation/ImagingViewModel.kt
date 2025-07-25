@@ -123,6 +123,28 @@ class ImagingViewModel @Inject constructor(
     fun onAction(action: ImagingAction) {
         viewModelScope.launch {
             when (action) {
+                ImagingAction.ShowExitDialog -> {
+                    _state.update { it.copy(showExitDialog = true) }
+                }
+
+                ImagingAction.DismissExitDialog -> {
+                    _state.update { it.copy(showExitDialog = false, pendingAction = null) }
+                }
+
+                is ImagingAction.SelectPendingAction -> {
+                    _state.update { it.copy(pendingAction = action.pendingAction) }
+                }
+
+                ImagingAction.ClearPendingAction -> {
+                    _state.update { it.copy(pendingAction = null) }
+                }
+
+                ImagingAction.ConfirmPendingAction -> {
+                    val actionToConfirm = _state.value.pendingAction
+                    _state.update { it.copy(showExitDialog = false, pendingAction = null) }
+                    actionToConfirm?.let { onAction(it) }
+                }
+
                 is ImagingAction.ManualFocusAt -> {
                     _state.update { it.copy(manualFocusPoint = action.offset) }
                 }

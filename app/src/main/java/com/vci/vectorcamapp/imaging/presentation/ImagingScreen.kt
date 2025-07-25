@@ -11,11 +11,13 @@ import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
@@ -51,6 +53,11 @@ import com.vci.vectorcamapp.imaging.presentation.components.camera.LiveCameraPre
 import com.vci.vectorcamapp.imaging.presentation.components.specimen.CapturedSpecimenTile
 import com.vci.vectorcamapp.ui.extensions.colors
 import com.vci.vectorcamapp.ui.extensions.dimensions
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.TextButton
 import com.vci.vectorcamapp.ui.theme.VectorcamappTheme
 
 @Composable
@@ -202,15 +209,99 @@ fun ImagingScreen(
                         )
                     ) {
                         ActionButton(
-                            label = "Save and Exit",
-                            onClick = { onAction(ImagingAction.SaveSessionProgress) },
-                            modifier = Modifier.weight(1f)
+                            label = "Exit",
+                            onClick = { onAction(ImagingAction.ShowExitDialog) },
+                            modifier = Modifier.padding(horizontal = MaterialTheme.dimensions.paddingMedium)
                         )
-                        ActionButton(
-                            label = "Submit",
-                            onClick = { onAction(ImagingAction.SubmitSession) },
-                            modifier = Modifier.weight(1f)
-                        )
+                    }
+
+                    if (state.showExitDialog) {
+                        AlertDialog(onDismissRequest = {
+                            onAction(ImagingAction.DismissExitDialog)
+                        }, title = {
+                            Text(
+                                text = if (state.pendingAction == null) "Exit session?" else "Confirm Action",
+                                style = MaterialTheme.typography.headlineMedium,
+                                color = MaterialTheme.colors.textPrimary
+                            )
+                        }, text = {
+                            val dialogText = when (state.pendingAction) {
+                                null -> "Would you like to save this session for later or submit it now?"
+                                is ImagingAction.SaveSessionProgress -> "Are you sure you want to save the session and exit?"
+                                is ImagingAction.SubmitSession -> "Are you sure you want to submit the session?"
+                                else -> ""
+                            }
+                            if (dialogText.isNotEmpty()) {
+                                Text(
+                                    text = dialogText,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colors.textSecondary
+                                )
+                            }
+                        }, confirmButton = {
+                            if (state.pendingAction == null) {
+                                OutlinedButton(
+                                    onClick = { onAction(ImagingAction.SelectPendingAction(ImagingAction.SubmitSession)) },
+                                    border = BorderStroke(MaterialTheme.dimensions.borderThicknessThick, MaterialTheme.colors.successConfirm)
+                                ) {
+                                    Icon(
+                                        painter = painterResource(id = R.drawable.ic_cloud_upload),
+                                        contentDescription = "Submit Icon",
+                                        tint = MaterialTheme.colors.successConfirm,
+                                        modifier = Modifier.size(MaterialTheme.dimensions.iconSizeSmall)
+                                    )
+                                    Spacer(Modifier.size(MaterialTheme.dimensions.paddingSmall))
+                                    Text(
+                                        text = "Submit",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = MaterialTheme.colors.successConfirm
+                                    )
+                                }
+                            } else {
+                                Button(
+                                    onClick = {
+                                        onAction(ImagingAction.ConfirmPendingAction)
+                                    },
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = MaterialTheme.colors.error
+                                    )
+                                ) {
+                                    Text(
+                                        text = "Yes, Confirm",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = MaterialTheme.colors.buttonText
+                                    )
+                                }
+                            }
+                        }, dismissButton = {
+                            if (state.pendingAction == null) {
+                                OutlinedButton(
+                                    onClick = { onAction(ImagingAction.SelectPendingAction(ImagingAction.SaveSessionProgress)) },
+                                    border = BorderStroke(MaterialTheme.dimensions.borderThicknessThick, MaterialTheme.colors.info)
+                                ) {
+                                    Icon(
+                                        painter = painterResource(id = R.drawable.ic_save),
+                                        contentDescription = "Save Icon",
+                                        tint = MaterialTheme.colors.info,
+                                        modifier = Modifier.size(MaterialTheme.dimensions.iconSizeSmall)
+                                    )
+                                    Spacer(Modifier.size(MaterialTheme.dimensions.paddingSmall))
+                                    Text(
+                                        "Save",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = MaterialTheme.colors.info
+                                    )
+                                }
+                            } else {
+                                TextButton(onClick = { onAction(ImagingAction.ClearPendingAction) }) {
+                                    Text(
+                                        "Back",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = MaterialTheme.colors.textPrimary
+                                    )
+                                }
+                            }
+                        })
                     }
 
                     InfoTile(
