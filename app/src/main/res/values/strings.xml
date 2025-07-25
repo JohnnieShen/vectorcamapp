@@ -31,6 +31,12 @@
     <!-- Network error: Client Error -->
     <string name="network_error_client_error">The request was invalid. Please check your input and try again.</string>
 
+    <!-- tus Upload Transient Error -->
+    <string name="network_error_tus_transient_error">tus Uploader transient error. Retry Pending.</string>
+
+    <!-- tus Upload Transient Error -->
+    <string name="network_error_tus_permanent_error">tus Uploader permanent error. Please contact support if the issue persists.</string>
+
     <!-- Network error: Unknown error -->
     <string name="network_error_unknown_error">An unknown error occurred. Please try again or contact support if the issue persists.</string>
 
@@ -162,4 +168,19 @@
 
     <!-- Complete session error: Unknown error -->
     <string name="complete_session_error_unknown_error">An unknown error occurred. Please try again or contact support if the issue persists.</string>
+
+    <!-- Image Upload Status: Upload completed -->
+    <string name="upload_status_completed">Completed</string>
+
+    <!-- Image Upload Status: Upload in progress -->
+    <string name="upload_status_in_progress">In Progress</string>
+
+    <!-- Image Upload Status: Upload paused -->
+    <string name="upload_status_paused">Paused</string>
+
+    <!-- Image Upload Status: Upload not started -->
+    <string name="upload_status_not_started">Not Started</string>
+
+    <!-- Image Upload Status: Upload failed -->
+    <string name="upload_status_retry">Retry</string>
 </resources>

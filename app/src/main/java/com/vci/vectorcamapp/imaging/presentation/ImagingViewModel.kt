@@ -68,6 +68,10 @@ class ImagingViewModel @Inject constructor(
     private val inferenceRepository: InferenceRepository
 ) : CoreViewModel() {
 
+    companion object {
+        private const val UPLOAD_WORK_CHAIN_NAME = "session_upload_chain"
+    }
+
     @Inject
     lateinit var transactionHelper: TransactionHelper
 
@@ -176,8 +180,10 @@ class ImagingViewModel @Inject constructor(
 
                     val success = sessionRepository.markSessionAsComplete(currentSession.localId)
                     if (success) {
+                        val workManager = WorkManager.getInstance(context)
                         val uploadConstraints =
-                            Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED)
+                            Constraints.Builder()
+                                .setRequiredNetworkType(NetworkType.CONNECTED)
                                 .build()
 
                         val metadataUploadRequest =
@@ -193,16 +199,21 @@ class ImagingViewModel @Inject constructor(
                             ).build()
 
                         val imageUploadRequest =
-                            OneTimeWorkRequestBuilder<ImageUploadWorker>().setInputData(workDataOf("session_id" to currentSession.localId.toString()))
-                                .setConstraints(uploadConstraints).setBackoffCriteria(
+                            OneTimeWorkRequestBuilder<ImageUploadWorker>().setInputData(
+                                workDataOf(
+                                    ImageUploadWorker.KEY_SESSION_ID to currentSession.localId.toString()
+                                )
+                            )
+                                .setConstraints(uploadConstraints)
+                                .setBackoffCriteria(
                                     BackoffPolicy.LINEAR,
                                     WorkRequest.MIN_BACKOFF_MILLIS,
-                                    TimeUnit.MILLISECONDS,
+                                    TimeUnit.MILLISECONDS
                                 ).build()
 
-                        WorkManager.getInstance(context).beginUniqueWork(
-                            "metadata_upload_work",
-                            ExistingWorkPolicy.REPLACE,
+                        workManager.beginUniqueWork(
+                            UPLOAD_WORK_CHAIN_NAME,
+                            ExistingWorkPolicy.APPEND_OR_REPLACE,
                             metadataUploadRequest
                         ).then(imageUploadRequest).enqueue()
 

@@ -32,7 +32,7 @@ import com.vci.vectorcamapp.core.presentation.components.tile.InfoTile
 import com.vci.vectorcamapp.ui.extensions.color
 import com.vci.vectorcamapp.ui.extensions.colors
 import com.vci.vectorcamapp.ui.extensions.dimensions
-import com.vci.vectorcamapp.ui.extensions.displayName
+import com.vci.vectorcamapp.ui.extensions.displayText
 import java.text.SimpleDateFormat
 import java.util.Locale
 
@@ -89,7 +89,7 @@ fun CompleteSessionSpecimensTile(
                 text = buildAnnotatedString {
                     append("Metadata Upload Status: ")
                     withStyle(SpanStyle(color = specimenImage.metadataUploadStatus.color())) {
-                        append(specimenImage.metadataUploadStatus.displayName())
+                        append(specimenImage.metadataUploadStatus.displayText(context))
                     }
                 },
                 style = MaterialTheme.typography.bodySmall
@@ -99,7 +99,7 @@ fun CompleteSessionSpecimensTile(
                 text = buildAnnotatedString {
                     append("Image Upload Status: ")
                     withStyle(SpanStyle(color = specimenImage.imageUploadStatus.color())) {
-                        append(specimenImage.imageUploadStatus.displayName())
+                        append(specimenImage.imageUploadStatus.displayText(context))
                     }
                 },
                 style = MaterialTheme.typography.bodySmall

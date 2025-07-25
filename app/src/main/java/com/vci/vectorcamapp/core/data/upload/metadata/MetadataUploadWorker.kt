@@ -560,7 +560,7 @@ class MetadataUploadWorker @AssistedInject constructor(
             }
 
             specimenImageRepository.updateSpecimenImage(
-                localSpecimenImage.copy(metadataUploadStatus = UploadStatus.COMPLETED),
+                remoteSpecimenImage.copy(metadataUploadStatus = UploadStatus.COMPLETED),
                 syncedSpecimenId,
                 syncedLocalSessionId
             )

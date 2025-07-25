@@ -162,6 +162,10 @@ dependencies {
     // JSON Serialization Library
     implementation(libs.kotlinx.serialization.json) // Kotlinx JSON serialization library
 
+    // TUS Library
+    implementation(libs.tus.android.client)
+    implementation(libs.tus.java.client)
+
     // Testing Dependencies
     testImplementation(libs.junit) // JUnit for unit tests
     androidTestImplementation(libs.androidx.junit) // AndroidX JUnit test library
