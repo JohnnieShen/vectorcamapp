@@ -38,10 +38,10 @@ class IncompleteSessionViewModel @Inject constructor(
             when (action) {
                 is IncompleteSessionAction.ResumeSession -> {
                     try {
-                        val relation = sessionRepository.getSessionAndSiteById(action.sessionId)
-                        if (relation != null) {
-                            currentSessionCache.saveSession(relation.session, relation.site.id)
-                            _events.send(IncompleteSessionEvent.NavigateToIntakeScreen)
+                        val sessionAndSite = sessionRepository.getSessionAndSiteById(action.sessionId)
+                        if (sessionAndSite != null) {
+                            currentSessionCache.saveSession(sessionAndSite.session, sessionAndSite.site.id)
+                            _events.send(IncompleteSessionEvent.NavigateToIntakeScreen(sessionAndSite.session.type))
                         } else {
                             emitError(IncompleteSessionError.SESSION_NOT_FOUND)
                         }

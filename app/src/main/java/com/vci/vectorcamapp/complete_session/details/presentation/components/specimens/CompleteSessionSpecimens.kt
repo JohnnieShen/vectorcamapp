@@ -1,7 +1,6 @@
 package com.vci.vectorcamapp.complete_session.details.presentation.components.specimens
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.width

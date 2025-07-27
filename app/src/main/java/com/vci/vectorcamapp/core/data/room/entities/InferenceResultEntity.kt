@@ -17,7 +17,7 @@ import java.util.UUID
     ]
 )
 data class InferenceResultEntity(
-    @PrimaryKey val specimenImageId: UUID = UUID(0, 0),
+    @PrimaryKey val specimenImageId: String = "",
     val bboxTopLeftX: Float = 0F,
     val bboxTopLeftY: Float = 0F,
     val bboxWidth: Float = 0F,

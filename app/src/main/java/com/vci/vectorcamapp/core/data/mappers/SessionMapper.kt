@@ -18,7 +18,8 @@ fun SessionEntity.toDomain(): Session {
         submittedAt = this.submittedAt,
         notes = this.notes,
         latitude = this.latitude,
-        longitude = this.longitude
+        longitude = this.longitude,
+        type = this.type
     )
 }
 
@@ -38,6 +39,7 @@ fun Session.toEntity(siteId: Int): SessionEntity {
         submittedAt = this.submittedAt,
         notes = this.notes,
         latitude = this.latitude,
-        longitude = this.longitude
+        longitude = this.longitude,
+        type = this.type
     )
 }

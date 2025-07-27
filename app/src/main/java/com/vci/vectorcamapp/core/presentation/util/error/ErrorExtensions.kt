@@ -12,6 +12,7 @@ import com.vci.vectorcamapp.main.domain.util.MainError
 import com.vci.vectorcamapp.registration.domain.util.RegistrationError
 import com.vci.vectorcamapp.intake.domain.util.FormValidationError
 import com.vci.vectorcamapp.intake.domain.util.IntakeError
+import com.vci.vectorcamapp.landing.domain.util.LandingError
 
 fun Error.toString(context: Context): String {
     val resId = when (this) {
@@ -38,7 +39,6 @@ fun Error.toString(context: Context): String {
         is CompleteSessionDetailsError -> when (this) {
             CompleteSessionDetailsError.SESSION_NOT_FOUND -> R.string.complete_session_error_session_not_found
             CompleteSessionDetailsError.SITE_NOT_FOUND -> R.string.complete_session_error_site_not_found
-            CompleteSessionDetailsError.SURVEILLANCE_FORM_NOT_FOUND -> R.string.complete_session_error_surveillance_form_not_found
             CompleteSessionDetailsError.SPECIMENS_NOT_FOUND -> R.string.complete_session_error_specimens_not_found
             CompleteSessionDetailsError.UNKNOWN_ERROR -> R.string.complete_session_error_unknown_error
         }
@@ -74,6 +74,10 @@ fun Error.toString(context: Context): String {
         is RegistrationError -> when (this) {
             RegistrationError.PROGRAM_NOT_FOUND -> R.string.registration_error_program_not_found
             RegistrationError.UNKNOWN_ERROR -> R.string.registration_error_unknown_error
+        }
+
+        is LandingError -> when (this) {
+            LandingError.SESSION_NOT_FOUND -> R.string.landing_error_session_not_found
         }
 
         is IntakeError -> when (this) {

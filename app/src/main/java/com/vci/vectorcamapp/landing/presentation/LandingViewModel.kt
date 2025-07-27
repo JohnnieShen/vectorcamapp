@@ -1,12 +1,13 @@
 package com.vci.vectorcamapp.landing.presentation
 
-import android.util.Log
 import androidx.lifecycle.viewModelScope
 import com.vci.vectorcamapp.core.domain.cache.CurrentSessionCache
 import com.vci.vectorcamapp.core.domain.cache.DeviceCache
+import com.vci.vectorcamapp.core.domain.model.enums.SessionType
 import com.vci.vectorcamapp.core.domain.repository.ProgramRepository
 import com.vci.vectorcamapp.core.domain.repository.SessionRepository
 import com.vci.vectorcamapp.core.presentation.CoreViewModel
+import com.vci.vectorcamapp.landing.domain.util.LandingError
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -53,8 +54,12 @@ class LandingViewModel @Inject constructor(
     fun onAction(action: LandingAction) {
         viewModelScope.launch {
             when (action) {
-                LandingAction.StartNewSession -> {
-                    _events.send(LandingEvent.NavigateToNewSessionScreen)
+                LandingAction.StartNewSurveillanceSession -> {
+                    _events.send(LandingEvent.NavigateToIntakeScreen(SessionType.SURVEILLANCE))
+                }
+
+                LandingAction.StartNewDataCollectionSession -> {
+                    _events.send(LandingEvent.NavigateToIntakeScreen(SessionType.DATA_COLLECTION))
                 }
 
                 LandingAction.ViewIncompleteSessions -> {
@@ -66,8 +71,14 @@ class LandingViewModel @Inject constructor(
                 }
 
                 LandingAction.ResumeSession -> {
+                    val session = currentSessionCache.getSession()
+                    if (session == null) {
+                        emitError(LandingError.SESSION_NOT_FOUND)
+                        return@launch
+                    }
+
                     _state.update { it.copy(showResumeDialog = false) }
-                    _events.send(LandingEvent.NavigateToNewSessionScreen)
+                    _events.send(LandingEvent.NavigateToIntakeScreen(session.type))
                 }
 
                 LandingAction.DismissResumePrompt -> {

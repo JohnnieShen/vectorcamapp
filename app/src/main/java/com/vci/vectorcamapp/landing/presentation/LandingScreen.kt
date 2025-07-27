@@ -46,16 +46,16 @@ fun LandingScreen(
 
                 LandingSection(title = "Imaging") {
                     LandingActionTile(
-                        title = "Start New Session",
+                        title = "New Surveillance Session",
                         description = "Begin a new household visit and capture mosquito images.",
                         icon = painterResource(R.drawable.ic_specimen),
-                        onClick = { onAction(LandingAction.StartNewSession) })
+                        onClick = { onAction(LandingAction.StartNewSurveillanceSession) })
 
                     LandingActionTile(
                         title = "Data Collection Mode",
                         description = "Capture and upload mosquito images without filling forms.",
                         icon = painterResource(R.drawable.ic_database),
-                        onClick = { Log.d("LandingScreen", "Data Collection Mode") })
+                        onClick = { onAction(LandingAction.StartNewDataCollectionSession) })
                 }
 
                 LandingSection(title = "Library") {

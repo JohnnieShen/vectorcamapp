@@ -124,6 +124,9 @@
     <!-- Main error: Unknown error -->
     <string name="main_error_unknown_error">An unknown error occurred. Please try again or contact support if the issue persists.</string>
 
+    <!-- Landing error: Session not found -->
+    <string name="landing_error_session_not_found">Unable to find a saved session. Please start a new one.</string>
+
     <!-- Intake error: Site fetch failed -->
     <string name="intake_error_site_not_found">Site not found for selected district and sentinel site.</string>
 
@@ -160,9 +163,6 @@
     <!-- Complete session error: Site not found -->
     <string name="complete_session_error_site_not_found">Could not load site details. Please try again.</string>
 
-    <!-- Complete session error: Surveillance form not found -->
-    <string name="complete_session_error_surveillance_form_not_found">Could not load surveillance form details. Please try again.</string>
-
     <!-- Complete session error: Specimens not found -->
     <string name="complete_session_error_specimens_not_found">Could not load specimens. Please try again.</string>
 
@@ -174,9 +174,6 @@
 
     <!-- Image Upload Status: Upload in progress -->
     <string name="upload_status_in_progress">In Progress</string>
-
-    <!-- Image Upload Status: Upload paused -->
-    <string name="upload_status_paused">Paused</string>
 
     <!-- Image Upload Status: Upload not started -->
     <string name="upload_status_not_started">Not Started</string>

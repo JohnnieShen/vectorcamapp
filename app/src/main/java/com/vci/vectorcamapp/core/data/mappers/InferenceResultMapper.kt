@@ -18,7 +18,7 @@ fun InferenceResultEntity.toDomain() : InferenceResult {
     )
 }
 
-fun InferenceResult.toEntity(specimenImageId: UUID) : InferenceResultEntity {
+fun InferenceResult.toEntity(specimenImageId: String) : InferenceResultEntity {
     return InferenceResultEntity(
         specimenImageId = specimenImageId,
         bboxTopLeftX = this.bboxTopLeftX,

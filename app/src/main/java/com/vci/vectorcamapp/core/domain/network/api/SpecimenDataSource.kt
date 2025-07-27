@@ -10,5 +10,8 @@ interface SpecimenDataSource {
     suspend fun postSpecimen(
         specimen: Specimen, sessionId: Int
     ): Result<PostSpecimenResponseDto, NetworkError>
-    suspend fun getSpecimenById(specimenId: String): Result<SpecimenDto, NetworkError>
+
+    suspend fun getSpecimenByIdAndSessionId(
+        specimenId: String, sessionId: Int
+    ): Result<SpecimenDto, NetworkError>
 }

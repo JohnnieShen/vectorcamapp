@@ -24,7 +24,7 @@ import com.vci.vectorcamapp.core.domain.model.Session
 import com.vci.vectorcamapp.core.domain.model.Specimen
 import com.vci.vectorcamapp.core.domain.model.SpecimenImage
 import com.vci.vectorcamapp.core.domain.model.SurveillanceForm
-import com.vci.vectorcamapp.core.domain.model.UploadStatus
+import com.vci.vectorcamapp.core.domain.model.enums.UploadStatus
 import com.vci.vectorcamapp.core.domain.network.api.DeviceDataSource
 import com.vci.vectorcamapp.core.domain.network.api.SessionDataSource
 import com.vci.vectorcamapp.core.domain.network.api.SpecimenDataSource
@@ -63,7 +63,6 @@ class MetadataUploadWorker @AssistedInject constructor(
     private val specimenImageDataSource: SpecimenImageDataSource
 ) : CoroutineWorker(context, workerParams) {
 
-    private var retryCount = 0
     private val notificationManager: NotificationManager =
         context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
@@ -124,7 +123,8 @@ class MetadataUploadWorker @AssistedInject constructor(
                 specimenRepository.getSpecimenImagesAndInferenceResultsBySession(syncedSession.localId)
             val totalSpecimens = localSpecimensWithImagesAndInferenceResults.size
             localSpecimensWithImagesAndInferenceResults.forEachIndexed { specimenIndex, specimenWithImagesAndInferenceResults ->
-                val totalImages = specimenWithImagesAndInferenceResults.specimenImagesAndInferenceResults.size
+                val totalImages =
+                    specimenWithImagesAndInferenceResults.specimenImagesAndInferenceResults.size
                 val syncedSpecimen = when (val syncSpecimenResult = syncSpecimenIfNeeded(
                     specimenWithImagesAndInferenceResults.specimen,
                     syncedSession.localId,
@@ -141,9 +141,8 @@ class MetadataUploadWorker @AssistedInject constructor(
                         syncSpecimenImageAndInferenceResultIfNeeded(
                             specimenImage,
                             inferenceResult,
-                            syncedSpecimen.id,
-                            syncedSession.localId,
-                            syncedSession.remoteId
+                            syncedSpecimen,
+                            syncedSession.localId
                         ).onError { error ->
                             return retryOrFailure(error.toString(context))
                         }
@@ -177,7 +176,7 @@ class MetadataUploadWorker @AssistedInject constructor(
             specimenWithImagesAndInferenceResults.specimenImagesAndInferenceResults.forEach { (specimenImage, _) ->
                 if (specimenImage.metadataUploadStatus == UploadStatus.IN_PROGRESS) {
                     specimenImageRepository.updateSpecimenImage(
-                        specimenImage.copy(metadataUploadStatus = UploadStatus.PAUSED),
+                        specimenImage.copy(metadataUploadStatus = UploadStatus.FAILED),
                         specimenWithImagesAndInferenceResults.specimen.id,
                         sessionId
                     )
@@ -187,8 +186,7 @@ class MetadataUploadWorker @AssistedInject constructor(
     }
 
     private fun retryOrFailure(message: String): WorkerResult {
-        if (retryCount < MAX_RETRIES) {
-            retryCount++
+        if (runAttemptCount < MAX_RETRIES) {
             showUploadRetryNotification(message)
             return WorkerResult.retry()
         } else {
@@ -306,7 +304,8 @@ class MetadataUploadWorker @AssistedInject constructor(
                 submittedAt = remoteSessionDto.submittedAt,
                 notes = remoteSessionDto.notes,
                 latitude = remoteSessionDto.latitude,
-                longitude = remoteSessionDto.longitude
+                longitude = remoteSessionDto.longitude,
+                type = localSession.type
             )
 
             if (localSessionDto != remoteSessionDto) {
@@ -396,12 +395,11 @@ class MetadataUploadWorker @AssistedInject constructor(
     ): DomainResult<Specimen, NetworkError> {
         return try {
             val localSpecimenDto = SpecimenDto(
-                specimenId = localSpecimen.id, sessionId = syncedRemoteSessionId
+                id = localSpecimen.remoteId, specimenId = localSpecimen.id, sessionId = syncedRemoteSessionId
             )
 
-            // TODO: MIGHT NEED TO CHANGE ONCE BACKEND REQUIRES SESSION ID TO GET A SPECIMEN BY ID
             val remoteSpecimenDto = when (val remoteSpecimenResult =
-                specimenDataSource.getSpecimenById(localSpecimen.id)) {
+                specimenDataSource.getSpecimenByIdAndSessionId(localSpecimen.id, syncedRemoteSessionId)) {
                 is DomainResult.Success -> remoteSpecimenResult.data
                 is DomainResult.Error -> {
                     when (remoteSpecimenResult.error) {
@@ -424,6 +422,7 @@ class MetadataUploadWorker @AssistedInject constructor(
 
             val remoteSpecimen = Specimen(
                 id = remoteSpecimenDto.specimenId,
+                remoteId = remoteSpecimenDto.id
             )
 
             if (remoteSpecimenDto != localSpecimenDto) {
@@ -442,42 +441,47 @@ class MetadataUploadWorker @AssistedInject constructor(
 
     private suspend fun syncSpecimenImageAndInferenceResultIfNeeded(
         localSpecimenImage: SpecimenImage,
-        localInferenceResult: InferenceResult,
-        syncedSpecimenId: String,
-        syncedLocalSessionId: UUID,
-        syncedRemoteSessionId: Int
+        localInferenceResult: InferenceResult?,
+        syncedSpecimen: Specimen,
+        syncedLocalSessionId: UUID
     ): DomainResult<Unit, NetworkError> {
         return try {
             specimenImageRepository.updateSpecimenImage(
                 localSpecimenImage.copy(metadataUploadStatus = UploadStatus.IN_PROGRESS),
-                syncedSpecimenId,
+                syncedSpecimen.id,
                 syncedLocalSessionId
             )
-            // TODO: ADD FRONTEND ID, REMOTE SESSION ID TO DTO WHEN BACKEND MAKES IT AVAILABLE
+
             val localSpecimenImageDto = SpecimenImageDto(
                 id = localSpecimenImage.remoteId,
+                filemd5 = localSpecimenImage.localId,
                 species = localSpecimenImage.species,
                 sex = localSpecimenImage.sex,
                 abdomenStatus = localSpecimenImage.abdomenStatus,
                 capturedAt = localSpecimenImage.capturedAt,
                 submittedAt = localSpecimenImage.submittedAt,
-                inferenceResult = InferenceResultDto(
-                    bboxTopLeftX = localInferenceResult.bboxTopLeftX,
-                    bboxTopLeftY = localInferenceResult.bboxTopLeftY,
-                    bboxWidth = localInferenceResult.bboxWidth,
-                    bboxHeight = localInferenceResult.bboxHeight,
-                    bboxConfidence = localInferenceResult.bboxConfidence,
-                    bboxClassId = localInferenceResult.bboxClassId,
-                    speciesLogits = localInferenceResult.speciesLogits,
-                    sexLogits = localInferenceResult.sexLogits,
-                    abdomenStatusLogits = localInferenceResult.abdomenStatusLogits
-                )
+                inferenceResult = localInferenceResult?.let {
+                    InferenceResultDto(
+                        bboxTopLeftX = it.bboxTopLeftX,
+                        bboxTopLeftY = it.bboxTopLeftY,
+                        bboxWidth = it.bboxWidth,
+                        bboxHeight = it.bboxHeight,
+                        bboxConfidence = it.bboxConfidence,
+                        bboxClassId = it.bboxClassId,
+                        speciesLogits = it.speciesLogits,
+                        sexLogits = it.sexLogits,
+                        abdomenStatusLogits = it.abdomenStatusLogits
+                    )
+                }
             )
 
-            // TODO: Change REMOTE ID when search by frontend ID
+            if (syncedSpecimen.remoteId == null) {
+                return DomainResult.Error(NetworkError.CLIENT_ERROR)
+            }
+
             val remoteSpecimenImageDto = when (val remoteSpecimenImageResult =
                 specimenImageDataSource.getSpecimenImageMetadata(
-                    localSpecimenImage.remoteId ?: -1, syncedSpecimenId
+                    localSpecimenImage.localId, syncedSpecimen.remoteId
                 )) {
                 is DomainResult.Success -> remoteSpecimenImageResult.data
                 is DomainResult.Error -> {
@@ -487,7 +491,7 @@ class MetadataUploadWorker @AssistedInject constructor(
                                 specimenImageDataSource.postSpecimenImageMetadata(
                                     localSpecimenImage,
                                     localInferenceResult,
-                                    syncedSpecimenId // TODO: ADD REMOTE SESSION ID ONCE BACKEND WORKS
+                                    syncedSpecimen.remoteId
                                 )
                             when (postSpecimenImageResult) {
                                 is DomainResult.Success -> {
@@ -497,8 +501,8 @@ class MetadataUploadWorker @AssistedInject constructor(
                                 is DomainResult.Error -> {
                                     specimenImageRepository.updateSpecimenImage(
                                         localSpecimenImage.copy(
-                                            metadataUploadStatus = UploadStatus.PAUSED
-                                        ), syncedSpecimenId, syncedLocalSessionId
+                                            metadataUploadStatus = UploadStatus.FAILED
+                                        ), syncedSpecimen.id, syncedLocalSessionId
                                     )
                                     return DomainResult.Error(
                                         postSpecimenImageResult.error
@@ -510,8 +514,8 @@ class MetadataUploadWorker @AssistedInject constructor(
                         else -> {
                             specimenImageRepository.updateSpecimenImage(
                                 localSpecimenImage.copy(
-                                    metadataUploadStatus = UploadStatus.PAUSED
-                                ), syncedSpecimenId, syncedLocalSessionId
+                                    metadataUploadStatus = UploadStatus.FAILED
+                                ), syncedSpecimen.id, syncedLocalSessionId
                             )
                             return DomainResult.Error(remoteSpecimenImageResult.error)
                         }
@@ -520,7 +524,7 @@ class MetadataUploadWorker @AssistedInject constructor(
             }
 
             val remoteSpecimenImage = SpecimenImage(
-                localId = localSpecimenImage.localId, // TODO: Change to Remote when backend makes it available
+                localId = remoteSpecimenImageDto.filemd5,
                 remoteId = remoteSpecimenImageDto.id,
                 species = remoteSpecimenImageDto.species,
                 sex = remoteSpecimenImageDto.sex,
@@ -532,50 +536,55 @@ class MetadataUploadWorker @AssistedInject constructor(
                 submittedAt = remoteSpecimenImageDto.submittedAt
             )
 
-            val remoteInferenceResult = InferenceResult(
-                bboxTopLeftX = remoteSpecimenImageDto.inferenceResult.bboxTopLeftX,
-                bboxTopLeftY = remoteSpecimenImageDto.inferenceResult.bboxTopLeftY,
-                bboxWidth = remoteSpecimenImageDto.inferenceResult.bboxWidth,
-                bboxHeight = remoteSpecimenImageDto.inferenceResult.bboxHeight,
-                bboxConfidence = remoteSpecimenImageDto.inferenceResult.bboxConfidence,
-                bboxClassId = remoteSpecimenImageDto.inferenceResult.bboxClassId,
-                speciesLogits = remoteSpecimenImageDto.inferenceResult.speciesLogits,
-                sexLogits = remoteSpecimenImageDto.inferenceResult.sexLogits,
-                abdomenStatusLogits = remoteSpecimenImageDto.inferenceResult.abdomenStatusLogits
-            )
+            val remoteInferenceResult = remoteSpecimenImageDto.inferenceResult?.let {
+                InferenceResult(
+                    bboxTopLeftX = it.bboxTopLeftX,
+                    bboxTopLeftY = it.bboxTopLeftY,
+                    bboxWidth = it.bboxWidth,
+                    bboxHeight = it.bboxHeight,
+                    bboxConfidence = it.bboxConfidence,
+                    bboxClassId = it.bboxClassId,
+                    speciesLogits = it.speciesLogits,
+                    sexLogits = it.sexLogits,
+                    abdomenStatusLogits = it.abdomenStatusLogits
+                )
+            }
 
             if (remoteSpecimenImageDto != localSpecimenImageDto) {
                 transactionHelper.runAsTransaction {
                     specimenImageRepository.updateSpecimenImage(
-                        remoteSpecimenImage, syncedSpecimenId, syncedLocalSessionId
+                        remoteSpecimenImage, syncedSpecimen.id, syncedLocalSessionId
                     ).onError {
                         return@runAsTransaction DomainResult.Error(NetworkError.CLIENT_ERROR)
                     }
-                    inferenceResultRepository.updateInferenceResult(
-                        remoteInferenceResult, remoteSpecimenImage.localId
-                    ).onError {
-                        return@runAsTransaction DomainResult.Error(NetworkError.CLIENT_ERROR)
+
+                    remoteInferenceResult?.let { remoteInferenceResult ->
+                        inferenceResultRepository.updateInferenceResult(
+                            remoteInferenceResult, remoteSpecimenImage.localId
+                        ).onError {
+                            return@runAsTransaction DomainResult.Error(NetworkError.CLIENT_ERROR)
+                        }
                     }
                 }
             }
 
             specimenImageRepository.updateSpecimenImage(
                 remoteSpecimenImage.copy(metadataUploadStatus = UploadStatus.COMPLETED),
-                syncedSpecimenId,
+                syncedSpecimen.id,
                 syncedLocalSessionId
             )
             DomainResult.Success(Unit)
         } catch (e: IOException) {
             specimenImageRepository.updateSpecimenImage(
-                localSpecimenImage.copy(metadataUploadStatus = UploadStatus.PAUSED),
-                syncedSpecimenId,
+                localSpecimenImage.copy(metadataUploadStatus = UploadStatus.FAILED),
+                syncedSpecimen.id,
                 syncedLocalSessionId
             )
             DomainResult.Error(NetworkError.NO_INTERNET)
         } catch (e: Exception) {
             specimenImageRepository.updateSpecimenImage(
-                localSpecimenImage.copy(metadataUploadStatus = UploadStatus.PAUSED),
-                syncedSpecimenId,
+                localSpecimenImage.copy(metadataUploadStatus = UploadStatus.FAILED),
+                syncedSpecimen.id,
                 syncedLocalSessionId
             )
             DomainResult.Error(NetworkError.UNKNOWN_ERROR)

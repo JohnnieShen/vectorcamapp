@@ -1,5 +1,6 @@
 package com.vci.vectorcamapp.navigation
 
+import com.vci.vectorcamapp.core.domain.model.enums.SessionType
 import kotlinx.serialization.Serializable
 
 sealed interface Destination {
@@ -10,7 +11,7 @@ sealed interface Destination {
     data object Landing : Destination
 
     @Serializable
-    data object Intake : Destination
+    data class Intake(val sessionType: SessionType) : Destination
 
     @Serializable
     data object Imaging : Destination

@@ -49,6 +49,7 @@ object NetworkModule {
                     ignoreUnknownKeys = true
                     encodeDefaults = true
                     prettyPrint = false
+                    explicitNulls = false
                 })
             }
         }

@@ -5,5 +5,5 @@ import com.vci.vectorcamapp.core.domain.model.SurveillanceForm
 
 data class SessionAndSurveillanceForm(
     val session: Session,
-    val surveillanceForm: SurveillanceForm
+    val surveillanceForm: SurveillanceForm?
 )

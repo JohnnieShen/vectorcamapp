@@ -56,7 +56,7 @@ fun IncompleteSessionCard(
 
                 Spacer(Modifier.height(MaterialTheme.dimensions.spacingSmall))
 
-                InfoPill(text = "Session ID: ${session.localId}", color = MaterialTheme.colors.info)
+                InfoPill(text = "Session Type: ${session.type}", color = MaterialTheme.colors.info)
 
                 Spacer(Modifier.height(MaterialTheme.dimensions.spacingSmall))
 

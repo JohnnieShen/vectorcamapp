@@ -1,12 +1,10 @@
 package com.vci.vectorcamapp.core.data.network.api
 
-import com.vci.vectorcamapp.core.data.dto.inference_result.InferenceResultDto
 import com.vci.vectorcamapp.core.data.dto.specimen.PostSpecimenRequestDto
 import com.vci.vectorcamapp.core.data.dto.specimen.PostSpecimenResponseDto
 import com.vci.vectorcamapp.core.data.dto.specimen.SpecimenDto
 import com.vci.vectorcamapp.core.data.network.constructUrl
 import com.vci.vectorcamapp.core.data.network.safeCall
-import com.vci.vectorcamapp.core.domain.model.InferenceResult
 import com.vci.vectorcamapp.core.domain.model.Specimen
 import com.vci.vectorcamapp.core.domain.network.api.SpecimenDataSource
 import com.vci.vectorcamapp.core.domain.util.Result
@@ -27,21 +25,20 @@ class RemoteSpecimenDataSource @Inject constructor(
         specimen: Specimen, sessionId: Int
     ): Result<PostSpecimenResponseDto, NetworkError> {
         return safeCall<PostSpecimenResponseDto> {
-            httpClient.post(constructUrl("specimens")) {
+            httpClient.post(constructUrl("sessions/$sessionId/specimens")) {
                 contentType(ContentType.Application.Json)
                 setBody(
                     PostSpecimenRequestDto(
-                        specimenId = specimen.id,
-                        sessionId = sessionId
+                        specimenId = specimen.id
                     )
                 )
             }
         }
     }
 
-    override suspend fun getSpecimenById(specimenId: String): Result<SpecimenDto, NetworkError> {
+    override suspend fun getSpecimenByIdAndSessionId(specimenId: String, sessionId: Int): Result<SpecimenDto, NetworkError> {
         return safeCall<SpecimenDto> {
-            httpClient.get(constructUrl("specimens/$specimenId")) {
+            httpClient.get(constructUrl("sessions/$sessionId/specimens/$specimenId")) {
                 contentType(ContentType.Application.Json)
             }
         }

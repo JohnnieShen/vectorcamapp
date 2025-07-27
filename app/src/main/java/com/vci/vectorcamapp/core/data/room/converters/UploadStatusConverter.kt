@@ -1,7 +1,7 @@
 package com.vci.vectorcamapp.core.data.room.converters
 
 import androidx.room.TypeConverter
-import com.vci.vectorcamapp.core.domain.model.UploadStatus
+import com.vci.vectorcamapp.core.domain.model.enums.UploadStatus
 
 class UploadStatusConverter {
     @TypeConverter

@@ -5,17 +5,15 @@ import androidx.compose.ui.geometry.Offset
 import com.vci.vectorcamapp.core.domain.model.InferenceResult
 import com.vci.vectorcamapp.core.domain.model.Specimen
 import com.vci.vectorcamapp.core.domain.model.SpecimenImage
-import com.vci.vectorcamapp.core.domain.model.UploadStatus
-import com.vci.vectorcamapp.core.domain.model.composites.SpecimenImageAndInferenceResult
+import com.vci.vectorcamapp.core.domain.model.enums.UploadStatus
 import com.vci.vectorcamapp.core.domain.model.composites.SpecimenWithSpecimenImagesAndInferenceResults
-import java.util.UUID
 
 data class ImagingState(
     val isLoading: Boolean = false,
     val isProcessing: Boolean = false,
-    val currentSpecimen: Specimen = Specimen(id = ""),
+    val currentSpecimen: Specimen = Specimen(id = "", remoteId = null),
     val currentSpecimenImage: SpecimenImage = SpecimenImage(
-        localId = UUID(0, 0),
+        localId = "",
         remoteId = null,
         species = null,
         sex = null,
@@ -26,17 +24,7 @@ data class ImagingState(
         capturedAt = 0L,
         submittedAt = null
     ),
-    val currentInferenceResult: InferenceResult = InferenceResult(
-        bboxTopLeftX = 0f,
-        bboxTopLeftY = 0f,
-        bboxWidth = 0f,
-        bboxHeight = 0f,
-        bboxConfidence = 0f,
-        bboxClassId = 0,
-        speciesLogits = null,
-        sexLogits = null,
-        abdomenStatusLogits = null
-    ),
+    val currentInferenceResult: InferenceResult? = null,
     val currentImageBytes: ByteArray? = null,
     val previewInferenceResults: List<InferenceResult> = emptyList(),
     val specimensWithImagesAndInferenceResults: List<SpecimenWithSpecimenImagesAndInferenceResults> = emptyList(),

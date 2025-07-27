@@ -12,13 +12,14 @@ import com.vci.vectorcamapp.R
 import com.vci.vectorcamapp.core.domain.model.Session
 import com.vci.vectorcamapp.core.domain.model.Site
 import com.vci.vectorcamapp.core.domain.model.SurveillanceForm
+import com.vci.vectorcamapp.core.presentation.components.pill.InfoPill
 import com.vci.vectorcamapp.ui.extensions.colors
 import java.text.SimpleDateFormat
 import java.util.Locale
 
 @Composable
 fun CompleteSessionForm(
-    session: Session, site: Site, surveillanceForm: SurveillanceForm, modifier: Modifier = Modifier
+    session: Session, site: Site, surveillanceForm: SurveillanceForm?, modifier: Modifier = Modifier
 ) {
     val dateTimeFormatter =
         remember { SimpleDateFormat("MMM dd, yyyy 'at' h:mm a", Locale.getDefault()) }
@@ -42,6 +43,8 @@ fun CompleteSessionForm(
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colors.textPrimary
                 )
+
+                InfoPill(text = "Session Type: ${session.type}", color = MaterialTheme.colors.info)
             }
 
             CompleteSessionFormTile(
@@ -116,59 +119,61 @@ fun CompleteSessionForm(
                 )
             }
 
-            CompleteSessionFormTile(
-                title = "Surveillance Form",
-                iconPainter = painterResource(R.drawable.ic_clipboard),
-                iconDescription = "Clipboard"
-            ) {
-                Text(
-                    text = "Number of People who Slept in the House: ${surveillanceForm.numPeopleSleptInHouse}",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colors.textPrimary
-                )
-
-                Text(
-                    text = "Was Indoor Residual Spray (IRS) Conducted: ${if (surveillanceForm.wasIrsConducted) "Yes" else "No"}",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colors.textPrimary
-                )
-
-                surveillanceForm.monthsSinceIrs?.let { monthsSinceIrs ->
+            surveillanceForm?.let {
+                CompleteSessionFormTile(
+                    title = "Surveillance Form",
+                    iconPainter = painterResource(R.drawable.ic_clipboard),
+                    iconDescription = "Clipboard"
+                ) {
                     Text(
-                        text = "Months Since IRS: $monthsSinceIrs",
+                        text = "Number of People who Slept in the House: ${it.numPeopleSleptInHouse}",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colors.textPrimary
                     )
-                }
 
-                Text(
-                    text = "Number of Long Lasting Insecticide-coated Nets (LLINs) Available: ${surveillanceForm.numLlinsAvailable}",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colors.textPrimary
-                )
-
-                surveillanceForm.llinType?.let { llinType ->
                     Text(
-                        text = "LLIN Type: $llinType",
+                        text = "Was Indoor Residual Spray (IRS) Conducted: ${if (it.wasIrsConducted) "Yes" else "No"}",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colors.textPrimary
                     )
-                }
 
-                surveillanceForm.llinBrand?.let { llinBrand ->
+                    it.monthsSinceIrs?.let { monthsSinceIrs ->
+                        Text(
+                            text = "Months Since IRS: $monthsSinceIrs",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colors.textPrimary
+                        )
+                    }
+
                     Text(
-                        text = "LLIN Brand: $llinBrand",
+                        text = "Number of Long Lasting Insecticide-coated Nets (LLINs) Available: ${it.numLlinsAvailable}",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colors.textPrimary
                     )
-                }
 
-                surveillanceForm.numPeopleSleptUnderLlin?.let { numPeopleSleptUnderLlin ->
-                    Text(
-                        text = "Number of People who Slept Under LLIN: $numPeopleSleptUnderLlin",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colors.textPrimary
-                    )
+                    it.llinType?.let { llinType ->
+                        Text(
+                            text = "LLIN Type: $llinType",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colors.textPrimary
+                        )
+                    }
+
+                    it.llinBrand?.let { llinBrand ->
+                        Text(
+                            text = "LLIN Brand: $llinBrand",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colors.textPrimary
+                        )
+                    }
+
+                    it.numPeopleSleptUnderLlin?.let { numPeopleSleptUnderLlin ->
+                        Text(
+                            text = "Number of People who Slept Under LLIN: $numPeopleSleptUnderLlin",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colors.textPrimary
+                        )
+                    }
                 }
             }
 

@@ -36,7 +36,7 @@ android {
 
     buildTypes {
         debug {
-            buildConfigField("String", "BASE_URL", "\"https://api.vectorcam.org/\"")
+            buildConfigField("String", "BASE_URL", "\"https://test.api.vectorcam.org/\"")
         }
 
         release {

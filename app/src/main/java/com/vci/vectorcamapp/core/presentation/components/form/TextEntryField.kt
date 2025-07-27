@@ -17,8 +17,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
+import com.vci.vectorcamapp.core.domain.util.Error
 import com.vci.vectorcamapp.core.presentation.util.error.toString
-import com.vci.vectorcamapp.intake.domain.util.FormValidationError
 import com.vci.vectorcamapp.ui.extensions.colors
 import com.vci.vectorcamapp.ui.extensions.dimensions
 
@@ -30,7 +30,7 @@ fun TextEntryField(
     label: String? = null,
     singleLine: Boolean = false,
     keyboardType: KeyboardType = KeyboardType.Text,
-    error: FormValidationError? = null,
+    error: Error? = null,
     placeholder: String? = null
 ) {
     val context = LocalContext.current

@@ -25,8 +25,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import com.vci.vectorcamapp.R
+import com.vci.vectorcamapp.core.domain.util.Error
 import com.vci.vectorcamapp.core.presentation.util.error.toString
-import com.vci.vectorcamapp.intake.domain.util.FormValidationError
 import com.vci.vectorcamapp.ui.extensions.colors
 import com.vci.vectorcamapp.ui.extensions.dimensions
 import java.text.SimpleDateFormat
@@ -38,7 +38,7 @@ fun DatePickerField(
     onDateSelected: (Long) -> Unit,
     modifier: Modifier = Modifier,
     label: String? = null,
-    error: FormValidationError? = null
+    error: Error? = null
 ) {
     val context = LocalContext.current
 

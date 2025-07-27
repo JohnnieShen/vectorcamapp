@@ -14,8 +14,9 @@ import androidx.work.WorkerParameters
 import androidx.work.workDataOf
 import com.vci.vectorcamapp.R
 import com.vci.vectorcamapp.core.data.network.constructUrl
+import com.vci.vectorcamapp.core.domain.model.Specimen
 import com.vci.vectorcamapp.core.domain.model.SpecimenImage
-import com.vci.vectorcamapp.core.domain.model.UploadStatus
+import com.vci.vectorcamapp.core.domain.model.enums.UploadStatus
 import com.vci.vectorcamapp.core.domain.repository.SessionRepository
 import com.vci.vectorcamapp.core.domain.repository.SpecimenImageRepository
 import com.vci.vectorcamapp.core.domain.repository.SpecimenRepository
@@ -54,7 +55,7 @@ class ImageUploadWorker @AssistedInject constructor(
     private val tusClient: TusClient
 ) : CoroutineWorker(context, workerParams) {
 
-    private data class ImageUploadTask(val specimenId: String, val image: SpecimenImage)
+    private data class ImageUploadTask(val specimen: Specimen, val image: SpecimenImage)
 
     companion object {
         const val KEY_SESSION_ID = "session_id"
@@ -115,7 +116,7 @@ class ImageUploadWorker @AssistedInject constructor(
 
         val imagesToUpload = specimensWithImages.flatMap { specimenWithData ->
             specimenWithData.specimenImagesAndInferenceResults.map { imageAndResult ->
-                ImageUploadTask(specimenWithData.specimen.id, imageAndResult.specimenImage)
+                ImageUploadTask(specimenWithData.specimen, imageAndResult.specimenImage)
             }
         }.filter { task ->
             task.image.imageUploadStatus != UploadStatus.COMPLETED
@@ -139,7 +140,7 @@ class ImageUploadWorker @AssistedInject constructor(
                 Log.e("ImageUploadWorker", "Image ${task.image.localId} has a null remoteId. Skipping.")
                 specimenImageRepository.updateSpecimenImage(
                     specimenImage = task.image.copy(imageUploadStatus = UploadStatus.FAILED),
-                    specimenId = task.specimenId,
+                    specimenId = task.specimen.id,
                     sessionId = sessionId
                 )
                 encounteredPermanentFailure = true
@@ -175,9 +176,9 @@ class ImageUploadWorker @AssistedInject constructor(
     ): DomainResult<String, NetworkError> {
         var tempFile: File? = null
         val (file, contentType, md5) = try {
-            val (prepared, type) = prepareFile(task.image.imageUri, task.specimenId)
+            val (prepared, type) = prepareFile(task.image.imageUri, task.specimen.id)
             tempFile = prepared
-            Triple(prepared, type, calculateMD5(prepared))
+            Triple(prepared, type, task.image.localId)
         } catch (e: Exception) {
             if (isStopped) {
                 throw CancellationException("Worker was stopped during file preparation.", e)
@@ -185,7 +186,7 @@ class ImageUploadWorker @AssistedInject constructor(
             Log.e("ImageUploadWorker", "Failed to prepare file or calculate MD5 for specimen ${task.image.localId}.", e)
             specimenImageRepository.updateSpecimenImage(
                 specimenImage = task.image.copy(imageUploadStatus = UploadStatus.FAILED),
-                specimenId = task.specimenId,
+                specimenId = task.specimen.id,
                 sessionId = sessionId
             )
             tempFile?.takeIf { it.exists() }?.delete()
@@ -202,8 +203,8 @@ class ImageUploadWorker @AssistedInject constructor(
         val uploadResult: DomainResult<String, NetworkError> = run {
             for (attempt in 1..MAX_RETRIES) {
                 val result: DomainResult<String, NetworkError> = try {
-                    val uniqueFingerprint = "${task.specimenId}-${task.image.localId}-$md5"
-                    val tusPath = "specimens/${task.specimenId}/images/tus"
+                    val uniqueFingerprint = "${task.specimen.remoteId}-${task.image.localId}-$md5"
+                    val tusPath = "specimens/${task.specimen.remoteId}/images/tus"
 
                     tusClient.uploadCreationURL = URL(constructUrl(tusPath))
                     val upload = createTusUpload(file, uniqueFingerprint, metadata)
@@ -213,7 +214,7 @@ class ImageUploadWorker @AssistedInject constructor(
                         val uploaderInstance = tusClient.resumeOrCreateUpload(upload)
                         specimenImageRepository.updateSpecimenImage(
                             specimenImage = task.image.copy(imageUploadStatus = UploadStatus.IN_PROGRESS),
-                            specimenId = task.specimenId,
+                            specimenId = task.specimen.id,
                             sessionId = sessionId
                         )
                         Log.d("ImageUploadWorker", "Connection established for ${task.image.localId}.")
@@ -225,7 +226,7 @@ class ImageUploadWorker @AssistedInject constructor(
                                 Log.i("ImageUploadWorker", "Upload for ${task.image.localId} already exists on server (conflict). Treating as success.")
                                 specimenImageRepository.updateSpecimenImage(
                                     specimenImage = task.image.copy(imageUploadStatus = UploadStatus.COMPLETED),
-                                    specimenId = task.specimenId,
+                                    specimenId = task.specimen.id,
                                     sessionId = sessionId
                                 )
                                 return@run DomainResult.Success(location)
@@ -298,7 +299,7 @@ class ImageUploadWorker @AssistedInject constructor(
         }
         specimenImageRepository.updateSpecimenImage(
             specimenImage = task.image.copy(imageUploadStatus = finalStatus),
-            specimenId = task.specimenId,
+            specimenId = task.specimen.id,
             sessionId = sessionId
         )
         file.delete()
@@ -417,18 +418,6 @@ class ImageUploadWorker @AssistedInject constructor(
             this.fingerprint = fingerprint
             this.metadata = metadata
         }
-    }
-
-    private fun calculateMD5(file: File): String {
-        val md = MessageDigest.getInstance("MD5")
-        FileInputStream(file).use { fis ->
-            val buffer = ByteArray(BYTE_ARRAY_SIZE)
-            var read: Int
-            while (fis.read(buffer).also { read = it } != -1) {
-                md.update(buffer, 0, read)
-            }
-        }
-        return md.digest().joinToString("") { "%02x".format(it) }
     }
 
     private suspend fun prepareFile(

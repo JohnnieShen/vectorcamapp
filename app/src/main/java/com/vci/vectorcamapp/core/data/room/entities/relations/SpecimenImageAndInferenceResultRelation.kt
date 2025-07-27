@@ -11,5 +11,5 @@ data class SpecimenImageAndInferenceResultRelation(
         parentColumn = "localId",
         entityColumn = "specimenImageId"
     )
-    val inferenceResultEntity: InferenceResultEntity
+    val inferenceResultEntity: InferenceResultEntity?
 )

@@ -55,7 +55,7 @@ class SessionRepositoryImplementation @Inject constructor(
         return relation?.let {
             SessionAndSurveillanceForm(
                 session = it.sessionEntity.toDomain(),
-                surveillanceForm = it.surveillanceFormEntity.toDomain()
+                surveillanceForm = it.surveillanceFormEntity?.toDomain()
             )
         }
     }

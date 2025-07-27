@@ -87,11 +87,6 @@ class CompleteSessionDetailsViewModel @Inject constructor(
                 return@launch
             }
 
-            if (surveillanceForm == null) {
-                emitError(CompleteSessionDetailsError.SURVEILLANCE_FORM_NOT_FOUND)
-                return@launch
-            }
-
             _state.update {
                 it.copy(
                     session = session,

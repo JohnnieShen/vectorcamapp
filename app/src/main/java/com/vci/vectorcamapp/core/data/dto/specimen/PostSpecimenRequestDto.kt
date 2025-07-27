@@ -4,6 +4,5 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class PostSpecimenRequestDto(
-    val specimenId: String = "",
-    val sessionId: Int = -1
+    val specimenId: String = ""
 )

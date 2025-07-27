@@ -11,5 +11,5 @@ data class SessionAndSurveillanceFormRelation(
         parentColumn = "localId",
         entityColumn = "sessionId"
     )
-    val surveillanceFormEntity: SurveillanceFormEntity
+    val surveillanceFormEntity: SurveillanceFormEntity?
 )

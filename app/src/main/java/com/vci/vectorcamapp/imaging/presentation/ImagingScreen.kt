@@ -355,7 +355,7 @@ fun ImagingScreen(
                                 label = "Capture",
                                 onClick = { onAction(ImagingAction.CaptureImage(controller)) },
                                 iconPainter = painterResource(id = R.drawable.ic_camera),
-                                enabled = !state.isProcessing,
+                                enabled = (!state.isProcessing && state.isCameraReady),
                                 modifier = Modifier.padding(horizontal = MaterialTheme.dimensions.paddingMedium)
                             )
                         }

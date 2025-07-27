@@ -5,9 +5,10 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class PostSpecimenImageRequestDto(
+    val filemd5: String = "",
     val species: String? = null,
     val sex: String? = null,
     val abdomenStatus: String? = null,
     val capturedAt: Long = 0L,
-    val inferenceResult: InferenceResultDto = InferenceResultDto()
+    val inferenceResult: InferenceResultDto? = null
 )

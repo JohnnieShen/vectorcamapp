@@ -4,6 +4,7 @@ import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
+import com.vci.vectorcamapp.core.domain.model.enums.SessionType
 import java.util.UUID
 
 @Entity(
@@ -13,7 +14,7 @@ import java.util.UUID
         childColumns = ["siteId"],
         onDelete = ForeignKey.CASCADE,
         onUpdate = ForeignKey.CASCADE
-    )], indices = [Index("submittedAt"), Index("siteId")]
+    )], indices = [Index("completedAt"), Index("siteId"), Index("type")]
 )
 data class SessionEntity(
     @PrimaryKey val localId: UUID = UUID(0, 0),
@@ -31,4 +32,5 @@ data class SessionEntity(
     val notes: String = "",
     val latitude: Float? = null,
     val longitude: Float? = null,
+    val type: SessionType,
 )

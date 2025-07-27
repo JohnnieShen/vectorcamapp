@@ -5,5 +5,5 @@ import com.vci.vectorcamapp.core.domain.model.SpecimenImage
 
 data class SpecimenImageAndInferenceResult(
     val specimenImage: SpecimenImage,
-    val inferenceResult: InferenceResult
+    val inferenceResult: InferenceResult?
 )

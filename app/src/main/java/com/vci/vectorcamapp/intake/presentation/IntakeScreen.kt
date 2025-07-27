@@ -56,6 +56,8 @@ fun IntakeScreen(
                 iconPainter = painterResource(R.drawable.ic_info),
                 iconDescription = "General Information Icon"
             ) {
+                InfoPill(text = "Session Type: ${state.session.type.name}", color = MaterialTheme.colors.info)
+
                 TextEntryField(
                     label = "Collector Name",
                     value = state.session.collectorName,
@@ -166,14 +168,16 @@ fun IntakeScreen(
                     error = state.intakeErrors.houseNumber
                 )
 
-                TextEntryField(
-                    label = "Number of People Living in the House",
-                    value = if (state.surveillanceForm.numPeopleSleptInHouse == 0) "" else state.surveillanceForm.numPeopleSleptInHouse.toString(),
-                    onValueChange = { onAction(IntakeAction.EnterNumPeopleSleptInHouse(it.filter { character -> character.isDigit() })) },
-                    placeholder = "0",
-                    singleLine = true,
-                    keyboardType = KeyboardType.Number,
-                )
+                state.surveillanceForm?.let { surveillanceForm ->
+                    TextEntryField(
+                        label = "Number of People Living in the House",
+                        value = if (surveillanceForm.numPeopleSleptInHouse == 0) "" else surveillanceForm.numPeopleSleptInHouse.toString(),
+                        onValueChange = { onAction(IntakeAction.EnterNumPeopleSleptInHouse(it.filter { character -> character.isDigit() })) },
+                        placeholder = "0",
+                        singleLine = true,
+                        keyboardType = KeyboardType.Number,
+                    )
+                }
 
                 when {
                     state.session.latitude != null && state.session.longitude != null -> {
@@ -237,93 +241,95 @@ fun IntakeScreen(
             }
         }
 
-        item {
-            IntakeTile(
-                title = "Surveillance Form",
-                iconPainter = painterResource(id = R.drawable.ic_clipboard),
-                iconDescription = "Surveillance Form Icon"
-            ) {
-                ToggleField(
-                    label = "Was IRS conducted in this household?",
-                    checked = state.surveillanceForm.wasIrsConducted,
-                    onCheckedChange = {
-                        onAction(
-                            IntakeAction.ToggleIrsConducted(
-                                it
+        state.surveillanceForm?.let { surveillanceForm ->
+            item {
+                IntakeTile(
+                    title = "Surveillance Form",
+                    iconPainter = painterResource(id = R.drawable.ic_clipboard),
+                    iconDescription = "Surveillance Form Icon"
+                ) {
+                    ToggleField(
+                        label = "Was IRS conducted in this household?",
+                        checked = surveillanceForm.wasIrsConducted,
+                        onCheckedChange = {
+                            onAction(
+                                IntakeAction.ToggleIrsConducted(
+                                    it
+                                )
                             )
-                        )
-                    })
+                        })
 
-                if (state.surveillanceForm.wasIrsConducted) {
-                    TextEntryField(
-                        label = "Months Since IRS",
-                        value = state.surveillanceForm.monthsSinceIrs?.let { if (it == 0) "" else it.toString() }
-                            .orEmpty(),
-                        onValueChange = {
-                            onAction(IntakeAction.EnterMonthsSinceIrs(it.filter { character -> character.isDigit() }))
-                        },
-                        placeholder = "0",
-                        singleLine = true,
-                        keyboardType = KeyboardType.Number,
-                    )
-                }
-
-                TextEntryField(
-                    label = "Number of LLINs Available",
-                    value = if (state.surveillanceForm.numLlinsAvailable == 0) "" else state.surveillanceForm.numLlinsAvailable.toString(),
-                    onValueChange = { onAction(IntakeAction.EnterNumLlinsAvailable(it.filter { character -> character.isDigit() })) },
-                    placeholder = "0",
-                    singleLine = true,
-                    keyboardType = KeyboardType.Number
-                )
-
-                state.surveillanceForm.llinType?.let { current ->
-                    DropdownField(
-                        label = "LLIN Type",
-                        options = IntakeDropdownOptions.LlinTypeOption.entries,
-                        selectedOption = IntakeDropdownOptions.LlinTypeOption.entries.firstOrNull { it.label == current },
-                        onOptionSelected = {
-                            onAction(IntakeAction.SelectLlinType(it))
-                        },
-                        error = state.intakeErrors.llinType,
-                    ) { llinType ->
-                        Text(
-                            text = llinType.label,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colors.textPrimary
+                    if (surveillanceForm.wasIrsConducted) {
+                        TextEntryField(
+                            label = "Months Since IRS",
+                            value = surveillanceForm.monthsSinceIrs?.let { if (it == 0) "" else it.toString() }
+                                .orEmpty(),
+                            onValueChange = {
+                                onAction(IntakeAction.EnterMonthsSinceIrs(it.filter { character -> character.isDigit() }))
+                            },
+                            placeholder = "0",
+                            singleLine = true,
+                            keyboardType = KeyboardType.Number,
                         )
                     }
-                }
 
-                state.surveillanceForm.llinBrand?.let { current ->
-                    DropdownField(
-                        label = "LLIN Brand",
-                        options = IntakeDropdownOptions.LlinBrandOption.entries,
-                        selectedOption = IntakeDropdownOptions.LlinBrandOption.entries.firstOrNull { it.label == current },
-                        onOptionSelected = {
-                            onAction(IntakeAction.SelectLlinBrand(it))
-                        },
-                        error = state.intakeErrors.llinBrand,
-                    ) { llinBrand ->
-                        Text(
-                            text = llinBrand.label,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colors.textPrimary
-                        )
-                    }
-                }
-
-                state.surveillanceForm.numPeopleSleptUnderLlin?.let { current ->
                     TextEntryField(
-                        label = "Number of People who Slept Under LLIN",
-                        value = if (current == 0) "" else current.toString(),
-                        onValueChange = {
-                            onAction(IntakeAction.EnterNumPeopleSleptUnderLlin(it.filter { character -> character.isDigit() }))
-                        },
+                        label = "Number of LLINs Available",
+                        value = if (surveillanceForm.numLlinsAvailable == 0) "" else surveillanceForm.numLlinsAvailable.toString(),
+                        onValueChange = { onAction(IntakeAction.EnterNumLlinsAvailable(it.filter { character -> character.isDigit() })) },
                         placeholder = "0",
                         singleLine = true,
                         keyboardType = KeyboardType.Number
                     )
+
+                    surveillanceForm.llinType?.let { current ->
+                        DropdownField(
+                            label = "LLIN Type",
+                            options = IntakeDropdownOptions.LlinTypeOption.entries,
+                            selectedOption = IntakeDropdownOptions.LlinTypeOption.entries.firstOrNull { it.label == current },
+                            onOptionSelected = {
+                                onAction(IntakeAction.SelectLlinType(it))
+                            },
+                            error = state.intakeErrors.llinType,
+                        ) { llinType ->
+                            Text(
+                                text = llinType.label,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colors.textPrimary
+                            )
+                        }
+                    }
+
+                    surveillanceForm.llinBrand?.let { current ->
+                        DropdownField(
+                            label = "LLIN Brand",
+                            options = IntakeDropdownOptions.LlinBrandOption.entries,
+                            selectedOption = IntakeDropdownOptions.LlinBrandOption.entries.firstOrNull { it.label == current },
+                            onOptionSelected = {
+                                onAction(IntakeAction.SelectLlinBrand(it))
+                            },
+                            error = state.intakeErrors.llinBrand,
+                        ) { llinBrand ->
+                            Text(
+                                text = llinBrand.label,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colors.textPrimary
+                            )
+                        }
+                    }
+
+                    surveillanceForm.numPeopleSleptUnderLlin?.let { current ->
+                        TextEntryField(
+                            label = "Number of People who Slept Under LLIN",
+                            value = if (current == 0) "" else current.toString(),
+                            onValueChange = {
+                                onAction(IntakeAction.EnterNumPeopleSleptUnderLlin(it.filter { character -> character.isDigit() }))
+                            },
+                            placeholder = "0",
+                            singleLine = true,
+                            keyboardType = KeyboardType.Number
+                        )
+                    }
                 }
             }
         }

@@ -17,4 +17,5 @@ import java.util.UUID
 data class SpecimenEntity(
     val id: String = "",
     val sessionId: UUID = UUID(0, 0),
+    val remoteId: Int? = null
 )

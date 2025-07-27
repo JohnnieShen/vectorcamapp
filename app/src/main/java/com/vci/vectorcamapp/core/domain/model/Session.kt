@@ -1,5 +1,6 @@
 package com.vci.vectorcamapp.core.domain.model
 
+import com.vci.vectorcamapp.core.domain.model.enums.SessionType
 import java.util.UUID
 
 data class Session(
@@ -17,4 +18,5 @@ data class Session(
     val notes: String,
     val latitude: Float?,
     val longitude: Float?,
+    val type: SessionType
 )

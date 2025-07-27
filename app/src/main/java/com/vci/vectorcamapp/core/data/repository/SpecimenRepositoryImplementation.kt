@@ -71,7 +71,7 @@ class SpecimenRepositoryImplementation @Inject constructor(
                 specimenImagesAndInferenceResults = specimenImagesAndResults.map { relation ->
                     SpecimenImageAndInferenceResult(
                         specimenImage = relation.specimenImageEntity.toDomain(),
-                        inferenceResult = relation.inferenceResultEntity.toDomain()
+                        inferenceResult = relation.inferenceResultEntity?.toDomain()
                     )
                 })
         }
@@ -95,7 +95,7 @@ class SpecimenRepositoryImplementation @Inject constructor(
                                 specimenImagesAndInferenceResults = specimenImagesAndResults.map { relation ->
                                     SpecimenImageAndInferenceResult(
                                         specimenImage = relation.specimenImageEntity.toDomain(),
-                                        inferenceResult = relation.inferenceResultEntity.toDomain()
+                                        inferenceResult = relation.inferenceResultEntity?.toDomain()
                                     )
                                 })
                         }

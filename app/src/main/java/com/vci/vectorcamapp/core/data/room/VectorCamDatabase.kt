@@ -4,6 +4,7 @@ import androidx.room.Database
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import com.vci.vectorcamapp.core.data.room.converters.FloatListConverter
+import com.vci.vectorcamapp.core.data.room.converters.SessionTypeConverter
 import com.vci.vectorcamapp.core.data.room.converters.UploadStatusConverter
 import com.vci.vectorcamapp.core.data.room.converters.UriConverter
 import com.vci.vectorcamapp.core.data.room.converters.UuidConverter
@@ -24,12 +25,13 @@ import com.vci.vectorcamapp.core.data.room.entities.SurveillanceFormEntity
 
 @Database(
     entities = [ProgramEntity::class, SiteEntity::class, SessionEntity::class, SpecimenEntity::class, SpecimenImageEntity::class, InferenceResultEntity::class, SurveillanceFormEntity::class],
-    version = 8,
+    version = 10,
 )
 @TypeConverters(
     UuidConverter::class,
     UriConverter::class,
     UploadStatusConverter::class,
+    SessionTypeConverter::class,
     FloatListConverter::class
 )
 abstract class VectorCamDatabase : RoomDatabase() {
