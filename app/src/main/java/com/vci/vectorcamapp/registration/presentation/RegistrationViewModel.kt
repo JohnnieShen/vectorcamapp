@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.vci.vectorcamapp.core.domain.cache.CurrentSessionCache
 import com.vci.vectorcamapp.core.domain.cache.DeviceCache
 import com.vci.vectorcamapp.core.domain.model.Device
+import com.vci.vectorcamapp.core.domain.model.Program
 import com.vci.vectorcamapp.core.domain.repository.ProgramRepository
 import com.vci.vectorcamapp.core.presentation.CoreViewModel
 import com.vci.vectorcamapp.registration.domain.util.RegistrationError
@@ -13,7 +14,7 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
@@ -22,14 +23,22 @@ import javax.inject.Inject
 
 @HiltViewModel
 class RegistrationViewModel @Inject constructor(
-    private val programRepository: ProgramRepository,
     private val deviceCache: DeviceCache,
-    private val currentSessionCache: CurrentSessionCache
+    private val currentSessionCache: CurrentSessionCache,
+    programRepository: ProgramRepository
 ) : CoreViewModel() {
 
+    private val _allPrograms = programRepository.observeAllPrograms()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), emptyList())
+
     private val _state = MutableStateFlow(RegistrationState())
-    val state: StateFlow<RegistrationState> = _state.onStart {
-        loadAllPrograms()
+    val state: StateFlow<RegistrationState> = combine(
+        _allPrograms,
+        _state
+    ) { allPrograms, state ->
+        state.copy(
+            programs = allPrograms
+        )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), RegistrationState())
 
     private val _events = Channel<RegistrationEvent>(Channel.BUFFERED)
@@ -43,7 +52,7 @@ class RegistrationViewModel @Inject constructor(
                 }
 
                 RegistrationAction.ConfirmRegistration -> {
-                    val selectedProgram = _state.value.selectedProgram
+                    val selectedProgram = state.value.selectedProgram
                     if (selectedProgram == null) {
                         emitError(RegistrationError.PROGRAM_NOT_FOUND)
                         return@launch
@@ -59,23 +68,6 @@ class RegistrationViewModel @Inject constructor(
                     currentSessionCache.clearSession()
                     _events.send(RegistrationEvent.NavigateToLandingScreen)
                 }
-            }
-        }
-    }
-
-    private fun loadAllPrograms() {
-        viewModelScope.launch {
-            _state.update {
-                it.copy(
-                    isLoading = true
-                )
-            }
-            val programs = programRepository.getAllPrograms()
-            _state.update {
-                it.copy(
-                    programs = programs,
-                    isLoading = false
-                )
             }
         }
     }

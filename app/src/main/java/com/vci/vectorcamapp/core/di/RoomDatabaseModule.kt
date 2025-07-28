@@ -3,7 +3,11 @@ package com.vci.vectorcamapp.core.di
 import android.content.Context
 import android.util.Log
 import androidx.room.Room
-import com.vci.vectorcamapp.BuildConfig
+import androidx.room.RoomDatabase
+import androidx.sqlite.db.SupportSQLiteDatabase
+import com.vci.vectorcamapp.core.data.dto.program.ProgramDto
+import com.vci.vectorcamapp.core.data.dto.site.SiteDto
+import com.vci.vectorcamapp.core.data.mappers.toEntity
 import com.vci.vectorcamapp.core.data.room.TransactionHelper
 import com.vci.vectorcamapp.core.data.room.VectorCamDatabase
 import com.vci.vectorcamapp.core.data.room.dao.InferenceResultDao
@@ -13,8 +17,6 @@ import com.vci.vectorcamapp.core.data.room.dao.SiteDao
 import com.vci.vectorcamapp.core.data.room.dao.SpecimenDao
 import com.vci.vectorcamapp.core.data.room.dao.SpecimenImageDao
 import com.vci.vectorcamapp.core.data.room.dao.SurveillanceFormDao
-import com.vci.vectorcamapp.core.data.room.entities.ProgramEntity
-import com.vci.vectorcamapp.core.data.room.entities.SiteEntity
 import com.vci.vectorcamapp.core.data.room.migrations.ALL_MIGRATIONS
 import dagger.Module
 import dagger.Provides
@@ -24,9 +26,13 @@ import dagger.hilt.components.SingletonComponent
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.serialization.json.Json
+import javax.inject.Provider
 import javax.inject.Singleton
 
 private const val DB_NAME = "vectorcam.db"
+private const val PROGRAM_DATA_FILENAME = "programs.json"
+private const val SITE_DATA_FILENAME = "sites.json"
 
 @Module
 @InstallIn(SingletonComponent::class)
@@ -36,70 +42,38 @@ object RoomDatabaseModule {
     @Singleton
     fun provideDatabase(
         @ApplicationContext context: Context,
+        programDaoProvider: Provider<ProgramDao>,
+        siteDaoProvider: Provider<SiteDao>,
     ): VectorCamDatabase {
         return Room.databaseBuilder(
             context,
             VectorCamDatabase::class.java,
             DB_NAME,
-        ).addMigrations(*ALL_MIGRATIONS).build().apply {
-            // TODO: ⚠️ For development only: wipe database on every launch
-            if (BuildConfig.DEBUG) {
+        ).addCallback(object : RoomDatabase.Callback() {
+            override fun onCreate(db: SupportSQLiteDatabase) {
+                super.onCreate(db)
                 CoroutineScope(Dispatchers.IO).launch {
-                    Log.w("VectorCamDatabase", "Clearing all tables (DEBUG only)")
+                    try {
+                        val programsJson = context.assets.open(PROGRAM_DATA_FILENAME)
+                            .bufferedReader()
+                            .use { it.readText() }
+                        val sitesJson = context.assets.open(SITE_DATA_FILENAME)
+                            .bufferedReader()
+                            .use { it.readText() }
 
-                    val seededPrograms = listOf(
-                        ProgramEntity(id = 1, name = "Test Program", country = "Singapore"),
-                        ProgramEntity(id = 2, name = "Uganda Ministry of Health", country = "Uganda"),
-                        ProgramEntity(id = 3, name = "Jhpiego", country = "India")
-                    )
+                        val programEntities = Json.decodeFromString<List<ProgramDto>>(programsJson).map { it.toEntity() }
+                        val siteEntities = Json.decodeFromString<List<SiteDto>>(sitesJson).map { it.toEntity() }
 
-                    programDao.insertAll(seededPrograms)
-
-                    val seededSites = listOf(
-                        SiteEntity(
-                            id = 2,
-                            programId = 2,
-                            district = "Adjumani",
-                            subCounty = "County3",
-                            parish = "Parish3",
-                            sentinelSite = "Ofua",
-                            healthCenter = "Health Center 3"
-                        ),
-                        SiteEntity(
-                            id = 3,
-                            programId = 2,
-                            district = "Mayuge",
-                            subCounty = "County1",
-                            parish = "Parish1",
-                            sentinelSite = "Bukatube",
-                            healthCenter = "Health Center 1"
-                        ),
-                        SiteEntity(
-                            id = 4,
-                            programId = 2,
-                            district = "Mayuge",
-                            subCounty = "County2",
-                            parish = "Parish2",
-                            sentinelSite = "Namadhi",
-                            healthCenter = "Health Center 2"
-                        ),
-                        SiteEntity(
-                            id = 5,
-                            programId = 3,
-                            district = "Ahmedabad",
-                            subCounty = "County4",
-                            parish = "Parish4",
-                            sentinelSite = "Vastrapur",
-                            healthCenter = "Health Center 4"
-                        )
-                    )
-
-                    siteDao.insertAll(seededSites)
+                        programDaoProvider.get().insertAll(programEntities)
+                        siteDaoProvider.get().insertAll(siteEntities)
+                        Log.i("RoomCallback", "Seeded ${programEntities.size} programs, ${siteEntities.size} sites")
+                    } catch (e: Exception) {
+                        Log.e("RoomCallback", "Error seeding DB", e)
+                    }
                 }
             }
-        }
+        }).addMigrations(*ALL_MIGRATIONS).build()
     }
-
 
     @Provides
     fun provideTransactionHelper(db: VectorCamDatabase): TransactionHelper = TransactionHelper(db)

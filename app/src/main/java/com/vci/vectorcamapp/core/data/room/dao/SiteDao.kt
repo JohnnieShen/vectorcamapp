@@ -9,7 +9,7 @@ import com.vci.vectorcamapp.core.data.room.entities.SiteEntity
 @Dao
 interface SiteDao {
 
-    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    @Insert(onConflict = OnConflictStrategy.ABORT)
     suspend fun insertAll(sites: List<SiteEntity>)
 
     @Query("SELECT * FROM site WHERE programId = :programId")

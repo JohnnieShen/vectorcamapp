@@ -1,0 +1,92 @@
+[
+  {
+    "id": 1,
+    "programId": 2,
+    "district": "Antioquia",
+    "subCounty": "",
+    "parish": "",
+    "sentinelSite": "Medellin",
+    "healthCenter": ""
+  },
+  {
+    "id": 2,
+    "programId": 2,
+    "district": "Antioquia",
+    "subCounty": "",
+    "parish": "",
+    "sentinelSite": "Apartadó",
+    "healthCenter": ""
+  },
+  {
+    "id": 3,
+    "programId": 2,
+    "district": "Antioquia",
+    "subCounty": "",
+    "parish": "",
+    "sentinelSite": "Turbo",
+    "healthCenter": ""
+  },
+  {
+    "id": 4,
+    "programId": 2,
+    "district": "Antioquia",
+    "subCounty": "",
+    "parish": "",
+    "sentinelSite": "Necoclí",
+    "healthCenter": ""
+  },
+  {
+    "id": 5,
+    "programId": 2,
+    "district": "Putumayo",
+    "subCounty": "",
+    "parish": "",
+    "sentinelSite": "Mocoa",
+    "healthCenter": ""
+  },
+  {
+    "id": 6,
+    "programId": 2,
+    "district": "Putumayo",
+    "subCounty": "",
+    "parish": "",
+    "sentinelSite": "Orito",
+    "healthCenter": ""
+  },
+  {
+    "id": 7,
+    "programId": 2,
+    "district": "Valle del Cauca",
+    "subCounty": "",
+    "parish": "",
+    "sentinelSite": "Cali",
+    "healthCenter": ""
+  },
+  {
+    "id": 8,
+    "programId": 2,
+    "district": "Chocó",
+    "subCounty": "",
+    "parish": "",
+    "sentinelSite": "Quibdó",
+    "healthCenter": ""
+  },
+  {
+    "id": 9,
+    "programId": 2,
+    "district": "Chocó",
+    "subCounty": "",
+    "parish": "",
+    "sentinelSite": "Angostura",
+    "healthCenter": ""
+  },
+  {
+    "id": 10,
+    "programId": 2,
+    "district": "Bogotá D.C",
+    "subCounty": "",
+    "parish": "",
+    "sentinelSite": "Bogotá D.C",
+    "healthCenter": ""
+  }
+]
