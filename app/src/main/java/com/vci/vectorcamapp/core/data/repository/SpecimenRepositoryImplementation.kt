@@ -39,7 +39,10 @@ class SpecimenRepositoryImplementation @Inject constructor(
         specimen: Specimen, sessionId: UUID
     ): Result<Unit, RoomDbError> {
         return try {
-            specimenDao.updateSpecimen(specimen.toEntity(sessionId))
+            val updatedRows = specimenDao.updateSpecimen(specimen.toEntity(sessionId))
+            if (updatedRows == 0) {
+                Result.Error(RoomDbError.NO_ROWS_AFFECTED)
+            }
             Result.Success(Unit)
         } catch (e: SQLiteConstraintException) {
             Result.Error(RoomDbError.CONSTRAINT_VIOLATION)

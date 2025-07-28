@@ -14,7 +14,7 @@ interface SpecimenImageDao {
     suspend fun insertSpecimenImage(specimenImage: SpecimenImageEntity)
 
     @Update(onConflict = OnConflictStrategy.ABORT)
-    suspend fun updateSpecimenImage(specimenImage: SpecimenImageEntity)
+    suspend fun updateSpecimenImage(specimenImage: SpecimenImageEntity): Int
 
     @Delete
     suspend fun deleteSpecimenImage(specimenImage: SpecimenImageEntity): Int

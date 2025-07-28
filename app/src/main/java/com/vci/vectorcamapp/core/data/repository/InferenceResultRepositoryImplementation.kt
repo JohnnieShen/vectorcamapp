@@ -25,7 +25,10 @@ class InferenceResultRepositoryImplementation @Inject constructor(
 
     override suspend fun updateInferenceResult(inferenceResult: InferenceResult, specimenImageId: String): Result<Unit, RoomDbError> {
         return try {
-            inferenceResultDao.updateInferenceResult(inferenceResult.toEntity(specimenImageId))
+            val updatedRows = inferenceResultDao.updateInferenceResult(inferenceResult.toEntity(specimenImageId))
+            if (updatedRows == 0) {
+                Result.Error(RoomDbError.NO_ROWS_AFFECTED)
+            }
             Result.Success(Unit)
         } catch (e: SQLiteConstraintException) {
             Result.Error(RoomDbError.CONSTRAINT_VIOLATION)

@@ -26,7 +26,10 @@ class SpecimenImageRepositoryImplementation @Inject constructor(
 
     override suspend fun updateSpecimenImage(specimenImage: SpecimenImage, specimenId: String, sessionId: UUID): Result<Unit, RoomDbError> {
         return try {
-            specimenImageDao.updateSpecimenImage(specimenImage.toEntity(specimenId, sessionId))
+            val updatedRows = specimenImageDao.updateSpecimenImage(specimenImage.toEntity(specimenId, sessionId))
+            if (updatedRows == 0) {
+                Result.Error(RoomDbError.NO_ROWS_AFFECTED)
+            }
             Result.Success(Unit)
         } catch (e: SQLiteConstraintException) {
             Result.Error(RoomDbError.CONSTRAINT_VIOLATION)

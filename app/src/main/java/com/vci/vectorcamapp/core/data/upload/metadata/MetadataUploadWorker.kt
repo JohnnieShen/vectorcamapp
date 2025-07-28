@@ -4,6 +4,7 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
 import android.content.pm.ServiceInfo
+import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
@@ -112,10 +113,13 @@ class MetadataUploadWorker @AssistedInject constructor(
             val localSurveillanceForm =
                 surveillanceFormRepository.getSurveillanceFormBySessionId(syncedSession.localId)
             if (localSurveillanceForm != null) {
-                syncSurveillanceFormIfNeeded(
+                when (val syncSurveillanceFormResult = syncSurveillanceFormIfNeeded(
                     localSurveillanceForm, syncedSession.localId, syncedSession.remoteId
-                ).onError { error ->
-                    return retryOrFailure(error.toString(context))
+                )) {
+                    is DomainResult.Success -> syncSurveillanceFormResult.data
+                    is DomainResult.Error -> return retryOrFailure(
+                        syncSurveillanceFormResult.error.toString(context)
+                    )
                 }
             }
 
@@ -139,10 +143,7 @@ class MetadataUploadWorker @AssistedInject constructor(
                 specimenWithImagesAndInferenceResults.specimenImagesAndInferenceResults.forEachIndexed { imageIndex, (specimenImage, inferenceResult) ->
                     if (specimenImage.metadataUploadStatus != UploadStatus.COMPLETED) {
                         syncSpecimenImageAndInferenceResultIfNeeded(
-                            specimenImage,
-                            inferenceResult,
-                            syncedSpecimen,
-                            syncedSession.localId
+                            specimenImage, inferenceResult, syncedSpecimen, syncedSession.localId
                         ).onError { error ->
                             return retryOrFailure(error.toString(context))
                         }
@@ -309,7 +310,9 @@ class MetadataUploadWorker @AssistedInject constructor(
             )
 
             if (localSessionDto != remoteSessionDto) {
-                sessionRepository.upsertSession(remoteSession, remoteSessionDto.siteId).onError {
+                val updateSessionResult =
+                    sessionRepository.upsertSession(remoteSession, remoteSessionDto.siteId)
+                if (updateSessionResult is DomainResult.Error) {
                     return DomainResult.Error(NetworkError.CLIENT_ERROR)
                 }
             }
@@ -375,9 +378,11 @@ class MetadataUploadWorker @AssistedInject constructor(
             )
 
             if (remoteSurveillanceFormDto != localSurveillanceFormDto) {
-                surveillanceFormRepository.upsertSurveillanceForm(
-                    remoteSurveillanceForm, syncedLocalSessionId
-                ).onError {
+                val updateSurveillanceFormResult =
+                    surveillanceFormRepository.upsertSurveillanceForm(
+                        remoteSurveillanceForm, syncedLocalSessionId
+                    )
+                if (updateSurveillanceFormResult is DomainResult.Error) {
                     return DomainResult.Error(NetworkError.CLIENT_ERROR)
                 }
             }
@@ -395,38 +400,43 @@ class MetadataUploadWorker @AssistedInject constructor(
     ): DomainResult<Specimen, NetworkError> {
         return try {
             val localSpecimenDto = SpecimenDto(
-                id = localSpecimen.remoteId, specimenId = localSpecimen.id, sessionId = syncedRemoteSessionId
+                id = localSpecimen.remoteId,
+                specimenId = localSpecimen.id,
+                sessionId = syncedRemoteSessionId
             )
 
-            val remoteSpecimenDto = when (val remoteSpecimenResult =
-                specimenDataSource.getSpecimenByIdAndSessionId(localSpecimen.id, syncedRemoteSessionId)) {
-                is DomainResult.Success -> remoteSpecimenResult.data
-                is DomainResult.Error -> {
-                    when (remoteSpecimenResult.error) {
-                        NetworkError.NOT_FOUND -> {
-                            val postSpecimenResult = specimenDataSource.postSpecimen(
-                                localSpecimen, syncedRemoteSessionId
-                            )
-                            when (postSpecimenResult) {
-                                is DomainResult.Success -> postSpecimenResult.data.specimen
-                                is DomainResult.Error -> return DomainResult.Error(
-                                    postSpecimenResult.error
+            val remoteSpecimenDto =
+                when (val remoteSpecimenResult = specimenDataSource.getSpecimenByIdAndSessionId(
+                    localSpecimen.id, syncedRemoteSessionId
+                )) {
+                    is DomainResult.Success -> remoteSpecimenResult.data
+                    is DomainResult.Error -> {
+                        when (remoteSpecimenResult.error) {
+                            NetworkError.NOT_FOUND -> {
+                                val postSpecimenResult = specimenDataSource.postSpecimen(
+                                    localSpecimen, syncedRemoteSessionId
                                 )
+                                when (postSpecimenResult) {
+                                    is DomainResult.Success -> postSpecimenResult.data.specimen
+                                    is DomainResult.Error -> return DomainResult.Error(
+                                        postSpecimenResult.error
+                                    )
+                                }
                             }
-                        }
 
-                        else -> return DomainResult.Error(remoteSpecimenResult.error)
+                            else -> return DomainResult.Error(remoteSpecimenResult.error)
+                        }
                     }
                 }
-            }
 
             val remoteSpecimen = Specimen(
-                id = remoteSpecimenDto.specimenId,
-                remoteId = remoteSpecimenDto.id
+                id = remoteSpecimenDto.specimenId, remoteId = remoteSpecimenDto.id
             )
 
             if (remoteSpecimenDto != localSpecimenDto) {
-                specimenRepository.updateSpecimen(remoteSpecimen, syncedLocalSessionId).onError {
+                val specimenUpdateResult =
+                    specimenRepository.updateSpecimen(remoteSpecimen, syncedLocalSessionId)
+                if (specimenUpdateResult is DomainResult.Error) {
                     return DomainResult.Error(NetworkError.CLIENT_ERROR)
                 }
             }
@@ -472,8 +482,7 @@ class MetadataUploadWorker @AssistedInject constructor(
                         sexLogits = it.sexLogits,
                         abdomenStatusLogits = it.abdomenStatusLogits
                     )
-                }
-            )
+                })
 
             if (syncedSpecimen.remoteId == null) {
                 return DomainResult.Error(NetworkError.CLIENT_ERROR)
@@ -551,7 +560,7 @@ class MetadataUploadWorker @AssistedInject constructor(
             }
 
             if (remoteSpecimenImageDto != localSpecimenImageDto) {
-                transactionHelper.runAsTransaction {
+                val transactionResult = transactionHelper.runAsTransaction {
                     specimenImageRepository.updateSpecimenImage(
                         remoteSpecimenImage, syncedSpecimen.id, syncedLocalSessionId
                     ).onError {
@@ -565,6 +574,12 @@ class MetadataUploadWorker @AssistedInject constructor(
                             return@runAsTransaction DomainResult.Error(NetworkError.CLIENT_ERROR)
                         }
                     }
+
+                    DomainResult.Success(Unit)
+                }
+
+                if (transactionResult is DomainResult.Error) {
+                    return DomainResult.Error(transactionResult.error)
                 }
             }
 

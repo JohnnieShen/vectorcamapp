@@ -180,4 +180,5 @@
 
     <!-- Image Upload Status: Upload failed -->
     <string name="upload_status_retry">Retry</string>
+    <string name="roomdb_error_no_rows_affected">Could not save information. Please try again.</string>
 </resources>

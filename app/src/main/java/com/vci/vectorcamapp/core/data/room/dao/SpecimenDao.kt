@@ -22,7 +22,7 @@ interface SpecimenDao {
     suspend fun getSpecimenByIdAndSessionId(specimenId: String, sessionId: UUID): SpecimenEntity?
 
     @Update(onConflict = OnConflictStrategy.ABORT)
-    suspend fun updateSpecimen(specimen: SpecimenEntity)
+    suspend fun updateSpecimen(specimen: SpecimenEntity): Int
 
     @Delete
     suspend fun deleteSpecimen(specimen: SpecimenEntity): Int

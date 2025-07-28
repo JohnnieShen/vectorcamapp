@@ -4,5 +4,6 @@ import com.vci.vectorcamapp.core.domain.util.Error
 
 enum class RoomDbError : Error {
     CONSTRAINT_VIOLATION,
-    UNKNOWN_ERROR;
+    NO_ROWS_AFFECTED,
+    UNKNOWN_ERROR
 }

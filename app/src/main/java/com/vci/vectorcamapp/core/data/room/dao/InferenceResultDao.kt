@@ -13,5 +13,5 @@ interface InferenceResultDao {
     suspend fun insertInferenceResult(inferenceResultEntity: InferenceResultEntity)
 
     @Update(onConflict = OnConflictStrategy.ABORT)
-    suspend fun updateInferenceResult(inferenceResultEntity: InferenceResultEntity)
+    suspend fun updateInferenceResult(inferenceResultEntity: InferenceResultEntity): Int
 }

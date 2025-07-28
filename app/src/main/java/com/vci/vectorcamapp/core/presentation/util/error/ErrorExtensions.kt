@@ -33,6 +33,7 @@ fun Error.toString(context: Context): String {
 
         is RoomDbError -> when (this) {
             RoomDbError.CONSTRAINT_VIOLATION -> R.string.roomdb_error_constraint_violation
+            RoomDbError.NO_ROWS_AFFECTED -> R.string.roomdb_error_no_rows_affected
             RoomDbError.UNKNOWN_ERROR -> R.string.roomdb_error_unknown_error
         }
 
