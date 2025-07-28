@@ -34,6 +34,7 @@ import com.vci.vectorcamapp.registration.presentation.RegistrationViewModel
 import com.vci.vectorcamapp.intake.presentation.IntakeEvent
 import com.vci.vectorcamapp.intake.presentation.IntakeScreen
 import com.vci.vectorcamapp.intake.presentation.IntakeViewModel
+import com.vci.vectorcamapp.main.presentation.SplashScreen
 
 @Composable
 fun NavGraph(startDestination: Destination) {
@@ -91,9 +92,7 @@ fun NavGraph(startDestination: Destination) {
 
             BaseScaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                 when (state.isLoading) {
-                    true -> LoadingAnimation(
-                        text = "Loading...", modifier = Modifier.padding(innerPadding)
-                    )
+                    true -> SplashScreen(modifier = Modifier.fillMaxSize())
 
                     false -> LandingScreen(
                         state = state,

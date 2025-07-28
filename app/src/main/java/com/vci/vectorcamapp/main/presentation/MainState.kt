@@ -6,5 +6,6 @@ data class MainState(
     val startDestination: Destination? = null,
     val allGranted: Boolean = false,
     val isGpsEnabled: Boolean = false,
-    val isLoading: Boolean = false
+    val permissionChecked: Boolean = false,
+    val gpsChecked: Boolean = false
 )

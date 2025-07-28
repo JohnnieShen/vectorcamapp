@@ -34,23 +34,14 @@ class MainViewModel @Inject constructor(
     fun onAction(action: MainAction) {
         viewModelScope.launch {
             when (action) {
-                MainAction.RequestPermissions -> {
-                    _state.update { it.copy(isLoading = true) }
-                    _events.send(MainEvent.LaunchPermissionRequest)
-                }
-
-                MainAction.OpenAppSettings -> {
-                    _events.send(MainEvent.NavigateToAppSettings)
-                }
-
-                MainAction.OpenLocationSettings -> {
-                    _events.send(MainEvent.NavigateToLocationSettings)
-                }
-
+                MainAction.RequestPermissions -> _events.send(MainEvent.LaunchPermissionRequest)
+                MainAction.OpenAppSettings -> _events.send(MainEvent.NavigateToAppSettings)
+                MainAction.OpenLocationSettings -> _events.send(MainEvent.NavigateToLocationSettings)
                 is MainAction.UpdatePermissionStatus -> {
                     _state.update {
                         it.copy(
-                            allGranted = action.allGranted, isLoading = false
+                            allGranted = action.allGranted,
+                            permissionChecked = true
                         )
                     }
                 }
@@ -58,7 +49,8 @@ class MainViewModel @Inject constructor(
                 is MainAction.UpdateGpsStatus -> {
                     _state.update {
                         it.copy(
-                            isGpsEnabled = action.isGpsEnabled
+                            isGpsEnabled = action.isGpsEnabled,
+                            gpsChecked = true
                         )
                     }
                 }

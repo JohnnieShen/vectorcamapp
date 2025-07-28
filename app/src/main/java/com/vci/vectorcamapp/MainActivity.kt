@@ -1,7 +1,6 @@
 package com.vci.vectorcamapp
 
 import android.Manifest
-import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.location.LocationManager
@@ -9,22 +8,26 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import com.vci.vectorcamapp.animation.presentation.LoadingAnimation
+import androidx.compose.ui.platform.LocalFontFamilyResolver
+import androidx.compose.ui.text.font.createFontFamilyResolver
 import com.vci.vectorcamapp.core.presentation.util.ObserveAsEvents
 import com.vci.vectorcamapp.main.presentation.MainAction
 import com.vci.vectorcamapp.main.presentation.MainEvent
 import com.vci.vectorcamapp.main.presentation.MainViewModel
+import com.vci.vectorcamapp.main.presentation.SplashScreen
 import com.vci.vectorcamapp.main.presentation.components.PermissionAndGpsPrompt
 import com.vci.vectorcamapp.navigation.NavGraph
 import com.vci.vectorcamapp.ui.theme.VectorcamappTheme
@@ -32,6 +35,7 @@ import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+
     private val viewModel: MainViewModel by viewModels()
 
     private val permissionsRequired = buildList {
@@ -51,43 +55,39 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
         setContent {
             VectorcamappTheme {
+                val state by viewModel.state.collectAsState()
+
+                val isReady = state.permissionChecked && state.gpsChecked
+
                 ObserveAsEvents(events = viewModel.events) { event ->
                     when (event) {
-                        MainEvent.LaunchPermissionRequest -> {
-                            permissionLauncher.launch(permissionsRequired)
-                        }
-
+                        MainEvent.LaunchPermissionRequest -> permissionLauncher.launch(permissionsRequired)
                         MainEvent.NavigateToAppSettings -> openAppSettings()
-
                         MainEvent.NavigateToLocationSettings -> openLocationSettings()
                     }
                 }
 
-                LaunchedEffect(Unit) {
-                    checkAndUpdatePermissionStatus()
-                    checkAndUpdateGpsStatus()
-                    viewModel.onAction(MainAction.RequestPermissions)
-                }
-
-                val state by viewModel.state.collectAsState()
-
-                when (state.allGranted && state.isGpsEnabled) {
-                    true -> {
+                when {
+                    !isReady ->{
+                        SplashScreen(modifier = Modifier.fillMaxSize())
+                    }
+                    state.allGranted && state.isGpsEnabled -> {
                         when (val startDestination = state.startDestination) {
-                            null -> LoadingAnimation(text = "Initializing…")
+                            null -> SplashScreen(modifier = Modifier.fillMaxSize())
                             else -> NavGraph(startDestination = startDestination)
                         }
                     }
-
-                    false -> Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                        PermissionAndGpsPrompt(
-                            state = state,
-                            onAction = viewModel::onAction,
-                            modifier = Modifier.padding(innerPadding)
-                        )
+                    else -> {
+                        Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
+                            PermissionAndGpsPrompt(
+                                state = state,
+                                onAction = viewModel::onAction,
+                                modifier = Modifier
+                                    .padding(innerPadding)
+                            )
+                        }
                     }
                 }
             }
@@ -111,7 +111,7 @@ class MainActivity : ComponentActivity() {
 
     private fun checkAndUpdateGpsStatus() {
         val locationManager =
-            application.getSystemService(Context.LOCATION_SERVICE) as LocationManager
+            application.getSystemService(LOCATION_SERVICE) as LocationManager
         val isGpsEnabled =
             locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER) || locationManager.isProviderEnabled(
                 LocationManager.GPS_PROVIDER
