@@ -1,15 +1,19 @@
 package com.vci.vectorcamapp.complete_session.details.presentation.components.specimens
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.material3.Badge
+import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -48,7 +52,8 @@ fun CompleteSessionSpecimensTile(
     session: Session,
     specimen: Specimen,
     specimenImage: SpecimenImage,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    badgeText: String? = null,
 ) {
 
     val context = LocalContext.current
@@ -59,7 +64,7 @@ fun CompleteSessionSpecimensTile(
     InfoTile(modifier = modifier) {
         BoxWithConstraints(
             modifier = Modifier
-                .fillMaxSize()
+                .fillMaxWidth()
                 .aspectRatio(1f / MaterialTheme.dimensions.aspectRatio)
                 .clip(RectangleShape)
         ) {
@@ -76,8 +81,23 @@ fun CompleteSessionSpecimensTile(
                     .fillMaxSize()
                     .zoomPanGesture(containerSize)
             )
-        }
 
+            badgeText?.let {
+                Badge(
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(MaterialTheme.dimensions.paddingSmall),
+                    containerColor = MaterialTheme.colors.info,
+                    contentColor = MaterialTheme.colors.buttonText
+                ) {
+                    Text(
+                        text = badgeText,
+                        style = MaterialTheme.typography.labelLarge,
+                        modifier = Modifier.padding(MaterialTheme.dimensions.paddingSmall)
+                    )
+                }
+            }
+        }
         Column(
             verticalArrangement = Arrangement.spacedBy(MaterialTheme.dimensions.spacingMedium),
             modifier = Modifier.padding(MaterialTheme.dimensions.paddingLarge)
@@ -127,7 +147,6 @@ fun CompleteSessionSpecimensTile(
                 style = MaterialTheme.typography.bodySmall
             )
 
-
             Text(
                 text = if (specimenImage.species != null) "Species: ${specimenImage.species}" else "",
                 style = MaterialTheme.typography.bodySmall,
@@ -154,3 +173,4 @@ fun CompleteSessionSpecimensTile(
         }
     }
 }
+

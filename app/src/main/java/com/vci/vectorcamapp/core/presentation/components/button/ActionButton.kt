@@ -18,6 +18,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import com.vci.vectorcamapp.ui.extensions.colors
 import com.vci.vectorcamapp.ui.extensions.dimensions
@@ -28,7 +29,8 @@ fun ActionButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
-    iconPainter: Painter? = null
+    iconPainter: Painter? = null,
+    textSize: TextStyle = MaterialTheme.typography.bodyLarge
 ) {
     Button(
         onClick = onClick,
@@ -63,7 +65,7 @@ fun ActionButton(
             Text(
                 text = label,
                 color = MaterialTheme.colors.buttonText,
-                style = MaterialTheme.typography.bodyLarge,
+                style = textSize,
                 fontWeight = FontWeight.Bold
             )
         }

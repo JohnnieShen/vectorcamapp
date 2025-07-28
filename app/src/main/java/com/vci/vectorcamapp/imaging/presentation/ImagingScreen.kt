@@ -24,7 +24,6 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -60,6 +59,9 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.TextButton
 import com.vci.vectorcamapp.ui.theme.VectorcamappTheme
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.itemsIndexed
 
 @Composable
 fun ImagingScreen(
@@ -115,7 +117,7 @@ fun ImagingScreen(
                     Row(
                         horizontalArrangement = Arrangement.SpaceEvenly,
                         verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.padding(vertical = MaterialTheme.dimensions.paddingMedium).fillMaxWidth()
                     ) {
                         if (page > 0) {
                             Icon(
@@ -155,12 +157,16 @@ fun ImagingScreen(
                                 .size(MaterialTheme.dimensions.iconSizeLarge))
                     }
 
-                    LazyColumn {
-                        items(state.specimensWithImagesAndInferenceResults[page].specimenImagesAndInferenceResults) { (specimenImage, inferenceResult) ->
+                    LazyColumn (modifier = Modifier.fillMaxHeight()) {
+                        val imageList = state.specimensWithImagesAndInferenceResults[page].specimenImagesAndInferenceResults
+                        itemsIndexed(imageList) { index, (specimenImage, inferenceResult) ->
                             CapturedSpecimenTile(
                                 specimen = state.specimensWithImagesAndInferenceResults[page].specimen,
                                 specimenImage = specimenImage,
                                 inferenceResult = inferenceResult,
+                                badgeText = "${index + 1} of ${imageList.size}",
+                                modifier = Modifier
+                                    .fillMaxWidth()
                             )
                         }
                     }
@@ -175,28 +181,40 @@ fun ImagingScreen(
                 }
 
                 Column(
-                    verticalArrangement = Arrangement.Center, modifier = modifier.fillMaxSize()
+                    modifier = modifier
+                        .padding(top = MaterialTheme.dimensions.paddingSmall)
+                        .fillMaxSize(),
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     CapturedSpecimenTile(
                         specimen = state.currentSpecimen,
                         specimenImage = state.currentSpecimenImage,
                         inferenceResult = state.currentInferenceResult,
                         specimenBitmap = specimenBitmap,
-                        onSpecimenIdCorrected = { onAction(ImagingAction.CorrectSpecimenId(it)) })
+                        onSpecimenIdCorrected = { onAction(ImagingAction.CorrectSpecimenId(it)) },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = MaterialTheme.dimensions.paddingSmall)
+                    )
 
                     Row(
-                        horizontalArrangement = Arrangement.spacedBy(MaterialTheme.dimensions.paddingMedium),
-                        modifier = Modifier.padding(horizontal = MaterialTheme.dimensions.paddingMedium)
+                        horizontalArrangement = Arrangement.spacedBy(MaterialTheme.dimensions.paddingSmall),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = MaterialTheme.dimensions.paddingMedium)
                     ) {
                         ActionButton(
                             label = "Retake Image",
                             onClick = { onAction(ImagingAction.RetakeImage) },
-                            modifier = Modifier.weight(1f)
+                            modifier = Modifier.weight(1f),
+                            textSize = MaterialTheme.typography.bodyMedium
                         )
                         ActionButton(
                             label = "Save To Session",
                             onClick = { onAction(ImagingAction.SaveImageToSession) },
-                            modifier = Modifier.weight(1f)
+                            modifier = Modifier.weight(1f),
+                            textSize = MaterialTheme.typography.bodyMedium
                         )
                     }
                 }
@@ -212,7 +230,7 @@ fun ImagingScreen(
                         modifier = Modifier.padding(
                             start = MaterialTheme.dimensions.paddingMedium,
                             end = MaterialTheme.dimensions.paddingMedium,
-                            top = MaterialTheme.dimensions.paddingLarge
+                            top = MaterialTheme.dimensions.paddingMedium
                         )
                     ) {
                         ActionButton(
@@ -314,7 +332,7 @@ fun ImagingScreen(
                     InfoTile(
                         modifier = Modifier
                             .fillMaxSize()
-                            .padding(vertical = MaterialTheme.dimensions.paddingMedium)
+                            .padding(vertical = MaterialTheme.dimensions.paddingSmall)
                     ) {
                         Column(
                             verticalArrangement = Arrangement.SpaceEvenly,
