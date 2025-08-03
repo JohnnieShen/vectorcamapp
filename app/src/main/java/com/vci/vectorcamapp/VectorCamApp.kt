@@ -37,7 +37,7 @@ class VectorCamApp : Application(), Configuration.Provider {
 
         postHogConfig.captureApplicationLifecycleEvents = true
 
-        postHogConfig.sessionReplay = true
+        postHogConfig.sessionReplay = false
 
         postHogConfig.sessionReplayConfig.maskAllImages = false
         postHogConfig.sessionReplayConfig.maskAllTextInputs = false

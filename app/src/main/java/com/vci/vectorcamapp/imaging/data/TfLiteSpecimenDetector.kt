@@ -285,7 +285,7 @@ class TfLiteSpecimenDetector(
         private const val DEFAULT_TENSOR_WIDTH = 640
         private const val DEFAULT_NUM_CHANNELS = 25200
         private const val DEFAULT_NUM_ELEMENTS = 6
-        private const val CONFIDENCE_THRESHOLD = 0.8f
+        private const val CONFIDENCE_THRESHOLD = 0.5f
         private const val IOU_THRESHOLD = 0.5f
 
         private const val PIXEL_NORMALIZATION_SCALE = 1f / 255f
