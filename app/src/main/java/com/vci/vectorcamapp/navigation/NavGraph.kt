@@ -1,6 +1,5 @@
 package com.vci.vectorcamapp.navigation
 
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
@@ -12,6 +11,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.vci.vectorcamapp.animation.presentation.LoadingAnimation
+import com.vci.vectorcamapp.complete_session.details.presentation.CompleteSessionDetailsEvent
 import com.vci.vectorcamapp.complete_session.details.presentation.CompleteSessionDetailsScreen
 import com.vci.vectorcamapp.complete_session.details.presentation.CompleteSessionDetailsViewModel
 import com.vci.vectorcamapp.complete_session.list.presentation.CompleteSessionListEvent
@@ -171,9 +171,10 @@ fun NavGraph(startDestination: Destination) {
 
             ObserveAsEvents(events = viewModel.events) { event ->
                 when (event) {
+                    IncompleteSessionEvent.NavigateBackToLandingScreen -> navController.popBackStack()
+
                     is IncompleteSessionEvent.NavigateToIntakeScreen ->
                         navController.navigate(Destination.Intake(event.sessionType))
-                    IncompleteSessionEvent.NavigateToLandingScreen -> navController.popBackStack()
                 }
             }
 
@@ -192,6 +193,8 @@ fun NavGraph(startDestination: Destination) {
 
             ObserveAsEvents(events = viewModel.events) { event ->
                 when (event) {
+                    CompleteSessionListEvent.NavigateBackToLandingScreen -> navController.popBackStack()
+
                     is CompleteSessionListEvent.NavigateToCompleteSessionDetails -> navController.navigate(
                         Destination.CompleteSessionDetails(event.sessionId.toString())
                     )
@@ -210,6 +213,12 @@ fun NavGraph(startDestination: Destination) {
         composable<Destination.CompleteSessionDetails> {
             val viewModel = hiltViewModel<CompleteSessionDetailsViewModel>()
             val state by viewModel.state.collectAsStateWithLifecycle()
+
+            ObserveAsEvents(events = viewModel.events) { event ->
+                when (event) {
+                    CompleteSessionDetailsEvent.NavigateBackToCompleteSessionListScreen -> navController.popBackStack()
+                }
+            }
 
             BaseScaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                 CompleteSessionDetailsScreen(

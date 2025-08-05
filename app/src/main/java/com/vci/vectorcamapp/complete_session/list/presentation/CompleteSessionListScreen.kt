@@ -1,5 +1,6 @@
 package com.vci.vectorcamapp.complete_session.list.presentation
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -31,6 +32,17 @@ fun CompleteSessionListScreen(
         ScreenHeader(
             title = "Complete Sessions",
             subtitle = "Click on a session to view more details",
+            leadingIcon = {
+                Icon(
+                    painter = painterResource(R.drawable.ic_arrow_left),
+                    contentDescription = "Back Button",
+                    tint = MaterialTheme.colors.icon,
+                    modifier = Modifier
+                        .size(MaterialTheme.dimensions.iconSizeMedium)
+                        .clickable {
+                            onAction(CompleteSessionListAction.ReturnToLandingScreen)
+                        })
+            },
             modifier = modifier
         ) {
             items(

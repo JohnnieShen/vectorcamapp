@@ -1,6 +1,7 @@
 package com.vci.vectorcamapp.intake.presentation
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -8,7 +9,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -48,6 +51,18 @@ fun IntakeScreen(
     ScreenHeader(
         title = "Session Intake",
         subtitle = "Please fill out the information below",
+        leadingIcon = {
+            Icon(
+                painter = painterResource(R.drawable.ic_arrow_left),
+                contentDescription = "Back Button",
+                tint = MaterialTheme.colors.icon,
+                modifier = Modifier
+                    .size(MaterialTheme.dimensions.iconSizeMedium)
+                    .clickable {
+                        onAction(IntakeAction.ReturnToLandingScreen)
+                    }
+            )
+        },
         modifier = modifier
     ) {
         item {
@@ -56,7 +71,10 @@ fun IntakeScreen(
                 iconPainter = painterResource(R.drawable.ic_info),
                 iconDescription = "General Information Icon"
             ) {
-                InfoPill(text = "Session Type: ${state.session.type.name}", color = MaterialTheme.colors.info)
+                InfoPill(
+                    text = "Session Type: ${state.session.type.name}",
+                    color = MaterialTheme.colors.info
+                )
 
                 TextEntryField(
                     label = "Collector Name",
