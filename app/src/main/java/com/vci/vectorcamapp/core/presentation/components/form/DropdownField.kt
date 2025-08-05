@@ -69,7 +69,7 @@ fun <T> DropdownField(
             val parentHeight = maxHeight
 
             Box(
-                modifier = modifier
+                modifier = Modifier
                     .fillMaxWidth()
                     .background(
                         color = MaterialTheme.colors.cardBackground,

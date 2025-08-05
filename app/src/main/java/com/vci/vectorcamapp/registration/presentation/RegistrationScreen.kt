@@ -35,13 +35,6 @@ fun RegistrationScreen(
     state: RegistrationState, onAction: (RegistrationAction) -> Unit, modifier: Modifier = Modifier
 ) {
     Box(modifier = modifier.fillMaxSize()) {
-        state.error?.let {
-            Text(
-                "Error: $it",
-                modifier = modifier.padding(MaterialTheme.dimensions.paddingMedium)
-            )
-        }
-
         Image(
             painter = painterResource(R.drawable.registration_background),
             contentDescription = "Mosquito background",
