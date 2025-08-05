@@ -66,8 +66,8 @@ class RegistrationViewModelTest {
 
     private fun selectProgram(program: Program) = runTest {
         viewModel.state.test {
-            awaitItem() // default state
-            awaitItem() // repository programs
+            awaitItem()
+            awaitItem() 
             viewModel.onAction(RegistrationAction.SelectProgram(program))
             advanceUntilIdle()
             val selectedState = awaitItem()
@@ -98,7 +98,7 @@ class RegistrationViewModelTest {
         advanceUntilIdle()
 
         viewModel.state.test {
-            awaitItem() // initial empty state
+            awaitItem() 
             val stateWithPrograms = awaitItem()
             assertThat(stateWithPrograms.programs).isEqualTo(testPrograms)
             assertThat(stateWithPrograms.selectedProgram).isNull()
@@ -110,8 +110,8 @@ class RegistrationViewModelTest {
         advanceUntilIdle()
 
         viewModel.state.test {
-            awaitItem() // initial
-            awaitItem() // with test programs
+            awaitItem()
+            awaitItem()
 
             val newPrograms = listOf(Program(id = 99, name = "Updated", country = "Test"))
             programsFlow.value = newPrograms
@@ -133,8 +133,8 @@ class RegistrationViewModelTest {
         advanceUntilIdle()
 
         viewModel.state.test {
-            awaitItem() // initial
-            awaitItem() // with programs
+            awaitItem()
+            awaitItem()
 
             viewModel.onAction(RegistrationAction.SelectProgram(programToSelect))
             advanceUntilIdle()
@@ -151,12 +151,12 @@ class RegistrationViewModelTest {
         advanceUntilIdle()
 
         viewModel.state.test {
-            awaitItem() // initial
-            awaitItem() // with programs
+            awaitItem()
+            awaitItem()
 
             viewModel.onAction(RegistrationAction.SelectProgram(selectedProgram))
             advanceUntilIdle()
-            awaitItem() // selection state
+            awaitItem()
 
             val newPrograms = listOf(Program(id = 3, name = "New", country = "New"))
             programsFlow.value = newPrograms
@@ -226,7 +226,7 @@ class RegistrationViewModelTest {
         viewModel.events.test {
             viewModel.onAction(RegistrationAction.ConfirmRegistration)
             advanceUntilIdle()
-            awaitItem() // consume event
+            awaitItem()
         }
 
         coVerify(exactly = 1) {
@@ -249,22 +249,19 @@ class RegistrationViewModelTest {
 
     @Test
     fun `E01 multiple successful confirmations emit multiple events`() = runTest {
-        // Wait for initial state setup
         viewModel.state.test {
-            awaitItem() // initial
-            awaitItem() // with programs
+            awaitItem() 
+            awaitItem() 
             cancelAndIgnoreRemainingEvents()
         }
 
         viewModel.events.test {
-            // First confirmation
             viewModel.onAction(RegistrationAction.SelectProgram(testPrograms[0]))
             advanceUntilIdle()
             viewModel.onAction(RegistrationAction.ConfirmRegistration)
             advanceUntilIdle()
             assertThat(awaitItem()).isEqualTo(RegistrationEvent.NavigateToLandingScreen)
 
-            // Second confirmation with different program
             viewModel.onAction(RegistrationAction.SelectProgram(testPrograms[1]))
             advanceUntilIdle()
             viewModel.onAction(RegistrationAction.ConfirmRegistration)
@@ -363,7 +360,6 @@ class RegistrationViewModelTest {
         val selectedProgram = testPrograms[0]
         selectProgram(selectedProgram)
 
-        // No event collection - tests Channel.send() without collector
         viewModel.onAction(RegistrationAction.ConfirmRegistration)
         advanceUntilIdle()
 
