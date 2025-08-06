@@ -3,7 +3,6 @@ package com.vci.vectorcamapp.core.presentation.components.button
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
@@ -20,6 +19,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.platform.testTag
 import com.vci.vectorcamapp.ui.extensions.colors
 import com.vci.vectorcamapp.ui.extensions.dimensions
 
@@ -30,7 +30,8 @@ fun ActionButton(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     iconPainter: Painter? = null,
-    textSize: TextStyle = MaterialTheme.typography.bodyLarge
+    textSize: TextStyle = MaterialTheme.typography.bodyLarge,
+    testTag: String? = null
 ) {
     Button(
         onClick = onClick,
@@ -50,7 +51,7 @@ fun ActionButton(
                         MaterialTheme.colors.buttonGradientRight
                     )
                 ), shape = RoundedCornerShape(MaterialTheme.dimensions.cornerRadiusMedium)
-            )
+            ).testTag(testTag ?: "action-button")
     ) {
         Row(horizontalArrangement = Arrangement.spacedBy(MaterialTheme.dimensions.spacingMedium), verticalAlignment = Alignment.CenterVertically) {
             iconPainter?.let {

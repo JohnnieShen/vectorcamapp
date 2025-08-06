@@ -64,6 +64,10 @@ class RegistrationViewModelTest {
         unmockkObject(ErrorMessageBus)
     }
 
+    // ========================================
+    // Test Harness / Helpers
+    // ========================================
+
     private fun selectProgram(program: Program) = runTest {
         viewModel.state.test {
             awaitItem()
@@ -77,12 +81,11 @@ class RegistrationViewModelTest {
     }
 
     // ========================================
-    // STATE MANAGEMENT TESTS
-    // Tests for initial state and state changes
+    // A. State Management
     // ========================================
 
     @Test
-    fun `S01 initial state has empty programs and no selection`() = runTest {
+    fun regVm_a01_initialStateHasEmptyProgramsAndNoSelection() = runTest {
         advanceUntilIdle()
 
         viewModel.state.test {
@@ -94,7 +97,7 @@ class RegistrationViewModelTest {
     }
 
     @Test
-    fun `S02 state emits programs from repository after initialization`() = runTest {
+    fun regVm_a02_stateEmitsProgramsFromRepositoryAfterInitialization() = runTest {
         advanceUntilIdle()
 
         viewModel.state.test {
@@ -106,7 +109,7 @@ class RegistrationViewModelTest {
     }
 
     @Test
-    fun `S03 state updates when repository programs change`() = runTest {
+    fun regVm_a03_stateUpdatesWhenRepositoryProgramsChange() = runTest {
         advanceUntilIdle()
 
         viewModel.state.test {
@@ -123,12 +126,11 @@ class RegistrationViewModelTest {
     }
 
     // ========================================
-    // PROGRAM SELECTION TESTS
-    // Tests for program selection functionality
+    // B. Program Selection
     // ========================================
 
     @Test
-    fun `P01 selecting program updates state correctly`() = runTest {
+    fun regVm_b01_selectingProgramUpdatesStateCorrectly() = runTest {
         val programToSelect = testPrograms[0]
         advanceUntilIdle()
 
@@ -146,7 +148,7 @@ class RegistrationViewModelTest {
     }
 
     @Test
-    fun `P02 program selection persists when repository updates`() = runTest {
+    fun regVm_b02_programSelectionPersistsWhenRepositoryUpdates() = runTest {
         val selectedProgram = testPrograms[0]
         advanceUntilIdle()
 
@@ -169,12 +171,11 @@ class RegistrationViewModelTest {
     }
 
     // ========================================
-    // CONFIRMATION TESTS
-    // Tests for registration confirmation logic
+    // C. Confirmation
     // ========================================
 
     @Test
-    fun `C01 confirm without selection emits error and no events`() = runTest {
+    fun regVm_c01_confirmWithoutSelectionEmitsErrorAndNoEvents() = runTest {
         advanceUntilIdle()
 
         viewModel.events.test {
@@ -189,7 +190,7 @@ class RegistrationViewModelTest {
     }
 
     @Test
-    fun `C02 repeated confirmations without selection emit multiple errors`() = runTest {
+    fun regVm_c02_repeatedConfirmationsWithoutSelectionEmitMultipleErrors() = runTest {
         repeat(3) {
             viewModel.onAction(RegistrationAction.ConfirmRegistration)
             advanceUntilIdle()
@@ -199,7 +200,7 @@ class RegistrationViewModelTest {
     }
 
     @Test
-    fun `C03 successful confirmation calls operations in order and emits event`() = runTest {
+    fun regVm_c03_successfulConfirmationCallsOperationsInOrderAndEmitsEvent() = runTest {
         val selectedProgram = testPrograms[0]
         selectProgram(selectedProgram)
 
@@ -219,7 +220,7 @@ class RegistrationViewModelTest {
     }
 
     @Test
-    fun `C04 successful confirmation creates device with correct properties`() = runTest {
+    fun regVm_c04_successfulConfirmationCreatesDeviceWithCorrectProperties() = runTest {
         val selectedProgram = testPrograms[0]
         selectProgram(selectedProgram)
 
@@ -243,12 +244,11 @@ class RegistrationViewModelTest {
     }
 
     // ========================================
-    // EVENT EMISSION TESTS
-    // Tests for event handling and multiple emissions
+    // D. Event Emission
     // ========================================
 
     @Test
-    fun `E01 multiple successful confirmations emit multiple events`() = runTest {
+    fun regVm_d01_multipleSuccessfulConfirmationsEmitMultipleEvents() = runTest {
         viewModel.state.test {
             awaitItem() 
             awaitItem() 
@@ -273,12 +273,11 @@ class RegistrationViewModelTest {
     }
 
     // ========================================
-    // EXCEPTION HANDLING TESTS
-    // Tests for error scenarios and exception handling
+    // E. Exception Handling
     // ========================================
 
     @Test
-    fun `X01 saveDevice failure prevents clearSession and emits error`() = runTest {
+    fun regVm_e01_saveDeviceFailurePreventsClearSessionAndEmitsError() = runTest {
         val selectedProgram = testPrograms[0]
         selectProgram(selectedProgram)
 
@@ -296,7 +295,7 @@ class RegistrationViewModelTest {
     }
 
     @Test
-    fun `X02 clearSession failure after successful saveDevice emits error`() = runTest {
+    fun regVm_e02_clearSessionFailureAfterSuccessfulSaveDeviceEmitsError() = runTest {
         val selectedProgram = testPrograms[0]
         selectProgram(selectedProgram)
 
@@ -314,7 +313,7 @@ class RegistrationViewModelTest {
     }
 
     @Test
-    fun `X03 different exception types are handled correctly`() = runTest {
+    fun regVm_e03_differentExceptionTypesAreHandledCorrectly() = runTest {
         val selectedProgram = testPrograms[0]
         selectProgram(selectedProgram)
 
@@ -335,12 +334,11 @@ class RegistrationViewModelTest {
     }
 
     // ========================================
-    // EDGE CASE TESTS
-    // Tests for unusual conditions and boundary cases
+    // F. Edge Cases
     // ========================================
 
     @Test
-    fun `G01 empty repository emits error on confirmation`() = runTest {
+    fun regVm_f01_emptyRepositoryEmitsErrorOnConfirmation() = runTest {
         val emptyFlow = MutableStateFlow(emptyList<Program>())
         every { programRepository.observeAllPrograms() } returns emptyFlow
         val emptyRepoViewModel = RegistrationViewModel(deviceCache, sessionCache, programRepository)
@@ -356,7 +354,7 @@ class RegistrationViewModelTest {
     }
 
     @Test
-    fun `G02 confirmation without event collector still completes operations`() = runTest {
+    fun regVm_f02_confirmationWithoutEventCollectorStillCompletesOperations() = runTest {
         val selectedProgram = testPrograms[0]
         selectProgram(selectedProgram)
 

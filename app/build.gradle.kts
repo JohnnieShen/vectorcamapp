@@ -212,6 +212,7 @@ dependencies {
     testImplementation(libs.turbine)
     androidTestImplementation(libs.androidx.junit) // AndroidX JUnit test library
     androidTestImplementation(libs.androidx.espresso.core) // Espresso for UI testing
+    androidTestImplementation(libs.truth) // Google truth library for assertions
     androidTestImplementation(platform(libs.androidx.compose.bom)) // Compose testing BOM
     androidTestImplementation(libs.androidx.ui.test.junit4) // Compose JUnit testing
     debugImplementation(libs.androidx.ui.tooling) // Debugging tools for Compose

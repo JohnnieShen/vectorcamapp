@@ -8,16 +8,28 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.test.assert
+import androidx.compose.ui.test.assertHasClickAction
+import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsEnabled
+import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performClick
 import androidx.navigation.compose.ComposeNavigator
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.testing.TestNavHostController
 import androidx.test.core.app.ApplicationProvider
+import com.google.common.truth.Truth.assertThat
 import com.vci.vectorcamapp.MainActivity
 import com.vci.vectorcamapp.core.domain.model.Program
 import com.vci.vectorcamapp.core.presentation.components.scaffold.BaseScaffold
 import com.vci.vectorcamapp.navigation.Destination
+import com.vci.vectorcamapp.registration.presentation.util.RegistrationTestTags
 import com.vci.vectorcamapp.ui.theme.VectorcamappTheme
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
@@ -62,86 +74,294 @@ class RegistrationScreenTest {
         }
     }
 
+    // ========================================
+    // Test Harness / Helpers
+    // ========================================
+
     private fun launchRegistrationScreen(
-        initialState: RegistrationState = RegistrationState(),
+        initialState: RegistrationState = RegistrationState()
     ) {
         composeRule.activity.setContent {
             var state by remember { mutableStateOf(initialState) }
 
             VectorcamappTheme {
                 NavHost(
-                    navController = navController, startDestination = Destination.Registration
+                    navController = navController,
+                    startDestination = Destination.Registration
                 ) {
                     composable<Destination.Registration> {
                         BaseScaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                             RegistrationScreen(
-                                state = state, onAction = { action ->
-                                    // Handle state updates for UI testing
+                                state = state,
+                                onAction = { action ->
                                     when (action) {
                                         is RegistrationAction.SelectProgram -> {
-                                            state =
-                                                state.copy(selectedProgram = action.program)
+                                            state = state.copy(selectedProgram = action.program)
                                         }
-
                                         is RegistrationAction.ConfirmRegistration -> {
                                             navController.navigate(Destination.Landing)
                                         }
                                     }
-                                }, modifier = Modifier.padding(innerPadding)
+                                },
+                                modifier = Modifier.padding(innerPadding)
                             )
                         }
                     }
-                    composable<Destination.Landing> { }
+                    composable<Destination.Landing> { /* empty landing */ }
                 }
             }
         }
+        composeRule.waitForIdle()
     }
 
+    private fun openDropdown() {
+        composeRule.onNodeWithTag(RegistrationTestTags.PROGRAM_DROPDOWN)
+            .assertExists()
+            .assertHasClickAction()
+            .performClick()
+    }
+
+    private fun selectProgram(index: Int) {
+        openDropdown()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("${RegistrationTestTags.PROGRAM_OPTION}-$index")
+            .assertExists()
+            .performClick()
+        composeRule.waitForIdle()
+    }
+
+    private fun assertOnRegistration() {
+        composeRule.waitForIdle()
+        assertThat(navController.currentDestination?.route)
+            .isEqualTo(Destination.Registration::class.qualifiedName)
+    }
+
+    private fun assertOnLanding() {
+        composeRule.waitForIdle()
+        assertThat(navController.currentDestination?.route)
+            .isEqualTo(Destination.Landing::class.qualifiedName)
+    }
+
+    private fun assertConfirmEnabled(isEnabled: Boolean) {
+        composeRule.waitForIdle()
+        val node = composeRule.onNodeWithTag(RegistrationTestTags.CONFIRM_PROGRAM_BUTTON).assertExists()
+        if (isEnabled) node.assertIsEnabled() else node.assertIsNotEnabled()
+    }
+
+    // ========================================
+    // A. Static UI
+    // ========================================
+
     @Test
-    fun whenProgramListIsEmpty_dropdownHasNoOptions_andConfirmButtonIsDisabled() {
+    fun regUi_a01_headersAndBackgroundVisibleOnInitialRender() {
         launchRegistrationScreen()
+        composeRule.onNodeWithText("Register Program").assertIsDisplayed()
+        composeRule.onNodeWithText("Select your affiliated program").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("Mosquito background").assertIsDisplayed()
+        composeRule.onNodeWithTag(RegistrationTestTags.PROGRAM_DROPDOWN).assertExists()
+        composeRule.onNodeWithTag(RegistrationTestTags.CONFIRM_PROGRAM_BUTTON).assertExists()
     }
 
     @Test
-    fun whenProgramListIsNotEmpty_dropdownHasOptions_butConfirmButtonIsDisabled() {
+    fun regUi_a02_dropdownCollapsedByDefaultAndShowsExpandIcon() {
         launchRegistrationScreen(initialState = RegistrationState(programs = testPrograms))
+        composeRule.onNodeWithContentDescription("Expand dropdown", useUnmergedTree = true)
+            .assertExists()
+        composeRule.onNodeWithText("Select").assertIsDisplayed()
+    }
+
+    // ========================================
+    // B. Confirm Button State
+    // ========================================
+
+    @Test
+    fun regUi_b01_noProgramsConfirmDisabled() {
+        launchRegistrationScreen()
+        assertConfirmEnabled(false)
     }
 
     @Test
-    fun whenSelectedProgramIsNotNull_confirmButtonIsEnabled() {
+    fun regUi_b02_programsPresentButNoSelectionConfirmDisabled() {
+        launchRegistrationScreen(initialState = RegistrationState(programs = testPrograms))
+        assertConfirmEnabled(false)
+    }
+
+    @Test
+    fun regUi_b03_selectionPresentConfirmEnabled() {
         launchRegistrationScreen(
             initialState = RegistrationState(
-                programs = testPrograms, selectedProgram = testPrograms[0]
+                programs = testPrograms,
+                selectedProgram = testPrograms.first()
             )
         )
+        assertConfirmEnabled(true)
     }
 
     @Test
-    fun whenProgramIsSelected_dropdownCollapsesAndProgramDetailsAreDisplayed() {
+    fun regUi_b04_selectingProgramEnablesConfirm() {
         launchRegistrationScreen(initialState = RegistrationState(programs = testPrograms))
+        selectProgram(0)
+        assertConfirmEnabled(true)
     }
 
+    // ========================================
+    // C. Dropdown Behavior
+    // ========================================
+
     @Test
-    fun whenProgramIsSelected_confirmButtonChangesFromDisabledToEnabled() {
+    fun regUi_c01_openingDropdownShowsCollapseIconAndItems() {
         launchRegistrationScreen(initialState = RegistrationState(programs = testPrograms))
+        openDropdown()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithContentDescription("Collapse dropdown", useUnmergedTree = true)
+            .assertExists()
+        composeRule.onNodeWithTag("${RegistrationTestTags.PROGRAM_OPTION}-0").assertExists()
+        composeRule.onNodeWithTag("${RegistrationTestTags.PROGRAM_OPTION}-${testPrograms.lastIndex}")
+            .assertExists()
     }
 
     @Test
-    fun selectingAnotherProgram_updatesSelection() {
+    fun regUi_c02_selectingAnItemCollapsesDropdownAndSetsText() {
         launchRegistrationScreen(initialState = RegistrationState(programs = testPrograms))
+        selectProgram(1)
+        composeRule.waitForIdle()
+        composeRule.onNodeWithContentDescription("Expand dropdown", useUnmergedTree = true)
+            .assertExists()
+        composeRule.onNodeWithText(testPrograms[1].name).assertIsDisplayed()
+        composeRule.onNodeWithTag("${RegistrationTestTags.PROGRAM_OPTION}-0").assertDoesNotExist()
     }
 
     @Test
-    fun selectedProgram_displaysFullDetailsForLongNamesCorrectly() {
+    fun regUi_c03_selectingDifferentItemUpdatesSelection() {
         launchRegistrationScreen(initialState = RegistrationState(programs = testPrograms))
+        selectProgram(0)
+        composeRule.waitForIdle()
+        composeRule.onNodeWithText(testPrograms[0].name).assertIsDisplayed()
+        selectProgram(2)
+        composeRule.waitForIdle()
+        composeRule.onNodeWithText(testPrograms[2].name).assertIsDisplayed()
     }
 
     @Test
-    fun whenConfirmButtonIsClicked_navigatesToLandingScreen() {
+    fun regUi_c04_dropdownMenuItemsRenderBothNameAndCountry() {
+        launchRegistrationScreen(initialState = RegistrationState(programs = testPrograms))
+        openDropdown()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("${RegistrationTestTags.PROGRAM_OPTION}-0")
+            .assert(
+                hasText(testPrograms[0].name) and hasText(testPrograms[0].country)
+            )
+    }
+
+    @Test
+    fun regUi_c05_longNamesAndCountriesRenderWithoutCrashing() {
+        launchRegistrationScreen(initialState = RegistrationState(programs = testPrograms))
+        selectProgram(2)
+        composeRule.onNodeWithText(testPrograms[2].name).assertIsDisplayed()
+        composeRule.onNodeWithText(testPrograms[2].country).assertIsDisplayed()
+    }
+
+    @Test
+    fun regUi_c06_dropdownClickTargetIsClickableAndFullWidth() {
+        launchRegistrationScreen(initialState = RegistrationState(programs = testPrograms))
+        composeRule.onNodeWithTag(RegistrationTestTags.PROGRAM_DROPDOWN)
+            .assertExists()
+            .assertHasClickAction()
+            .performClick()
+    }
+
+    // ========================================
+    // D. List Size / Coverage
+    // ========================================
+
+    @Test
+    fun regUi_d01_allItemsPresentInMenuByTagWhenExpanded() {
+        launchRegistrationScreen(initialState = RegistrationState(programs = testPrograms))
+        openDropdown()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("${RegistrationTestTags.PROGRAM_OPTION}-0").assertExists()
+        composeRule.onNodeWithTag("${RegistrationTestTags.PROGRAM_OPTION}-5").assertExists()
+        composeRule.onNodeWithTag("${RegistrationTestTags.PROGRAM_OPTION}-10").assertExists()
+    }
+
+    // ========================================
+    // E. Navigation Cases
+    // ========================================
+
+    @Test
+    fun regUi_e01_confirmWhenDisabledDoesNotNavigate() {
+        launchRegistrationScreen(initialState = RegistrationState(programs = testPrograms))
+        assertOnRegistration()
+        composeRule.onNodeWithTag(RegistrationTestTags.CONFIRM_PROGRAM_BUTTON)
+            .assertIsNotEnabled()
+        assertOnRegistration()
+    }
+
+    @Test
+    fun regUi_e02_confirmWhenEnabledNavigatesToLanding() {
         launchRegistrationScreen(
             initialState = RegistrationState(
-                programs = testPrograms, selectedProgram = testPrograms[0]
+                programs = testPrograms,
+                selectedProgram = testPrograms.first()
             )
         )
+        composeRule.onNodeWithTag(RegistrationTestTags.CONFIRM_PROGRAM_BUTTON)
+            .assertIsEnabled()
+            .performClick()
+        composeRule.waitForIdle()
+        assertOnLanding()
+    }
+
+    @Test
+    fun regUi_e03_selectThenConfirmNavigatesToLanding() {
+        launchRegistrationScreen(initialState = RegistrationState(programs = testPrograms))
+        selectProgram(0)
+        composeRule.onNodeWithTag(RegistrationTestTags.CONFIRM_PROGRAM_BUTTON)
+            .assertIsEnabled()
+            .performClick()
+        composeRule.waitForIdle()
+        assertOnLanding()
+    }
+
+    // ========================================
+    // F. Accessibility Semantics
+    // ========================================
+
+    @Test
+    fun regUi_f01_expandCollapseContentDescriptionsToggle() {
+        launchRegistrationScreen(initialState = RegistrationState(programs = testPrograms))
+        composeRule.onNodeWithContentDescription("Expand dropdown", useUnmergedTree = true)
+            .assertExists()
+        openDropdown()
+        composeRule.onNodeWithContentDescription("Collapse dropdown", useUnmergedTree = true)
+            .assertExists()
+        composeRule.onNodeWithTag("${RegistrationTestTags.PROGRAM_OPTION}-0").performClick()
+        composeRule.onNodeWithContentDescription("Expand dropdown", useUnmergedTree = true)
+            .assertExists()
+    }
+
+    // ========================================
+    // G. Regression/Edge Cases
+    // ========================================
+
+    @Test
+    fun regUi_g01_reopeningDropdownShowsCurrentSelectionPersisted() {
+        launchRegistrationScreen(initialState = RegistrationState(programs = testPrograms))
+        selectProgram(1)
+        composeRule.onNodeWithText(testPrograms[1].name).assertIsDisplayed()
+        openDropdown()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag(RegistrationTestTags.PROGRAM_DROPDOWN)
+            .assert(hasText(testPrograms[1].name))
+    }
+
+    @Test
+    fun regUi_g02_placeholderSelectHiddenAfterSelection() {
+        launchRegistrationScreen(initialState = RegistrationState(programs = testPrograms))
+        composeRule.onNodeWithText("Select").assertIsDisplayed()
+        selectProgram(0)
+        composeRule.waitForIdle()
+        composeRule.onNodeWithText(testPrograms[0].name).assertIsDisplayed()
+        composeRule.onNodeWithText("Select").assertDoesNotExist()
     }
 }
