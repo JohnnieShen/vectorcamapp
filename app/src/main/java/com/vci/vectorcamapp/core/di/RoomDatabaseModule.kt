@@ -43,8 +43,8 @@ object RoomDatabaseModule {
             VectorCamDatabase::class.java,
             DB_NAME,
         ).addCallback(object : RoomDatabase.Callback() {
-            override fun onCreate(db: SupportSQLiteDatabase) {
-                super.onCreate(db)
+            override fun onOpen(db: SupportSQLiteDatabase) {
+                super.onOpen(db)
 
                 try {
                     val programsJson = context.assets.open(PROGRAM_DATA_FILENAME).bufferedReader()
@@ -60,14 +60,39 @@ object RoomDatabaseModule {
                         // Use direct SQL to avoid circular dependency
                         programs.forEach { program ->
                             db.execSQL(
-                                "INSERT INTO program (id, name, country) VALUES (?, ?, ?)",
-                                arrayOf(program.id, program.name, program.country)
+                                """
+                                    INSERT INTO program (id, name, country) 
+                                    VALUES (?, ?, ?)
+                                    ON CONFLICT (id) DO UPDATE SET
+                                        name = excluded.name,
+                                        country = excluded.country
+                                    WHERE
+                                        name != excluded.name OR
+                                        country != excluded.country
+                                """.trimIndent(), arrayOf(program.id, program.name, program.country)
                             )
                         }
 
                         sites.forEach { site ->
                             db.execSQL(
-                                "INSERT INTO site (id, programId, district, subCounty, parish, sentinelSite, healthCenter) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                                """
+                                    INSERT INTO site (id, programId, district, subCounty, parish, sentinelSite, healthCenter)
+                                    VALUES (?, ?, ?, ?, ?, ?, ?)
+                                    ON CONFLICT (id) DO UPDATE SET
+                                        programId = excluded.programId,
+                                        district = excluded.district,
+                                        subCounty = excluded.subCounty,
+                                        parish = excluded.parish,
+                                        sentinelSite = excluded.sentinelSite,
+                                        healthCenter = excluded.healthCenter
+                                    WHERE
+                                        programId != excluded.programId OR
+                                        district != excluded.district OR
+                                        subCounty != excluded.subCounty OR
+                                        parish != excluded.parish OR
+                                        sentinelSite != excluded.sentinelSite OR
+                                        healthCenter != excluded.healthCenter
+                                """.trimIndent(),
                                 arrayOf(
                                     site.id,
                                     site.programId,
