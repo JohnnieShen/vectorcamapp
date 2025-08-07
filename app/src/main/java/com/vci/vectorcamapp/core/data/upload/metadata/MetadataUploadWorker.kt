@@ -4,7 +4,6 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
 import android.content.pm.ServiceInfo
-import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
@@ -267,6 +266,7 @@ class MetadataUploadWorker @AssistedInject constructor(
                 notes = localSession.notes,
                 latitude = localSession.latitude,
                 longitude = localSession.longitude,
+                type = localSession.type,
                 siteId = localSiteId,
                 deviceId = syncedDeviceId
             )
@@ -306,7 +306,7 @@ class MetadataUploadWorker @AssistedInject constructor(
                 notes = remoteSessionDto.notes,
                 latitude = remoteSessionDto.latitude,
                 longitude = remoteSessionDto.longitude,
-                type = localSession.type
+                type = remoteSessionDto.type
             )
 
             if (localSessionDto != remoteSessionDto) {
@@ -635,9 +635,9 @@ class MetadataUploadWorker @AssistedInject constructor(
             .setContentText("Specimen ${currentSpecimenIndex + 1} of $totalSpecimens").setStyle(
                 NotificationCompat.BigTextStyle().bigText(
                     """
-                Specimen ${currentSpecimenIndex + 1} of $totalSpecimens
-                Image ${currentImageIndex + 1} of $totalImagesForSpecimen
-                """.trimIndent()
+                        Specimen ${currentSpecimenIndex + 1} of $totalSpecimens
+                        Image ${currentImageIndex + 1} of $totalImagesForSpecimen
+                    """.trimIndent()
                 )
             ).setSmallIcon(R.drawable.ic_cloud_upload)
             .setProgress(totalSpecimens, currentSpecimenIndex + 1, false).setOngoing(true).build()
