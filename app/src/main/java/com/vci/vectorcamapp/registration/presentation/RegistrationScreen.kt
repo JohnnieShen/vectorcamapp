@@ -24,6 +24,7 @@ import androidx.compose.ui.tooling.preview.PreviewLightDark
 import com.vci.vectorcamapp.R
 import com.vci.vectorcamapp.core.presentation.components.button.ActionButton
 import com.vci.vectorcamapp.core.presentation.components.form.DropdownField
+import com.vci.vectorcamapp.registration.presentation.util.RegistrationTestTags
 import com.vci.vectorcamapp.ui.extensions.colors
 import com.vci.vectorcamapp.ui.extensions.customShadow
 import com.vci.vectorcamapp.ui.extensions.dimensions
@@ -35,13 +36,6 @@ fun RegistrationScreen(
     state: RegistrationState, onAction: (RegistrationAction) -> Unit, modifier: Modifier = Modifier
 ) {
     Box(modifier = modifier.fillMaxSize()) {
-        state.error?.let {
-            Text(
-                "Error: $it",
-                modifier = modifier.padding(MaterialTheme.dimensions.paddingMedium)
-            )
-        }
-
         Image(
             painter = painterResource(R.drawable.registration_background),
             contentDescription = "Mosquito background",
@@ -92,6 +86,8 @@ fun RegistrationScreen(
                     options = state.programs,
                     selectedOption = state.selectedProgram,
                     onOptionSelected = { onAction(RegistrationAction.SelectProgram(it)) },
+                    menuTestTag = RegistrationTestTags.PROGRAM_DROPDOWN,
+                    menuItemTestTagPrefix = RegistrationTestTags.PROGRAM_OPTION,
                     modifier = modifier
                         .customShadow(
                             color = Color.Black.copy(alpha = 0.1f),
@@ -124,6 +120,7 @@ fun RegistrationScreen(
                     label = "Confirm",
                     onClick = { onAction(RegistrationAction.ConfirmRegistration) },
                     enabled = state.selectedProgram != null,
+                    testTag = RegistrationTestTags.CONFIRM_PROGRAM_BUTTON,
                     modifier = modifier
                 )
             }

@@ -55,7 +55,7 @@ android {
         versionCode = getRegionBasedVersionCode()
         versionName = getRegionBasedVersionName()
 
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunner = "com.vci.vectorcamapp.HiltTestRunner"
 
         buildConfigField("String", "POSTHOG_API_KEY", "\"${secretsProperties["POSTHOG_API_KEY"]}\"")
         buildConfigField("String", "POSTHOG_HOST", "\"${secretsProperties["POSTHOG_HOST"]}\"")
@@ -67,6 +67,8 @@ android {
 
     buildTypes {
         debug {
+            enableUnitTestCoverage = true
+            enableAndroidTestCoverage = true
             buildConfigField("String", "BASE_URL", "\"https://test.api.vectorcam.org/\"")
         }
 
@@ -157,6 +159,10 @@ dependencies {
     implementation(libs.androidx.hilt.work)
     ksp(libs.androidx.hilt.compiler)
     ksp(libs.hilt.android.compiler)
+    testImplementation(libs.hilt.android.testing)
+    kspTest(libs.hilt.android.compiler)
+    androidTestImplementation(libs.hilt.android.testing)
+    kspAndroidTest(libs.hilt.android.compiler)
 
     // Open CV Library
     implementation(libs.opencv)
@@ -200,8 +206,13 @@ dependencies {
 
     // Testing Dependencies
     testImplementation(libs.junit) // JUnit for unit tests
+    testImplementation(libs.truth) // Google truth library for assertions
+    testImplementation(libs.kotlinx.coroutines.test) // Kotlin coroutines test library
+    testImplementation(libs.mockk)
+    testImplementation(libs.turbine)
     androidTestImplementation(libs.androidx.junit) // AndroidX JUnit test library
     androidTestImplementation(libs.androidx.espresso.core) // Espresso for UI testing
+    androidTestImplementation(libs.truth) // Google truth library for assertions
     androidTestImplementation(platform(libs.androidx.compose.bom)) // Compose testing BOM
     androidTestImplementation(libs.androidx.ui.test.junit4) // Compose JUnit testing
     debugImplementation(libs.androidx.ui.tooling) // Debugging tools for Compose
