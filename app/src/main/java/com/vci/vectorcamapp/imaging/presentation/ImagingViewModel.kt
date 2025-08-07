@@ -25,6 +25,7 @@ import com.vci.vectorcamapp.core.presentation.CoreViewModel
 import com.vci.vectorcamapp.imaging.domain.repository.CameraRepository
 import com.vci.vectorcamapp.imaging.domain.strategy.ImagingWorkflow
 import com.vci.vectorcamapp.imaging.domain.strategy.ImagingWorkflowFactory
+import com.vci.vectorcamapp.imaging.domain.use_cases.ValidateSpecimenIdUseCase
 import com.vci.vectorcamapp.imaging.domain.util.ImagingError
 import com.vci.vectorcamapp.imaging.presentation.extensions.toUprightBitmap
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -54,7 +55,8 @@ class ImagingViewModel @Inject constructor(
     private val specimenImageRepository: SpecimenImageRepository,
     private val inferenceResultRepository: InferenceResultRepository,
     private val cameraRepository: CameraRepository,
-    private val workRepository: WorkManagerRepository
+    private val workRepository: WorkManagerRepository,
+    private val validateSpecimenIdUseCase: ValidateSpecimenIdUseCase,
 ) : CoreViewModel() {
 
     @Inject
@@ -154,10 +156,16 @@ class ImagingViewModel @Inject constructor(
                         val bitmap = action.frame.toUprightBitmap(displayOrientation)
 
                         val liveFrameProcessingResult = imagingWorkflow.processLiveFrame(bitmap)
+                        validateSpecimenIdUseCase(liveFrameProcessingResult.specimenId, shouldAutoCorrect = true).onSuccess { correctedSpecimenId ->
+                            _state.update {
+                                it.copy(
+                                    currentSpecimen = it.currentSpecimen.copy(id = correctedSpecimenId),
+                                )
+                            }
+                        }
 
                         _state.update {
                             it.copy(
-                                currentSpecimen = it.currentSpecimen.copy(id = liveFrameProcessingResult.specimenId),
                                 previewInferenceResults = liveFrameProcessingResult.previewInferenceResults
                             )
                         }
@@ -256,6 +264,12 @@ class ImagingViewModel @Inject constructor(
                         return@launch
                     }
 
+                    val validationResult = validateSpecimenIdUseCase(specimenId, shouldAutoCorrect = false)
+                    if (validationResult is Result.Error) {
+                        emitError(validationResult.error)
+                        return@launch
+                    }
+
                     val saveResult = cameraRepository.saveImage(jpegBytes, filename, currentSession)
 
                     saveResult.onSuccess { imageUri ->
@@ -329,6 +343,7 @@ class ImagingViewModel @Inject constructor(
             it.copy(
                 currentSpecimen = it.currentSpecimen.copy(
                     id = "",
+                    remoteId = null,
                 ),
                 currentSpecimenImage = it.currentSpecimenImage.copy(
                     localId = "",
