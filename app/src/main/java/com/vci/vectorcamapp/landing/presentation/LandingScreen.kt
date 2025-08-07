@@ -1,6 +1,5 @@
 package com.vci.vectorcamapp.landing.presentation
 
-import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -36,14 +35,9 @@ fun LandingScreen(
     ) {
         item {
             Column(
-                verticalArrangement = Arrangement.spacedBy(MaterialTheme.dimensions.spacingMedium)
+                verticalArrangement = Arrangement.spacedBy(MaterialTheme.dimensions.spacingMedium),
+                modifier = Modifier.padding(top = MaterialTheme.dimensions.spacingMedium)
             ) {
-                LandingActionTile(
-                    title = "Getting Started",
-                    description = "Learn how to use the app and start your first session.",
-                    icon = painterResource(R.drawable.ic_help),
-                    onClick = { Log.d("LandingScreen", "Getting Started") })
-
                 LandingSection(title = "Imaging") {
                     LandingActionTile(
                         title = "New Surveillance Session",
