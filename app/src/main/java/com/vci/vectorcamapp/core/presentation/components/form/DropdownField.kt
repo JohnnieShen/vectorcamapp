@@ -31,6 +31,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import com.vci.vectorcamapp.R
 import com.vci.vectorcamapp.core.domain.util.Error
@@ -47,6 +48,8 @@ fun <T> DropdownField(
     modifier: Modifier = Modifier,
     label: String? = null,
     error: Error? = null,
+    menuTestTag: String? = null,
+    menuItemTestTagPrefix: String? = null,
     itemContent: @Composable (T) -> Unit,
 ) {
     val context = LocalContext.current
@@ -69,7 +72,7 @@ fun <T> DropdownField(
             val parentHeight = maxHeight
 
             Box(
-                modifier = modifier
+                modifier = Modifier
                     .fillMaxWidth()
                     .background(
                         color = MaterialTheme.colors.cardBackground,
@@ -81,7 +84,8 @@ fun <T> DropdownField(
                         shape = RoundedCornerShape(MaterialTheme.dimensions.cornerRadiusSmall)
                     )
                     .heightIn(min = MaterialTheme.dimensions.componentHeightMedium)
-                    .clickable { expanded = true }) {
+                    .clickable { expanded = true }
+                    .testTag(menuTestTag ?: "dropdown-menu")) {
                 Row(
                     modifier = Modifier
                         .fillMaxSize()
@@ -137,7 +141,8 @@ fun <T> DropdownField(
                         },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(parentHeight),
+                            .height(parentHeight)
+                            .testTag(if (menuItemTestTagPrefix != null) "${menuItemTestTagPrefix}-$index" else "dropdown-menu-item-$index"),
                     )
                     if (index != options.lastIndex) {
                         HorizontalDivider(

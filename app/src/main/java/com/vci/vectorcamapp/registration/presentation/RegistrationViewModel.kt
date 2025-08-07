@@ -5,7 +5,6 @@ import androidx.lifecycle.viewModelScope
 import com.vci.vectorcamapp.core.domain.cache.CurrentSessionCache
 import com.vci.vectorcamapp.core.domain.cache.DeviceCache
 import com.vci.vectorcamapp.core.domain.model.Device
-import com.vci.vectorcamapp.core.domain.model.Program
 import com.vci.vectorcamapp.core.domain.repository.ProgramRepository
 import com.vci.vectorcamapp.core.presentation.CoreViewModel
 import com.vci.vectorcamapp.registration.domain.util.RegistrationError
@@ -41,7 +40,7 @@ class RegistrationViewModel @Inject constructor(
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), RegistrationState())
 
-    private val _events = Channel<RegistrationEvent>(Channel.BUFFERED)
+    private val _events = Channel<RegistrationEvent>()
     val events = _events.receiveAsFlow()
 
     fun onAction(action: RegistrationAction) {
@@ -58,15 +57,19 @@ class RegistrationViewModel @Inject constructor(
                         return@launch
                     }
 
-                    val device = Device(
-                        id = -1,
-                        model = "${Build.MANUFACTURER} ${Build.MODEL}",
-                        registeredAt = System.currentTimeMillis(),
-                        submittedAt = null,
-                    )
-                    deviceCache.saveDevice(device, selectedProgram.id)
-                    currentSessionCache.clearSession()
-                    _events.send(RegistrationEvent.NavigateToLandingScreen)
+                    try {
+                        val device = Device(
+                            id = -1,
+                            model = "${Build.MANUFACTURER} ${Build.MODEL}",
+                            registeredAt = System.currentTimeMillis(),
+                            submittedAt = null,
+                        )
+                        deviceCache.saveDevice(device, selectedProgram.id)
+                        currentSessionCache.clearSession()
+                        _events.send(RegistrationEvent.NavigateToLandingScreen)
+                    } catch (e: Exception) {
+                        emitError(RegistrationError.UNKNOWN_ERROR)
+                    }
                 }
             }
         }

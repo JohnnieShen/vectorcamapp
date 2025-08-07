@@ -1,6 +1,8 @@
 package com.vci.vectorcamapp.core.data.dto.session
 
+import com.vci.vectorcamapp.core.data.dto.serializers.SessionTypeSerializer
 import com.vci.vectorcamapp.core.data.dto.serializers.UuidSerializer
+import com.vci.vectorcamapp.core.domain.model.enums.SessionType
 import kotlinx.serialization.Serializable
 import java.util.UUID
 
@@ -21,6 +23,8 @@ data class SessionDto(
     val notes: String = "",
     val latitude: Float? = null,
     val longitude: Float? = null,
+    @Serializable(with = SessionTypeSerializer::class)
+    val type: SessionType = SessionType.SURVEILLANCE,
     val siteId: Int = -1,
     val deviceId: Int = -1,
 )

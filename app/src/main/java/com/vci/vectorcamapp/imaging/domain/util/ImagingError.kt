@@ -5,6 +5,7 @@ import com.vci.vectorcamapp.core.domain.util.Error
 enum class ImagingError : Error {
     CAPTURE_ERROR,
     SAVE_ERROR,
+    INVALID_SPECIMEN_ID,
     PROCESSING_ERROR,
     NO_SPECIMEN_FOUND,
     MULTIPLE_SPECIMENS_FOUND,

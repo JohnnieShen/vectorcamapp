@@ -40,15 +40,17 @@ class CompleteSessionListViewModel @Inject constructor(
     val events = _events.receiveAsFlow()
 
     fun onAction(action: CompleteSessionListAction) {
-        when (action) {
-            is CompleteSessionListAction.ViewCompleteSessionDetails -> {
-                viewModelScope.launch {
+        viewModelScope.launch {
+            when (action) {
+                CompleteSessionListAction.ReturnToLandingScreen -> {
+                    _events.send(CompleteSessionListEvent.NavigateBackToLandingScreen)
+                }
+
+                is CompleteSessionListAction.ViewCompleteSessionDetails -> {
                     _events.send(CompleteSessionListEvent.NavigateToCompleteSessionDetails(action.sessionId))
                 }
-            }
 
-            is CompleteSessionListAction.UploadAllPendingSessions -> {
-                viewModelScope.launch {
+                is CompleteSessionListAction.UploadAllPendingSessions -> {
                     val completeSessionsAndSites =
                         sessionRepository.observeCompleteSessionsAndSites().first()
                     for (sessionAndSite in completeSessionsAndSites) {

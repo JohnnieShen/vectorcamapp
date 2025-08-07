@@ -7,7 +7,9 @@ import com.vci.vectorcamapp.core.domain.model.composites.SpecimenWithSpecimenIma
 import com.vci.vectorcamapp.core.domain.repository.SessionRepository
 import com.vci.vectorcamapp.core.domain.repository.SpecimenRepository
 import com.vci.vectorcamapp.core.presentation.CoreViewModel
+import com.vci.vectorcamapp.intake.presentation.IntakeEvent
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -15,6 +17,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -51,9 +54,16 @@ class CompleteSessionDetailsViewModel @Inject constructor(
         loadCompleteSessionDetails()
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), CompleteSessionDetailsState())
 
+    private val _events = Channel<CompleteSessionDetailsEvent>()
+    val events = _events.receiveAsFlow()
+
     fun onAction(action: CompleteSessionDetailsAction) {
         viewModelScope.launch {
             when (action) {
+                CompleteSessionDetailsAction.ReturnToCompleteSessionListScreen -> {
+                    _events.send(CompleteSessionDetailsEvent.NavigateBackToCompleteSessionListScreen)
+                }
+
                 is CompleteSessionDetailsAction.ChangeSelectedTab -> {
                     _state.update { it.copy(selectedTab = action.selectedTab) }
                 }

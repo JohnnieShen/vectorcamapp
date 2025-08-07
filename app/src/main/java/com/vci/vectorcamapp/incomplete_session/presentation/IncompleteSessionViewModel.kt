@@ -51,7 +51,7 @@ class IncompleteSessionViewModel @Inject constructor(
                 }
 
                 is IncompleteSessionAction.ReturnToLandingScreen -> {
-                    _events.send(IncompleteSessionEvent.NavigateToLandingScreen)
+                    _events.send(IncompleteSessionEvent.NavigateBackToLandingScreen)
                 }
             }
         }

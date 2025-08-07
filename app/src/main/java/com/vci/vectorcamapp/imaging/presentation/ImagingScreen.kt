@@ -353,12 +353,10 @@ fun ImagingScreen(
                                 )
                             }
 
-                            TextEntryField(
-                                placeholder = "Specimen ID",
-                                value = state.currentSpecimen.id,
-                                onValueChange = { onAction(ImagingAction.CorrectSpecimenId(it)) },
-                                singleLine = true,
-                                modifier = Modifier.padding(horizontal = MaterialTheme.dimensions.paddingMedium)
+                            Text(
+                                text = if (state.currentSpecimen.id == "") "Specimen ID will appear here" else state.currentSpecimen.id,
+                                style = MaterialTheme.typography.headlineLarge,
+                                color = if (state.currentSpecimen.id == "") MaterialTheme.colors.textSecondary else MaterialTheme.colors.textPrimary,
                             )
 
                             LiveCameraPreview(

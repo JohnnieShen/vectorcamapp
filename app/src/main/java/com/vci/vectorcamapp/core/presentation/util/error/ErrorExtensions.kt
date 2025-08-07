@@ -48,6 +48,7 @@ fun Error.toString(context: Context): String {
             ImagingError.CAPTURE_ERROR -> R.string.imaging_error_capture_error
             ImagingError.SAVE_ERROR -> R.string.imaging_error_save_error
             ImagingError.PROCESSING_ERROR -> R.string.imaging_error_processing_error
+            ImagingError.INVALID_SPECIMEN_ID -> R.string.imaging_error_invalid_specimen_id
             ImagingError.NO_SPECIMEN_FOUND -> R.string.imaging_error_no_specimen_found
             ImagingError.MULTIPLE_SPECIMENS_FOUND -> R.string.imaging_error_multiple_specimens_found
             ImagingError.NO_ACTIVE_SESSION -> R.string.imaging_error_no_active_session

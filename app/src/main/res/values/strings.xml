@@ -79,6 +79,9 @@
     <!-- Imaging error: Processing error -->
     <string name="imaging_error_processing_error">Could not process the photo. Please try again.</string>
 
+    <!-- Imaging error: Invalid specimen ID -->
+    <string name="imaging_error_invalid_specimen_id">This specimen ID does not match the expected pattern.</string>
+
     <!-- Imaging error: No specimen found -->
     <string name="imaging_error_no_specimen_found">No specimen found in the photo. Please try again with a clearer image.</string>
 
@@ -114,6 +117,9 @@
 
     <!-- RoomDb error: Constraint Violation -->
     <string name="roomdb_error_constraint_violation">Some of the information you entered was invalid or already exists. Please check and try again.</string>
+
+    <!-- RoomDb error: No Rows Affected -->
+    <string name="roomdb_error_no_rows_affected">Could not save information. Please try again.</string>
 
     <!-- RoomDb error: Unknown error -->
     <string name="roomdb_error_unknown_error">An unknown error occurred while saving data. Please contact support if this issue persists.</string>
@@ -180,5 +186,4 @@
 
     <!-- Image Upload Status: Upload failed -->
     <string name="upload_status_retry">Retry</string>
-    <string name="roomdb_error_no_rows_affected">Could not save information. Please try again.</string>
 </resources>
