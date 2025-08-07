@@ -156,7 +156,9 @@ class ImagingViewModel @Inject constructor(
                         val bitmap = action.frame.toUprightBitmap(displayOrientation)
 
                         val liveFrameProcessingResult = imagingWorkflow.processLiveFrame(bitmap)
-                        validateSpecimenIdUseCase(liveFrameProcessingResult.specimenId, shouldAutoCorrect = true).onSuccess { correctedSpecimenId ->
+                        validateSpecimenIdUseCase(
+                            liveFrameProcessingResult.specimenId, shouldAutoCorrect = true
+                        ).onSuccess { correctedSpecimenId ->
                             _state.update {
                                 it.copy(
                                     currentSpecimen = it.currentSpecimen.copy(id = correctedSpecimenId),
@@ -192,7 +194,9 @@ class ImagingViewModel @Inject constructor(
 
                     val success = sessionRepository.markSessionAsComplete(currentSession.localId)
                     if (success) {
-                        workRepository.enqueueSessionUpload(currentSession.localId, currentSessionSiteId)
+                        workRepository.enqueueSessionUpload(
+                            currentSession.localId, currentSessionSiteId
+                        )
                         currentSessionCache.clearSession()
                         _events.send(ImagingEvent.NavigateBackToLandingScreen)
                     }
@@ -248,26 +252,29 @@ class ImagingViewModel @Inject constructor(
                 }
 
                 ImagingAction.SaveImageToSession -> {
-                    val jpegBytes = _state.value.currentImageBytes ?: return@launch
-                    val specimenId = _state.value.currentSpecimen.id
-                    val timestamp = System.currentTimeMillis()
-                    val filename = buildString {
-                        append(specimenId)
-                        append("_")
-                        append(timestamp)
-                        append(".jpg")
-                    }
-
                     val currentSession = currentSessionCache.getSession()
                     if (currentSession == null) {
                         _events.send(ImagingEvent.NavigateBackToLandingScreen)
                         return@launch
                     }
 
-                    val validationResult = validateSpecimenIdUseCase(specimenId, shouldAutoCorrect = false)
-                    if (validationResult is Result.Error) {
-                        emitError(validationResult.error)
-                        return@launch
+                    val specimenId = when (val validationResult = validateSpecimenIdUseCase(
+                        _state.value.currentSpecimen.id, shouldAutoCorrect = false
+                    )) {
+                        is Result.Success -> validationResult.data
+                        is Result.Error -> {
+                            emitError(validationResult.error)
+                            return@launch
+                        }
+                    }
+
+                    val jpegBytes = _state.value.currentImageBytes ?: return@launch
+                    val timestamp = System.currentTimeMillis()
+                    val filename = buildString {
+                        append(specimenId)
+                        append("_")
+                        append(timestamp)
+                        append(".jpg")
                     }
 
                     val saveResult = cameraRepository.saveImage(jpegBytes, filename, currentSession)
