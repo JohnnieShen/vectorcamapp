@@ -252,6 +252,9 @@ class TfLiteSpecimenDetector(
                 speciesLogits = null,
                 sexLogits = null,
                 abdomenStatusLogits = null,
+                speciesInferenceDuration = null,
+                sexInferenceDuration = null,
+                abdomenStatusInferenceDuration = null,
             )
             Log.d("InferenceResult", "($topLeftX, $topLeftY) -> ($width, $height)")
 

@@ -62,23 +62,18 @@ class SurveillanceImagingWorkflow @Inject constructor(
                         clampedHeight
                     )
 
-                    var (speciesLogits, sexLogits, abdomenStatusLogits) = inferenceRepository.classifySpecimen(
-                        croppedBitmap
-                    )
+                    var (speciesResult, sexResult, abdomenStatusResult) = inferenceRepository.classifySpecimen(croppedBitmap)
 
-                    val speciesIndex =
-                        speciesLogits?.let { logits -> logits.indexOf(logits.max()) }
-                    var sexIndex =
-                        sexLogits?.let { logits -> logits.indexOf(logits.max()) }
-                    var abdomenStatusIndex =
-                        abdomenStatusLogits?.let { logits -> logits.indexOf(logits.max()) }
+                    val speciesIndex = speciesResult?.logits?.let { logits -> logits.indexOf(logits.max()) }
+                    var sexIndex = sexResult?.logits?.let { logits -> logits.indexOf(logits.max()) }
+                    var abdomenStatusIndex = abdomenStatusResult?.logits?.let { logits -> logits.indexOf(logits.max()) }
 
-                    if (speciesLogits == null || speciesIndex == SpeciesLabel.NON_MOSQUITO.ordinal) {
-                        sexLogits = null
+                    if (speciesResult?.logits == null || speciesIndex == SpeciesLabel.NON_MOSQUITO.ordinal) {
+                        sexResult = null
                         sexIndex = null
                     }
-                    if (sexLogits == null || sexIndex == SexLabel.MALE.ordinal) {
-                        abdomenStatusLogits = null
+                    if (sexResult?.logits == null || sexIndex == SexLabel.MALE.ordinal) {
+                        abdomenStatusResult = null
                         abdomenStatusIndex = null
                     }
 
@@ -94,9 +89,12 @@ class SurveillanceImagingWorkflow @Inject constructor(
                                 bboxHeight = captureInferenceResult.bboxHeight,
                                 bboxConfidence = captureInferenceResult.bboxConfidence,
                                 bboxClassId = captureInferenceResult.bboxClassId,
-                                speciesLogits = speciesLogits,
-                                sexLogits = sexLogits,
-                                abdomenStatusLogits = abdomenStatusLogits
+                                speciesLogits = speciesResult?.logits,
+                                sexLogits = sexResult?.logits,
+                                abdomenStatusLogits = abdomenStatusResult?.logits,
+                                speciesInferenceDuration = speciesResult?.inferenceDuration,
+                                sexInferenceDuration = sexResult?.inferenceDuration,
+                                abdomenStatusInferenceDuration = abdomenStatusResult?.inferenceDuration,
                             )
                         )
                     )

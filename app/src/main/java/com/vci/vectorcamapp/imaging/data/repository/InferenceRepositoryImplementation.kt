@@ -5,6 +5,7 @@ import android.util.Log
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.text.TextRecognizer
 import com.vci.vectorcamapp.core.domain.model.InferenceResult
+import com.vci.vectorcamapp.core.domain.model.results.ClassifierResult
 import com.vci.vectorcamapp.imaging.data.GpuDelegateManager
 import com.vci.vectorcamapp.imaging.di.AbdomenStatusClassifier
 import com.vci.vectorcamapp.imaging.di.Detector
@@ -53,22 +54,22 @@ class InferenceRepositoryImplementation @Inject constructor(
             specimenDetector.detect(bitmap)
         }
 
-    override suspend fun classifySpecimen(croppedBitmap: Bitmap): Triple<List<Float>?, List<Float>?, List<Float>?> =
+    override suspend fun classifySpecimen(croppedBitmap: Bitmap): Triple<ClassifierResult?, ClassifierResult?, ClassifierResult?> =
         withContext(Dispatchers.Default) {
-            val speciesLogitsPromise = async { getClassification(croppedBitmap, speciesClassifier) }
-            val sexLogitsPromise = async { getClassification(croppedBitmap, sexClassifier) }
-            val abdomenStatusLogitsPromise = async { getClassification(croppedBitmap, abdomenStatusClassifier) }
+            val speciesResultPromise = async { getClassification(croppedBitmap, speciesClassifier) }
+            val sexResultPromise = async { getClassification(croppedBitmap, sexClassifier) }
+            val abdomenStatusResultPromise = async { getClassification(croppedBitmap, abdomenStatusClassifier) }
             
-            val speciesLogits = speciesLogitsPromise.await()
-            val sexLogits = sexLogitsPromise.await()
-            val abdomenStatusLogits = abdomenStatusLogitsPromise.await()
+            val speciesResult = speciesResultPromise.await()
+            val sexResult = sexResultPromise.await()
+            val abdomenStatusResult = abdomenStatusResultPromise.await()
 
-            Triple(speciesLogits, sexLogits, abdomenStatusLogits)
+            Triple(speciesResult, sexResult, abdomenStatusResult)
         }
 
     private suspend fun getClassification(
         croppedBitmap: Bitmap, classifier: SpecimenClassifier
-    ): List<Float>? = classifier.classify(croppedBitmap)
+    ): ClassifierResult? = classifier.classify(croppedBitmap)
 
     override fun closeResources() {
         specimenIdRecognizer.close()
