@@ -480,7 +480,10 @@ class MetadataUploadWorker @AssistedInject constructor(
                         bboxClassId = it.bboxClassId,
                         speciesLogits = it.speciesLogits,
                         sexLogits = it.sexLogits,
-                        abdomenStatusLogits = it.abdomenStatusLogits
+                        abdomenStatusLogits = it.abdomenStatusLogits,
+                        speciesInferenceDuration = it.speciesInferenceDuration,
+                        sexInferenceDuration = it.sexInferenceDuration,
+                        abdomenStatusInferenceDuration = it.abdomenStatusInferenceDuration
                     )
                 })
 
@@ -555,7 +558,10 @@ class MetadataUploadWorker @AssistedInject constructor(
                     bboxClassId = it.bboxClassId,
                     speciesLogits = it.speciesLogits,
                     sexLogits = it.sexLogits,
-                    abdomenStatusLogits = it.abdomenStatusLogits
+                    abdomenStatusLogits = it.abdomenStatusLogits,
+                    speciesInferenceDuration = it.speciesInferenceDuration,
+                    sexInferenceDuration = it.sexInferenceDuration,
+                    abdomenStatusInferenceDuration = it.abdomenStatusInferenceDuration,
                 )
             }
 

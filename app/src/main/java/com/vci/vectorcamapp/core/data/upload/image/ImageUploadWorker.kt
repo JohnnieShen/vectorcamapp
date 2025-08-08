@@ -29,13 +29,11 @@ import io.tus.java.client.TusUploader
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
-import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.SocketTimeoutException
 import java.net.URL
-import java.security.MessageDigest
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -69,8 +67,6 @@ class ImageUploadWorker @AssistedInject constructor(
         private const val SUCCESS_STREAK_FOR_INCREASE = 5
         private const val SUCCESS_CHUNK_SIZE_MULTIPLIER = 2
         private const val FAILURE_CHUNK_SIZE_DIVIDER = 2
-
-        private const val BYTE_ARRAY_SIZE = 8 * 1024
 
         private const val MAX_RETRIES = 5
 
@@ -112,7 +108,8 @@ class ImageUploadWorker @AssistedInject constructor(
         val sessionDateStr = dateFormatter.format(Date(session.createdAt))
         notificationSessionTitle = "Session from $sessionDateStr"
 
-        val specimensWithImages = specimenRepository.getSpecimenImagesAndInferenceResultsBySession(sessionId)
+        val specimensWithImages =
+            specimenRepository.getSpecimenImagesAndInferenceResultsBySession(sessionId)
 
         val imagesToUpload = specimensWithImages.flatMap { specimenWithData ->
             specimenWithData.specimenImagesAndInferenceResults.map { imageAndResult ->
@@ -137,7 +134,10 @@ class ImageUploadWorker @AssistedInject constructor(
             notificationCurrentImageIndex = index + 1
 
             if (task.image.remoteId == null) {
-                Log.e("ImageUploadWorker", "Image ${task.image.localId} has a null remoteId. Skipping.")
+                Log.e(
+                    "ImageUploadWorker",
+                    "Image ${task.image.localId} has a null remoteId. Skipping."
+                )
                 specimenImageRepository.updateSpecimenImage(
                     specimenImage = task.image.copy(imageUploadStatus = UploadStatus.FAILED),
                     specimenId = task.specimen.id,
@@ -151,7 +151,8 @@ class ImageUploadWorker @AssistedInject constructor(
                 is DomainResult.Success -> {
                     updateProgressNotification("Verifying...")
                     successfulUploads++
-            }
+                }
+
                 is DomainResult.Error -> {
                     if (result.error == NetworkError.TUS_PERMANENT_ERROR) {
                         encounteredPermanentFailure = true
@@ -183,7 +184,11 @@ class ImageUploadWorker @AssistedInject constructor(
             if (isStopped) {
                 throw CancellationException("Worker was stopped during file preparation.", e)
             }
-            Log.e("ImageUploadWorker", "Failed to prepare file or calculate MD5 for specimen ${task.image.localId}.", e)
+            Log.e(
+                "ImageUploadWorker",
+                "Failed to prepare file or calculate MD5 for specimen ${task.image.localId}.",
+                e
+            )
             specimenImageRepository.updateSpecimenImage(
                 specimenImage = task.image.copy(imageUploadStatus = UploadStatus.FAILED),
                 specimenId = task.specimen.id,
@@ -208,7 +213,10 @@ class ImageUploadWorker @AssistedInject constructor(
 
                     tusClient.uploadCreationURL = URL(constructUrl(tusPath))
                     val upload = createTusUpload(file, uniqueFingerprint, metadata)
-                    Log.d("ImageUploadWorker", "Attempt $attempt: Start/resume ${file.name} (fp=$uniqueFingerprint,md5=$md5)")
+                    Log.d(
+                        "ImageUploadWorker",
+                        "Attempt $attempt: Start/resume ${file.name} (fp=$uniqueFingerprint,md5=$md5)"
+                    )
 
                     val uploader: TusUploader = try {
                         val uploaderInstance = tusClient.resumeOrCreateUpload(upload)
@@ -217,13 +225,19 @@ class ImageUploadWorker @AssistedInject constructor(
                             specimenId = task.specimen.id,
                             sessionId = sessionId
                         )
-                        Log.d("ImageUploadWorker", "Connection established for ${task.image.localId}.")
+                        Log.d(
+                            "ImageUploadWorker",
+                            "Connection established for ${task.image.localId}."
+                        )
                         uploaderInstance
                     } catch (e: TusProtocolException) {
                         if (e.causingConnection?.responseCode == HttpURLConnection.HTTP_CONFLICT) {
                             val location = e.causingConnection.getHeaderField("Location")
                             if (location != null) {
-                                Log.i("ImageUploadWorker", "Upload for ${task.image.localId} already exists on server (conflict). Treating as success.")
+                                Log.i(
+                                    "ImageUploadWorker",
+                                    "Upload for ${task.image.localId} already exists on server (conflict). Treating as success."
+                                )
                                 specimenImageRepository.updateSpecimenImage(
                                     specimenImage = task.image.copy(imageUploadStatus = UploadStatus.COMPLETED),
                                     specimenId = task.specimen.id,
@@ -236,21 +250,28 @@ class ImageUploadWorker @AssistedInject constructor(
                         throw e
                     }
 
-                    val loopResult = executeUploadLoop(uploader, upload, file)
-                    when (loopResult) {
+                    when (val loopResult = executeUploadLoop(uploader, upload, file)) {
                         is DomainResult.Error -> loopResult
                         is DomainResult.Success -> {
                             when (val finalUrlResult = safeFinish(uploader, file)) {
                                 is DomainResult.Success -> {
-                                    Log.d("ImageUploadWorker", "Upload finished successfully: ${finalUrlResult.data}")
+                                    Log.d(
+                                        "ImageUploadWorker",
+                                        "Upload finished successfully: ${finalUrlResult.data}"
+                                    )
                                     DomainResult.Success(finalUrlResult.data.toString())
                                 }
+
                                 is DomainResult.Error -> finalUrlResult
                             }
                         }
                     }
                 } catch (e: TusProtocolException) {
-                    Log.w("ImageUploadWorker", "Attempt $attempt failed with TusProtocolException.", e)
+                    Log.w(
+                        "ImageUploadWorker",
+                        "Attempt $attempt failed with TusProtocolException.",
+                        e
+                    )
                     if (e.shouldRetry()) {
                         DomainResult.Error(NetworkError.TUS_TRANSIENT_ERROR)
                     } else {
@@ -264,12 +285,19 @@ class ImageUploadWorker @AssistedInject constructor(
                         file.delete()
                         throw CancellationException("Worker was stopped by the system.", e)
                     }
-                    Log.e("ImageUploadWorker", "Exception on attempt $attempt for specimen ${task.image.localId}.", e)
+                    Log.e(
+                        "ImageUploadWorker",
+                        "Exception on attempt $attempt for specimen ${task.image.localId}.",
+                        e
+                    )
                     return@run DomainResult.Error(NetworkError.UNKNOWN_ERROR)
                 }
 
                 if (result is DomainResult.Success) {
-                    Log.d("ImageUploadWorker", "Success for specimen ${task.image.localId} on attempt $attempt")
+                    Log.d(
+                        "ImageUploadWorker",
+                        "Success for specimen ${task.image.localId} on attempt $attempt"
+                    )
                     return@run result
                 }
 
@@ -281,9 +309,15 @@ class ImageUploadWorker @AssistedInject constructor(
 
                 if (result.error == NetworkError.TUS_PERMANENT_ERROR || attempt == MAX_RETRIES) {
                     if (result.error == NetworkError.TUS_PERMANENT_ERROR) {
-                        Log.e("ImageUploadWorker", "Permanent error for specimen ${task.image.localId}.")
+                        Log.e(
+                            "ImageUploadWorker",
+                            "Permanent error for specimen ${task.image.localId}."
+                        )
                     } else {
-                        Log.e("ImageUploadWorker", "Max retries reached for specimen ${task.image.localId}.")
+                        Log.e(
+                            "ImageUploadWorker",
+                            "Max retries reached for specimen ${task.image.localId}."
+                        )
                     }
                     return@run result
                 }
@@ -397,7 +431,10 @@ class ImageUploadWorker @AssistedInject constructor(
                     } catch (resumeException: Exception) {
                         if (isStopped) {
                             file.delete()
-                            throw CancellationException("Worker was stopped by the system.", resumeException)
+                            throw CancellationException(
+                                "Worker was stopped by the system.",
+                                resumeException
+                            )
                         }
                         Log.e("ImageUploadWorker", "Failed to resume upload.", resumeException)
                         return DomainResult.Error(NetworkError.UNKNOWN_ERROR)
@@ -444,7 +481,10 @@ class ImageUploadWorker @AssistedInject constructor(
             return@withContext Pair(destination, mimeType ?: "application/octet-stream")
         }
 
-    private suspend fun safeFinish(uploader: TusUploader, file: File): DomainResult<URL, NetworkError> =
+    private suspend fun safeFinish(
+        uploader: TusUploader,
+        file: File
+    ): DomainResult<URL, NetworkError> =
         withContext(Dispatchers.IO) {
             try {
                 uploader.finish()
