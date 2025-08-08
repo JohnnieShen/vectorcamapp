@@ -5,6 +5,7 @@ import android.graphics.Bitmap
 import android.os.Handler
 import android.os.HandlerThread
 import android.util.Log
+import com.vci.vectorcamapp.core.domain.model.results.ClassifierResult
 import com.vci.vectorcamapp.imaging.domain.SpecimenClassifier
 import org.opencv.android.Utils
 import org.opencv.core.Core
@@ -77,12 +78,13 @@ class TfLiteSpecimenClassifier(
 
     override fun getOutputTensorShape(): Int = outputNumClasses
 
-    override suspend fun classify(croppedBitmap: Bitmap): List<Float>? {
+    override suspend fun classify(croppedBitmap: Bitmap): ClassifierResult? {
         if (!isReady()) return null
 
         return suspendCoroutine { continuation ->
             handler.post {
                 try {
+                    val startTime = System.currentTimeMillis()
                     val inputMatrix = prepareInputMatrix(croppedBitmap)
 
                     val preprocessedMatrix = preprocessMatrix(inputMatrix)
@@ -116,14 +118,17 @@ class TfLiteSpecimenClassifier(
                         intArrayOf(1, outputNumClasses), DataType.FLOAT32
                     )
 
-                    val result = synchronized(classifierLock) {
+                    val logits = synchronized(classifierLock) {
                         if (!isReady()) return@post continuation.resume(null)
                         classifier?.run(inputTensor.buffer, outputTensor.buffer)
                         outputTensor.floatArray.toList()
                     }
 
-                    Log.d(TAG, "Inference result: $result")
-                    continuation.resume(result)
+                    Log.d(TAG, "Inference result: $logits")
+                    continuation.resume(ClassifierResult(
+                        logits = logits,
+                        inferenceDuration = System.currentTimeMillis() - startTime
+                    ))
                 } catch (e: Exception) {
                     Log.e(TAG, "Inference failed: ${e.message}")
                     continuation.resume(null)

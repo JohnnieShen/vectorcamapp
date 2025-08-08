@@ -14,7 +14,10 @@ fun InferenceResultEntity.toDomain() : InferenceResult {
         bboxClassId = this.bboxClassId,
         speciesLogits = this.speciesLogits,
         sexLogits = this.sexLogits,
-        abdomenStatusLogits = this.abdomenStatusLogits
+        abdomenStatusLogits = this.abdomenStatusLogits,
+        speciesInferenceDuration = this.speciesInferenceDuration,
+        sexInferenceDuration = this.sexInferenceDuration,
+        abdomenStatusInferenceDuration = this.abdomenStatusInferenceDuration
     )
 }
 
@@ -29,6 +32,9 @@ fun InferenceResult.toEntity(specimenImageId: String) : InferenceResultEntity {
         bboxClassId = this.bboxClassId,
         speciesLogits = this.speciesLogits,
         sexLogits = this.sexLogits,
-        abdomenStatusLogits = this.abdomenStatusLogits
+        abdomenStatusLogits = this.abdomenStatusLogits,
+        speciesInferenceDuration = this.speciesInferenceDuration,
+        sexInferenceDuration = this.sexInferenceDuration,
+        abdomenStatusInferenceDuration = this.abdomenStatusInferenceDuration
     )
 }

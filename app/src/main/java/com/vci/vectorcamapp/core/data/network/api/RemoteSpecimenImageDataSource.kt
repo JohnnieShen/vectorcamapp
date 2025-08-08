@@ -46,7 +46,10 @@ class RemoteSpecimenImageDataSource @Inject constructor(
                                 bboxClassId = it.bboxClassId,
                                 speciesLogits = it.speciesLogits,
                                 sexLogits = it.sexLogits,
-                                abdomenStatusLogits = it.abdomenStatusLogits
+                                abdomenStatusLogits = it.abdomenStatusLogits,
+                                speciesInferenceDuration = it.speciesInferenceDuration,
+                                sexInferenceDuration = it.sexInferenceDuration,
+                                abdomenStatusInferenceDuration = it.abdomenStatusInferenceDuration
                             )
                         }
                     )

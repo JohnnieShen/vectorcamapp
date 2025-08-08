@@ -1,5 +1,6 @@
 package com.vci.vectorcamapp.core.data.room.migrations
 
+import com.vci.vectorcamapp.core.data.room.migrations.versions.MIGRATION_10_11_ADD_INFERENCE_DURATION_COLUMNS
 import com.vci.vectorcamapp.core.data.room.migrations.versions.MIGRATION_1_2_CREATE_BOUNDING_BOX_TABLE
 import com.vci.vectorcamapp.core.data.room.migrations.versions.MIGRATION_2_3_CREATE_SURVEILLANCE_FORM_TABLE
 import com.vci.vectorcamapp.core.data.room.migrations.versions.MIGRATION_3_4_SCHEMA_V2
@@ -19,5 +20,6 @@ val ALL_MIGRATIONS = arrayOf(
     MIGRATION_6_7_BOUNDING_BOX_TO_INFERENCE_RESULT,
     MIGRATION_7_8_SPECIMEN_IMAGE_SEPARATION,
     MIGRATION_8_9_ADD_SESSION_TYPE_COLUMN,
-    MIGRATION_9_10_REFACTOR_SPECIMEN_IMAGE_AND_INFERENCE_RESULT_KEYS
+    MIGRATION_9_10_REFACTOR_SPECIMEN_IMAGE_AND_INFERENCE_RESULT_KEYS,
+    MIGRATION_10_11_ADD_INFERENCE_DURATION_COLUMNS
 )
