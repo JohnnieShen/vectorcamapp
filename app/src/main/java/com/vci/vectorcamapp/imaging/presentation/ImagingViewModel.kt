@@ -4,7 +4,6 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
-import android.view.OrientationEventListener
 import androidx.compose.material3.SnackbarDuration
 import androidx.lifecycle.viewModelScope
 import com.vci.vectorcamapp.core.data.room.TransactionHelper
@@ -77,15 +76,6 @@ class ImagingViewModel @Inject constructor(
             }
         }
 
-    private val orientationListener = object : OrientationEventListener(context) {
-        override fun onOrientationChanged(displayOrientation: Int) {
-            val currentRotation = _state.value.displayOrientation
-            if (currentRotation != displayOrientation) {
-                _state.update { it.copy(displayOrientation = displayOrientation) }
-            }
-        }
-    }
-
     private val _state = MutableStateFlow(ImagingState())
     val state: StateFlow<ImagingState> = combine(
         _specimensWithImagesAndInferenceResults, _state
@@ -152,8 +142,7 @@ class ImagingViewModel @Inject constructor(
                     }
 
                     try {
-                        val displayOrientation = _state.value.displayOrientation
-                        val bitmap = action.frame.toUprightBitmap(displayOrientation)
+                        val bitmap = action.frame.toUprightBitmap()
 
                         val liveFrameProcessingResult = imagingWorkflow.processLiveFrame(bitmap)
                         validateSpecimenIdUseCase(
@@ -209,8 +198,7 @@ class ImagingViewModel @Inject constructor(
                     val captureResult = cameraRepository.captureImage(action.controller)
 
                     captureResult.onSuccess { image ->
-                        val displayOrientation = _state.value.displayOrientation
-                        val bitmap = image.toUprightBitmap(displayOrientation)
+                        val bitmap = image.toUprightBitmap()
                         image.close()
 
                         val jpegStream = ByteArrayOutputStream()
@@ -381,7 +369,6 @@ class ImagingViewModel @Inject constructor(
 
     private fun loadImagingDetails() {
         viewModelScope.launch {
-            orientationListener.enable()
             val session = currentSessionCache.getSession()
             if (session != null) {
                 imagingWorkflow = imagingWorkflowFactory.create(session.type)
@@ -394,8 +381,6 @@ class ImagingViewModel @Inject constructor(
 
     override fun onCleared() {
         super.onCleared()
-
-        orientationListener.disable()
         imagingWorkflow.close()
     }
 }
