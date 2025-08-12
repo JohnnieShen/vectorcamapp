@@ -61,39 +61,56 @@ object RoomDatabaseModule {
                         programs.forEach { program ->
                             db.execSQL(
                                 """
-                                    INSERT INTO program (id, name, country) 
-                                    VALUES (?, ?, ?)
-                                    ON CONFLICT (id) DO UPDATE SET
-                                        name = excluded.name,
-                                        country = excluded.country
-                                    WHERE
-                                        name != excluded.name OR
-                                        country != excluded.country
+                                    INSERT OR IGNORE INTO `program` (`id`, `name`, `country`) VALUES (?, ?, ?)
                                 """.trimIndent(), arrayOf(program.id, program.name, program.country)
+                            )
+
+                            db.execSQL(
+                                """
+                                    UPDATE `program`
+                                        SET `name` = ?, `country` = ?
+                                    WHERE `id` = ?
+                                        AND (`name` != ? OR `country` != ?)
+                                """.trimIndent(), arrayOf(
+                                    program.name,
+                                    program.country,
+                                    program.id,
+                                    program.name,
+                                    program.country
+                                )
                             )
                         }
 
                         sites.forEach { site ->
                             db.execSQL(
                                 """
-                                    INSERT INTO site (id, programId, district, subCounty, parish, sentinelSite, healthCenter)
+                                    INSERT OR IGNORE INTO `site` 
+                                        (`id`, `programId`, `district`, `subCounty`, `parish`, `sentinelSite`, `healthCenter`) 
                                     VALUES (?, ?, ?, ?, ?, ?, ?)
-                                    ON CONFLICT (id) DO UPDATE SET
-                                        programId = excluded.programId,
-                                        district = excluded.district,
-                                        subCounty = excluded.subCounty,
-                                        parish = excluded.parish,
-                                        sentinelSite = excluded.sentinelSite,
-                                        healthCenter = excluded.healthCenter
-                                    WHERE
-                                        programId != excluded.programId OR
-                                        district != excluded.district OR
-                                        subCounty != excluded.subCounty OR
-                                        parish != excluded.parish OR
-                                        sentinelSite != excluded.sentinelSite OR
-                                        healthCenter != excluded.healthCenter
-                                """.trimIndent(),
-                                arrayOf(
+                                """.trimIndent(), arrayOf(
+                                    site.id,
+                                    site.programId,
+                                    site.district,
+                                    site.subCounty,
+                                    site.parish,
+                                    site.sentinelSite,
+                                    site.healthCenter
+                                )
+                            )
+
+                            db.execSQL(
+                                """
+                                    UPDATE `site`
+                                        SET `programId` = ?, `district` = ?, `subCounty` = ?, `parish` = ?, `sentinelSite` = ?, `healthCenter` = ?
+                                    WHERE `id` = ?
+                                        AND (`programId` != ? OR `district` != ? OR `subCounty` != ? OR `parish` != ? OR `sentinelSite` != ? OR `healthCenter` != ?)
+                                """.trimIndent(), arrayOf(
+                                    site.programId,
+                                    site.district,
+                                    site.subCounty,
+                                    site.parish,
+                                    site.sentinelSite,
+                                    site.healthCenter,
                                     site.id,
                                     site.programId,
                                     site.district,
