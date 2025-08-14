@@ -1,6 +1,5 @@
 package com.vci.vectorcamapp.imaging.presentation
 
-import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
@@ -28,7 +27,6 @@ import com.vci.vectorcamapp.imaging.domain.use_cases.ValidateSpecimenIdUseCase
 import com.vci.vectorcamapp.imaging.domain.util.ImagingError
 import com.vci.vectorcamapp.imaging.presentation.extensions.toUprightBitmap
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -47,7 +45,6 @@ import javax.inject.Inject
 
 @HiltViewModel
 class ImagingViewModel @Inject constructor(
-    @ApplicationContext private val context: Context,
     private val currentSessionCache: CurrentSessionCache,
     private val sessionRepository: SessionRepository,
     private val specimenRepository: SpecimenRepository,

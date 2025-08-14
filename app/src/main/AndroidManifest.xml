@@ -66,10 +66,15 @@
         <meta-data
             android:name="io.sentry.traces.user-interaction.enable"
             android:value="true" />
+        <meta-data
+            android:name="io.sentry.breadcrumbs.user-interaction"
+            android:value="true" />
+
         <!-- enable screenshot for crashes (could contain sensitive/PII data) -->
         <meta-data
             android:name="io.sentry.attach-screenshot"
             android:value="true" />
+
         <!-- enable view hierarchy for crashes -->
         <meta-data
             android:name="io.sentry.attach-view-hierarchy"
