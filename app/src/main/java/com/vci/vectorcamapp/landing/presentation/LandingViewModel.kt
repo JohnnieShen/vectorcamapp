@@ -8,6 +8,7 @@ import com.vci.vectorcamapp.core.domain.repository.ProgramRepository
 import com.vci.vectorcamapp.core.domain.repository.SessionRepository
 import com.vci.vectorcamapp.core.presentation.CoreViewModel
 import com.vci.vectorcamapp.landing.domain.util.LandingError
+import com.vci.vectorcamapp.landing.logging.LandingSentryLogger
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -74,6 +75,7 @@ class LandingViewModel @Inject constructor(
                     val session = currentSessionCache.getSession()
                     if (session == null) {
                         emitError(LandingError.SESSION_NOT_FOUND)
+                        LandingSentryLogger.logSessionNotFound(Exception(LandingError.SESSION_NOT_FOUND.name))
                         return@launch
                     }
 
@@ -95,15 +97,19 @@ class LandingViewModel @Inject constructor(
 
             val programId = deviceCache.getProgramId()
             if (programId == null) {
+                emitError(LandingError.PROGRAM_NOT_FOUND)
                 _events.send(LandingEvent.NavigateBackToRegistrationScreen)
                 _state.update { it.copy(isLoading = false) }
+                LandingSentryLogger.logProgramIdNotFound(Exception(LandingError.PROGRAM_NOT_FOUND.name))
                 return@launch
             }
 
             val program = programRepository.getProgramById(programId)
             if (program == null) {
+                emitError(LandingError.PROGRAM_NOT_FOUND)
                 _events.send(LandingEvent.NavigateBackToRegistrationScreen)
                 _state.update { it.copy(isLoading = false) }
+                LandingSentryLogger.logProgramNotFound(Exception(LandingError.PROGRAM_NOT_FOUND.name), programId)
                 return@launch
             }
 

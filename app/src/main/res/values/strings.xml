@@ -130,6 +130,9 @@
     <!-- Main error: Unknown error -->
     <string name="main_error_unknown_error">An unknown error occurred. Please try again or contact support if the issue persists.</string>
 
+    <!-- Landing error: Program not found -->
+    <string name="landing_error_program_not_found">Unable to find a valid program for this device.</string>
+
     <!-- Landing error: Session not found -->
     <string name="landing_error_session_not_found">Unable to find a saved session. Please start a new one.</string>
 

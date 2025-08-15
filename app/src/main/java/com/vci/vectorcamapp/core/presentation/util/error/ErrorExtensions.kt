@@ -79,6 +79,7 @@ fun Error.toString(context: Context): String {
         }
 
         is LandingError -> when (this) {
+            LandingError.PROGRAM_NOT_FOUND -> R.string.landing_error_program_not_found
             LandingError.SESSION_NOT_FOUND -> R.string.landing_error_session_not_found
         }
 
