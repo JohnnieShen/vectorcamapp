@@ -8,6 +8,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import com.vci.vectorcamapp.ui.extensions.colors
 import com.vci.vectorcamapp.ui.extensions.dimensions
 
@@ -15,9 +16,14 @@ import com.vci.vectorcamapp.ui.extensions.dimensions
 fun LandingSection(
     title: String,
     modifier: Modifier = Modifier,
+    testTag: String? = null,
     content: @Composable ColumnScope.() -> Unit
 ) {
-    Column(modifier = modifier.fillMaxWidth()) {
+    Column(
+        modifier = modifier
+            .then(if (testTag != null) Modifier.testTag(testTag) else Modifier)
+            .fillMaxWidth()
+    ) {
         Text(
             text = title,
             style = MaterialTheme.typography.titleLarge,
