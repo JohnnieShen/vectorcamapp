@@ -65,8 +65,7 @@ class MainViewModel @Inject constructor(
                 .catch { throwable ->
                     emitError(MainError.DEVICE_FETCH_FAILED)
                     _state.update { it.copy(startDestination = Destination.Registration) }
-
-                    MainSentryLogger.deviceFetchFailure(Exception(MainError.DEVICE_FETCH_FAILED.name, throwable))
+                    MainSentryLogger.logDeviceFetchFailure(Exception(MainError.DEVICE_FETCH_FAILED.name, throwable))
                 }
                 .onEach { programId ->
                     if (programId != -1 && _state.value.startDestination != Destination.Landing) {

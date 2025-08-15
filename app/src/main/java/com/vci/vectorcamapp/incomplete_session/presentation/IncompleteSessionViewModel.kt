@@ -5,6 +5,7 @@ import com.vci.vectorcamapp.core.domain.cache.CurrentSessionCache
 import com.vci.vectorcamapp.core.domain.repository.SessionRepository
 import com.vci.vectorcamapp.core.presentation.CoreViewModel
 import com.vci.vectorcamapp.incomplete_session.domain.util.IncompleteSessionError
+import com.vci.vectorcamapp.incomplete_session.logging.IncompleteSessionSentryLogger
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -44,9 +45,11 @@ class IncompleteSessionViewModel @Inject constructor(
                             _events.send(IncompleteSessionEvent.NavigateToIntakeScreen(sessionAndSite.session.type))
                         } else {
                             emitError(IncompleteSessionError.SESSION_NOT_FOUND)
+                            IncompleteSessionSentryLogger.logSessionNotFound(Exception(IncompleteSessionError.SESSION_NOT_FOUND.name), action.sessionId)
                         }
                     } catch (e: Exception) {
                         emitError(IncompleteSessionError.SESSION_RETRIEVAL_FAILED)
+                        IncompleteSessionSentryLogger.logSessionRetrievalFailure(Exception(IncompleteSessionError.SESSION_RETRIEVAL_FAILED.name, e), action.sessionId)
                     }
                 }
 

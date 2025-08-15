@@ -27,7 +27,7 @@ class VectorCamApp : Application(), Configuration.Provider {
         try {
             OpenCVLoader.initLocal()
         } catch (e: Exception) {
-            MainSentryLogger.openCvInitFailure(e)
+            MainSentryLogger.logOpenCvInitFailure(e)
         }
 
         try {
@@ -48,7 +48,7 @@ class VectorCamApp : Application(), Configuration.Provider {
 
             PostHogAndroid.setup(this, postHogConfig)
         } catch (e: Exception) {
-            MainSentryLogger.postHogInitFailure(e)
+            MainSentryLogger.logPostHogInitFailure(e)
         }
     }
 }

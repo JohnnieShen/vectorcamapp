@@ -2,11 +2,10 @@ package com.vci.vectorcamapp.main.logging
 
 import com.vci.vectorcamapp.core.logging.Crashy
 import com.vci.vectorcamapp.core.logging.CrashyContext
-import io.sentry.SentryLevel
 
 object MainSentryLogger {
 
-    fun openCvInitFailure(e: Throwable) {
+    fun logOpenCvInitFailure(e: Throwable) {
         Crashy.exception(
             throwable = e,
             context = CrashyContext(
@@ -25,7 +24,7 @@ object MainSentryLogger {
         )
     }
 
-    fun postHogInitFailure(e: Throwable) {
+    fun logPostHogInitFailure(e: Throwable) {
         Crashy.exception(
             throwable = e,
             context = CrashyContext(
@@ -44,7 +43,7 @@ object MainSentryLogger {
         )
     }
 
-    fun deviceFetchFailure(e: Throwable) {
+    fun logDeviceFetchFailure(e: Throwable) {
         Crashy.exception(
             throwable = e,
             context = CrashyContext(
@@ -53,7 +52,7 @@ object MainSentryLogger {
                 action = "observe_program_id"
             ),
             tags = mapOf(
-                "error_type" to "device_cache_failure",
+                "error_type" to "device_fetch_failure",
                 "critical" to "true",
                 "phase" to "startup",
             ),
