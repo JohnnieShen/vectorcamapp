@@ -18,19 +18,26 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -47,21 +54,12 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.vci.vectorcamapp.R
 import com.vci.vectorcamapp.core.presentation.components.button.ActionButton
 import com.vci.vectorcamapp.core.presentation.components.empty.EmptySpace
-import com.vci.vectorcamapp.core.presentation.components.form.TextEntryField
 import com.vci.vectorcamapp.core.presentation.components.tile.InfoTile
 import com.vci.vectorcamapp.imaging.presentation.components.camera.LiveCameraPreview
 import com.vci.vectorcamapp.imaging.presentation.components.specimen.CapturedSpecimenTile
 import com.vci.vectorcamapp.ui.extensions.colors
 import com.vci.vectorcamapp.ui.extensions.dimensions
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.TextButton
 import com.vci.vectorcamapp.ui.theme.VectorcamappTheme
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.itemsIndexed
 
 @Composable
 fun ImagingScreen(
@@ -117,7 +115,9 @@ fun ImagingScreen(
                     Row(
                         horizontalArrangement = Arrangement.SpaceEvenly,
                         verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.padding(vertical = MaterialTheme.dimensions.paddingMedium).fillMaxWidth()
+                        modifier = Modifier
+                            .padding(vertical = MaterialTheme.dimensions.paddingMedium)
+                            .fillMaxWidth()
                     ) {
                         if (page > 0) {
                             Icon(
@@ -157,8 +157,9 @@ fun ImagingScreen(
                                 .size(MaterialTheme.dimensions.iconSizeLarge))
                     }
 
-                    LazyColumn (modifier = Modifier.fillMaxHeight()) {
-                        val imageList = state.specimensWithImagesAndInferenceResults[page].specimenImagesAndInferenceResults
+                    LazyColumn(modifier = Modifier.fillMaxHeight()) {
+                        val imageList =
+                            state.specimensWithImagesAndInferenceResults[page].specimenImagesAndInferenceResults
                         itemsIndexed(imageList) { index, (specimenImage, inferenceResult) ->
                             CapturedSpecimenTile(
                                 specimen = state.specimensWithImagesAndInferenceResults[page].specimen,
@@ -266,8 +267,17 @@ fun ImagingScreen(
                         }, confirmButton = {
                             if (state.pendingAction == null) {
                                 OutlinedButton(
-                                    onClick = { onAction(ImagingAction.SelectPendingAction(ImagingAction.SubmitSession)) },
-                                    border = BorderStroke(MaterialTheme.dimensions.borderThicknessThick, MaterialTheme.colors.successConfirm)
+                                    onClick = {
+                                        onAction(
+                                            ImagingAction.SelectPendingAction(
+                                                ImagingAction.SubmitSession
+                                            )
+                                        )
+                                    },
+                                    border = BorderStroke(
+                                        MaterialTheme.dimensions.borderThicknessThick,
+                                        MaterialTheme.colors.successConfirm
+                                    )
                                 ) {
                                     Icon(
                                         painter = painterResource(id = R.drawable.ic_cloud_upload),
@@ -301,8 +311,17 @@ fun ImagingScreen(
                         }, dismissButton = {
                             if (state.pendingAction == null) {
                                 OutlinedButton(
-                                    onClick = { onAction(ImagingAction.SelectPendingAction(ImagingAction.SaveSessionProgress)) },
-                                    border = BorderStroke(MaterialTheme.dimensions.borderThicknessThick, MaterialTheme.colors.info)
+                                    onClick = {
+                                        onAction(
+                                            ImagingAction.SelectPendingAction(
+                                                ImagingAction.SaveSessionProgress
+                                            )
+                                        )
+                                    },
+                                    border = BorderStroke(
+                                        MaterialTheme.dimensions.borderThicknessThick,
+                                        MaterialTheme.colors.info
+                                    )
                                 ) {
                                     Icon(
                                         painter = painterResource(id = R.drawable.ic_save),
@@ -365,6 +384,7 @@ fun ImagingScreen(
                                 manualFocusPoint = state.manualFocusPoint,
                                 onEnableManualFocus = { onAction(ImagingAction.ManualFocusAt(it)) },
                                 onCancelManualFocus = { onAction(ImagingAction.CancelManualFocus) },
+                                isProcessing = state.isProcessing
                             )
 
                             ActionButton(
