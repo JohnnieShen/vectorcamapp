@@ -31,7 +31,8 @@ class CameraRepositoryImplementation @Inject constructor(
     override suspend fun captureImage(controller: LifecycleCameraController): Result<ImageProxy, ImagingError> {
         return suspendCoroutine { continuation ->
             controller.takePicture(
-                ContextCompat.getMainExecutor(context), object : OnImageCapturedCallback() {
+                ContextCompat.getMainExecutor(context),
+                object : OnImageCapturedCallback() {
                     override fun onCaptureSuccess(image: ImageProxy) {
                         super.onCaptureSuccess(image)
                         continuation.resume(Result.Success(image))

@@ -167,11 +167,11 @@ dependencies {
     // Open CV Library
     implementation(libs.opencv)
 
-    // TensorFlow Lite Library
-    implementation(libs.tensorflow.lite)
-    implementation(libs.tensorflow.lite.support)
-    implementation(libs.tensorflow.lite.gpu)
-    implementation(libs.tensorflow.lite.gpu.api)
+    // LiteRT Library
+    implementation(libs.litert)
+    implementation(libs.litert.gpu)
+    implementation(libs.litert.gpu.api)
+    implementation(libs.litert.support)
 
     // Room Database Dependencies
     implementation(libs.androidx.room.runtime)

@@ -25,8 +25,7 @@ playServicesLocation = "21.3.0"
 posthogAndroid = "3.19.0"
 room = "2.7.1"
 sentry = "5.7.0"
-tensorflowLite = "2.16.1"
-tensorflowLiteSupport = "0.4.4"
+litert = "1.4.0"
 textRecognition = "16.0.1"
 truth = "1.4.4"
 turbine = "1.2.1"
@@ -92,15 +91,15 @@ mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
 opencv = { module = "org.opencv:opencv", version.ref = "opencv" }
 play-services-location = { module = "com.google.android.gms:play-services-location", version.ref = "playServicesLocation" }
 posthog-android = { module = "com.posthog:posthog-android", version.ref = "posthogAndroid" }
-tensorflow-lite = { module = "org.tensorflow:tensorflow-lite", version.ref = "tensorflowLite" }
-tensorflow-lite-gpu = { module = "org.tensorflow:tensorflow-lite-gpu", version.ref = "tensorflowLite" }
-tensorflow-lite-gpu-api = { module = "org.tensorflow:tensorflow-lite-gpu-api", version.ref = "tensorflowLite" }
-tensorflow-lite-support = { module = "org.tensorflow:tensorflow-lite-support", version.ref = "tensorflowLiteSupport" }
 text-recognition = { module = "com.google.mlkit:text-recognition", version.ref = "textRecognition" }
 truth = { module = "com.google.truth:truth", version.ref = "truth" }
 turbine = { module = "app.cash.turbine:turbine", version.ref = "turbine" }
 tus-android-client = { module = "io.tus.android.client:tus-android-client", version.ref = "tusAndroidClient" }
 tus-java-client = { module = "io.tus.java.client:tus-java-client", version.ref = "tusJavaClient" }
+litert = { module = "com.google.ai.edge.litert:litert", version.ref = "litert" }
+litert-gpu = { module = "com.google.ai.edge.litert:litert-gpu", version.ref = "litert" }
+litert-gpu-api = { module = "com.google.ai.edge.litert:litert-gpu-api", version.ref = "litert" }
+litert-support = { group = "com.google.ai.edge.litert", name = "litert-support", version.ref = "litert" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
