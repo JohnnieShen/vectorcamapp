@@ -22,9 +22,7 @@ fun BoundingBoxOverlay(
     val density = LocalDensity.current
     val strokeWidth = with(density) { MaterialTheme.dimensions.borderThicknessThick.toPx() }
 
-    // Extract colors in Composable context
-    val highConfidenceColor = MaterialTheme.colors.successConfirm
-    val lowConfidenceColor = MaterialTheme.colors.warning
+    val boxColor = MaterialTheme.colors.successConfirm
 
     Canvas(modifier = modifier) {
         val topLeft = Offset(
@@ -37,7 +35,7 @@ fun BoundingBoxOverlay(
         )
         
         drawRect(
-            color = if (inferenceResult.bboxConfidence > 0.9f) highConfidenceColor else lowConfidenceColor,
+            color = boxColor,
             topLeft = topLeft,
             size = boxSize,
             style = Stroke(width = strokeWidth)
