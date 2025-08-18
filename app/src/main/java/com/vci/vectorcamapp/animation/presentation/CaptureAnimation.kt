@@ -34,80 +34,94 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.dp
+import com.vci.vectorcamapp.ui.extensions.colors
+import com.vci.vectorcamapp.ui.extensions.dimensions
 import kotlin.math.min
 import kotlin.math.sin
+
+private const val DURATION_MS = 1600
+private const val FADE_IN_MS = 250
+private const val FADE_OUT_MS = 400
+
+private const val PULSE_FREQ = 4.0
+private const val PULSE_AMP = 0.10
 
 @Composable
 fun CaptureAnimation(
     modifier: Modifier = Modifier, isVisible: Boolean = true
 ) {
     AnimatedVisibility(
-        visible = isVisible, enter = fadeIn(tween(250)), exit = fadeOut(tween(400))
+        visible = isVisible,
+        enter = fadeIn(tween(FADE_IN_MS)),
+        exit = fadeOut(tween(FADE_OUT_MS))
     ) {
-        // 1) Time base (single float)
-        val t by rememberInfiniteTransition(label = "cap").animateFloat(
-            initialValue = 0f, targetValue = 1f, animationSpec = infiniteRepeatable(
-                animation = tween(1600, easing = LinearEasing), repeatMode = RepeatMode.Restart
-            ), label = "scan"
+        val infiniteTransition = rememberInfiniteTransition(label = "capture_transition")
+        val t by infiniteTransition.animateFloat(
+            initialValue = 0f,
+            targetValue = 1f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(DURATION_MS, easing = LinearEasing),
+                repeatMode = RepeatMode.Restart
+            ),
+            label = "scan_progress"
         )
 
-        // 2) Constants / cached brushes
-        val scanColor = Color(0xFF00FF7F)
-        val overlay = Color(0x80000000)           // 50% black
-        val cornerColor = Color.White.copy(0.7f)
-        val lineBrush = remember {
-            Brush.horizontalGradient(
-                listOf(Color.Transparent, scanColor, Color.Transparent)
-            )
-        }
+        val scannerHeight = MaterialTheme.dimensions.scannerLineHeight
+        val cornerLength = MaterialTheme.dimensions.cornerLength
+        val cornerStroke = MaterialTheme.dimensions.cornerStroke
+        val cornerColor = MaterialTheme.colors.animationCornerColor
 
         val density = LocalDensity.current
-        val lineHpx = with(density) { 3.dp.toPx() }
-        val cornerLen = with(density) { 24.dp.toPx() }
-        val strokePx = with(density) { 2.dp.toPx() }
+        val (lineHpx, cornerLenPx, strokePx) = remember(density) {
+            with(density) {
+                Triple(
+                    scannerHeight.toPx(),
+                    cornerLength.toPx(),
+                    cornerStroke.toPx()
+                )
+            }
+        }
 
         var containerHeightPx by remember { mutableIntStateOf(0) }
 
-        Box(
-            modifier
+        Box(modifier
                 .fillMaxSize()
-                .onSizeChanged { containerHeightPx = it.height } // used for translationY
+                .onSizeChanged { containerHeightPx = it.height }
         ) {
-            // A) Static dim overlay
-            Box(
-                Modifier
+            Box(Modifier
                     .matchParentSize()
-                    .background(overlay)
+                    .background(MaterialTheme.colors.animationOverlayColor)
             )
 
-            // B) Static corner frame (drawn once by the renderer)
-            Box(
-                Modifier
+            Box(Modifier
                     .matchParentSize()
                     .drawWithCache {
                         val w = size.width
                         val h = size.height
                         val inset = min(w, h) * 0.15f
-                        onDrawBehind { drawCorners(cornerColor, w, h, inset, cornerLen, strokePx) }
-                    })
+                        onDrawBehind {
+                            drawCorners(cornerColor.copy(0.7f), w, h, inset, cornerLenPx, strokePx)
+                        }
+                    }
+            )
 
-            // C) Scanning line (GPU translated, no repaint of background)
             Box(Modifier
-                .fillMaxWidth()
-                .height(3.dp)
-                .graphicsLayer {
-                    // translation in pixels; keep within bounds
-                    translationY = (t * (containerHeightPx - lineHpx)).coerceAtLeast(0f)
-                }
-                .background(lineBrush))
+                    .fillMaxWidth()
+                    .height(MaterialTheme.dimensions.scannerLineHeight)
+                    .graphicsLayer {
+                        translationY = (t * (containerHeightPx - lineHpx)).coerceAtLeast(0f)
+                    }
+                    .background(Brush.horizontalGradient(
+                        listOf(Color.Transparent, MaterialTheme.colors.animationScanColor, Color.Transparent)
+                    ))
+            )
 
-            // D) Subtle pulse (GPU alpha only)
-            val pulseAlpha = ((sin(t * Math.PI * 4) * 0.10) + 0.10).toFloat()
+            val pulseAlpha = (sin(t * Math.PI * PULSE_FREQ) * PULSE_AMP + PULSE_AMP).toFloat()
             Box(Modifier
-                .matchParentSize()
-                .graphicsLayer { alpha = pulseAlpha }
-                .background(scanColor))
+                    .matchParentSize()
+                    .graphicsLayer { alpha = pulseAlpha }
+                    .background(MaterialTheme.colors.animationScanColor)
+            )
 
             Text(
                 text = "Capturing… Hold Still",
@@ -117,7 +131,7 @@ fun CaptureAnimation(
                 textAlign = TextAlign.Center,
                 modifier = Modifier
                     .align(Alignment.Center)
-                    .padding(24.dp)
+                    .padding(MaterialTheme.dimensions.paddingLarge)
             )
         }
     }

@@ -63,7 +63,12 @@ data class Dimensions(
     val lineHeightLarge: Dp = 32.dp,
 
     // Aspect Ratio Height to Width
-    val aspectRatio: Float = 4f / 3f
+    val aspectRatio: Float = 4f / 3f,
+
+    // Capture Animation Parameters
+    val scannerLineHeight: Dp = 3.dp,
+    val cornerLength: Dp = 24.dp,
+    val cornerStroke: Dp = 2.dp
 )
 
 val LocalDimensions = staticCompositionLocalOf { Dimensions() }
