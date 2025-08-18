@@ -63,13 +63,17 @@ class MetadataUploadWorker @AssistedInject constructor(
     private val specimenImageDataSource: SpecimenImageDataSource
 ) : CoroutineWorker(context, workerParams) {
 
+    companion object {
+        const val MAX_RETRIES = 5
+        const val CHANNEL_ID = "metadata_upload_channel"
+        const val CHANNEL_NAME = "Metadata Upload Channel"
+    }
+
+    private var notificationId = 1001
     private val notificationManager: NotificationManager =
         context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
     override suspend fun doWork(): WorkerResult {
-        createNotificationChannel()
-        setForeground(showInitialMetadataNotification())
-
         val localSessionIdString = inputData.getString("session_id")
         val localSiteId = inputData.getInt("site_id", -1)
         if (localSessionIdString == null || localSiteId == -1) {
@@ -88,6 +92,10 @@ class MetadataUploadWorker @AssistedInject constructor(
         if (localSession == null || localDevice == null || localProgramId == null) {
             return retryOrFailure("Device or session not found.")
         }
+
+        createNotificationChannel()
+        notificationId = localSessionId.hashCode()
+        setForeground(showInitialMetadataNotification())
 
         try {
             val syncedDevice =
@@ -625,7 +633,7 @@ class MetadataUploadWorker @AssistedInject constructor(
             .setSmallIcon(R.drawable.ic_cloud_upload).setOngoing(true).build()
 
         return ForegroundInfo(
-            NOTIFICATION_ID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC
+            notificationId, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC
         )
     }
 
@@ -648,7 +656,7 @@ class MetadataUploadWorker @AssistedInject constructor(
             ).setSmallIcon(R.drawable.ic_cloud_upload)
             .setProgress(totalSpecimens, currentSpecimenIndex + 1, false).setOngoing(true).build()
 
-        notificationManager.notify(NOTIFICATION_ID, notification)
+        notificationManager.notify(notificationId, notification)
     }
 
     private fun showUploadRetryNotification(message: String) {
@@ -656,7 +664,7 @@ class MetadataUploadWorker @AssistedInject constructor(
             NotificationCompat.Builder(context, CHANNEL_ID).setContentTitle("Retrying upload...")
                 .setContentText(message).setSmallIcon(R.drawable.ic_error).build()
 
-        notificationManager.notify(NOTIFICATION_ID, notification)
+        notificationManager.notify(notificationId, notification)
     }
 
     private fun showUploadErrorNotification(message: String) {
@@ -664,13 +672,6 @@ class MetadataUploadWorker @AssistedInject constructor(
             NotificationCompat.Builder(context, CHANNEL_ID).setContentTitle("Upload failed")
                 .setContentText(message).setSmallIcon(R.drawable.ic_error).build()
 
-        notificationManager.notify(NOTIFICATION_ID, notification)
-    }
-
-    companion object {
-        const val MAX_RETRIES = 5
-        const val CHANNEL_ID = "metadata_upload_channel"
-        const val CHANNEL_NAME = "Metadata Upload Channel"
-        const val NOTIFICATION_ID = 1002
+        notificationManager.notify(notificationId, notification)
     }
 }

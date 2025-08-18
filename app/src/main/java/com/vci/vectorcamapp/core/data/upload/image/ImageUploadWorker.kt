@@ -72,12 +72,12 @@ class ImageUploadWorker @AssistedInject constructor(
 
         private const val CHANNEL_ID = "image_upload_channel"
         private const val CHANNEL_NAME = "Image Upload Channel"
-        private const val NOTIFICATION_ID = 1001
     }
 
     private val notificationManager =
         context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
+    private var notificationId: Int = 1002
     private var notificationSessionTitle: String = ""
     private var notificationTotalImages: Int = 0
     private var notificationCurrentImageIndex: Int = 0
@@ -85,7 +85,6 @@ class ImageUploadWorker @AssistedInject constructor(
     private val dateFormatter = SimpleDateFormat("MMMM dd, yyyy", Locale.getDefault())
 
     override suspend fun doWork(): WorkerResult {
-        createNotificationChannel()
         val sessionIdStr = inputData.getString(KEY_SESSION_ID)
         if (sessionIdStr == null) {
             Log.e("ImageUploadWorker", "Session ID missing from worker input data.")
@@ -105,9 +104,6 @@ class ImageUploadWorker @AssistedInject constructor(
             return WorkerResult.failure()
         }
 
-        val sessionDateStr = dateFormatter.format(Date(session.createdAt))
-        notificationSessionTitle = "Session from $sessionDateStr"
-
         val specimensWithImages =
             specimenRepository.getSpecimenImagesAndInferenceResultsBySession(sessionId)
 
@@ -124,6 +120,10 @@ class ImageUploadWorker @AssistedInject constructor(
             return WorkerResult.success()
         }
 
+        createNotificationChannel()
+        val sessionDateStr = dateFormatter.format(Date(session.createdAt))
+        notificationSessionTitle = "Session from $sessionDateStr"
+        notificationId = sessionId.hashCode()
         setForeground(showInitialSessionNotification(imagesToUpload.size))
 
         var successfulUploads = 0
@@ -525,7 +525,7 @@ class ImageUploadWorker @AssistedInject constructor(
             .setOngoing(true)
             .build()
         return ForegroundInfo(
-            NOTIFICATION_ID,
+            notificationId,
             notification,
             ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC
         )
@@ -542,7 +542,7 @@ class ImageUploadWorker @AssistedInject constructor(
             .setProgress(notificationTotalImages, filesCompleted, false)
             .setOngoing(true)
             .build()
-        notificationManager.notify(NOTIFICATION_ID, notification)
+        notificationManager.notify(notificationId, notification)
     }
 
     private fun showFinalStatusNotification(successful: Int, total: Int) {
@@ -555,6 +555,6 @@ class ImageUploadWorker @AssistedInject constructor(
             .setContentText(message)
             .setSmallIcon(icon)
             .build()
-        notificationManager.notify(NOTIFICATION_ID, notification)
+        notificationManager.notify(notificationId, notification)
     }
 }
