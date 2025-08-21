@@ -1,0 +1,63 @@
+name: Release Build - Uganda
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-and-sign-uganda:
+    name: Build and Sign for Uganda
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x ./gradlew
+
+      - name: Restore secrets.properties
+        run: echo "${{ secrets.SECRETS_PROPERTIES }}" | base64 --decode > secrets.properties
+
+      - name: Build Release AAB
+        run: ./gradlew bundleRelease -Pregion=uganda
+
+      - name: Sign AAB
+        id: sign_aab
+        uses: r0adkll/sign-android-release@v1
+        with:
+          releaseDirectory: app/build/outputs/bundle/release
+          signingKeyBase64: ${{ secrets.SIGNING_KEY_UGANDA }}
+          alias: ${{ secrets.KEY_ALIAS_UGANDA }}
+          keyStorePassword: ${{ secrets.KEY_STORE_PASSWORD_UGANDA }}
+          keyPassword: ${{ secrets.KEY_PASSWORD_UGANDA }}
+
+      - name: Upload Signed AAB
+        uses: actions/upload-artifact@v4
+        with:
+          name: VectorCam-uganda.aab
+          path: ${{ steps.sign_aab.outputs.signedReleaseFile }}
+
+      - name: Build Release APK
+        run: ./gradlew assembleRelease -Pregion=uganda
+
+      - name: Sign APK
+        id: sign_apk
+        uses: r0adkll/sign-android-release@v1
+        with:
+          releaseDirectory: app/build/outputs/apk/release
+          signingKeyBase64: ${{ secrets.SIGNING_KEY_UGANDA }}
+          alias: ${{ secrets.KEY_ALIAS_UGANDA }}
+          keyStorePassword: ${{ secrets.KEY_STORE_PASSWORD_UGANDA }}
+          keyPassword: ${{ secrets.KEY_PASSWORD_UGANDA }}
+
+      - name: Upload Signed APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: VectorCam-uganda.apk
+          path: ${{ steps.sign_apk.outputs.signedReleaseFile }}
