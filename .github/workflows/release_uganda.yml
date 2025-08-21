@@ -1,0 +1,76 @@
+name: Release Build - Uganda
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-and-sign-uganda:
+    name: Build and Sign for Uganda
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x ./gradlew
+
+      - name: Setup build tool version variable
+        shell: bash
+        run: |
+          BUILD_TOOL_VERSION=$(ls /usr/local/lib/android/sdk/build-tools/ | tail -n 1)
+          echo "BUILD_TOOL_VERSION=$BUILD_TOOL_VERSION" >> $GITHUB_ENV
+          echo Last build tool version is: $BUILD_TOOL_VERSION
+
+      - name: Restore secrets.properties
+        run: echo "${{ secrets.SECRETS_PROPERTIES }}" | base64 --decode > secrets.properties
+
+      - name: Build Release AAB
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+        run: ./gradlew bundleRelease -Pregion=uganda
+
+      - name: Sign AAB
+        id: sign_aab
+        uses: ilharp/sign-android-release@v2
+        with:
+          releaseDir: app/build/outputs/bundle/release
+          signingKey: ${{ secrets.SIGNING_KEY_UGANDA }}
+          keyAlias: ${{ secrets.KEY_ALIAS_UGANDA }}
+          keyStorePassword: ${{ secrets.KEY_STORE_PASSWORD_UGANDA }}
+          keyPassword: ${{ secrets.KEY_PASSWORD_UGANDA }}
+          buildToolsVersion: ${{ env.BUILD_TOOL_VERSION }}
+
+      - name: Upload Signed AAB
+        uses: actions/upload-artifact@v4
+        with:
+          name: VectorCam-uganda.aab
+          path: ${{ steps.sign_aab.outputs.signedReleaseFile }}
+
+      - name: Build Release APK
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+        run: ./gradlew assembleRelease -Pregion=uganda
+
+      - name: Sign APK
+        id: sign_apk
+        uses: ilharp/sign-android-release@v2
+        with:
+          releaseDir: app/build/outputs/apk/release
+          signingKey: ${{ secrets.SIGNING_KEY_UGANDA }}
+          keyAlias: ${{ secrets.KEY_ALIAS_UGANDA }}
+          keyStorePassword: ${{ secrets.KEY_STORE_PASSWORD_UGANDA }}
+          keyPassword: ${{ secrets.KEY_PASSWORD_UGANDA }}
+          buildToolsVersion: ${{ env.BUILD_TOOL_VERSION }}
+
+      - name: Upload Signed APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: VectorCam-uganda.apk
+          path: ${{ steps.sign_apk.outputs.signedReleaseFile }}

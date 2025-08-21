@@ -1,0 +1,76 @@
+name: Release Build - Colombia
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-and-sign-colombia:
+    name: Build and Sign for Colombia
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x ./gradlew
+
+      - name: Setup build tool version variable
+        shell: bash
+        run: |
+          BUILD_TOOL_VERSION=$(ls /usr/local/lib/android/sdk/build-tools/ | tail -n 1)
+          echo "BUILD_TOOL_VERSION=$BUILD_TOOL_VERSION" >> $GITHUB_ENV
+          echo Last build tool version is: $BUILD_TOOL_VERSION
+
+      - name: Restore secrets.properties
+        run: echo "${{ secrets.SECRETS_PROPERTIES }}" | base64 --decode > secrets.properties
+
+      - name: Build Release AAB
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+        run: ./gradlew bundleRelease -Pregion=colombia
+
+      - name: Sign AAB
+        id: sign_aab
+        uses: ilharp/sign-android-release@v2
+        with:
+          releaseDir: app/build/outputs/bundle/release
+          signingKey: ${{ secrets.SIGNING_KEY_COLOMBIA }}
+          keyAlias: ${{ secrets.KEY_ALIAS_COLOMBIA }}
+          keyStorePassword: ${{ secrets.KEY_STORE_PASSWORD_COLOMBIA }}
+          keyPassword: ${{ secrets.KEY_PASSWORD_COLOMBIA }}
+          buildToolsVersion: ${{ env.BUILD_TOOL_VERSION }}
+
+      - name: Upload Signed AAB
+        uses: actions/upload-artifact@v4
+        with:
+          name: VectorCam-colombia.aab
+          path: ${{ steps.sign_aab.outputs.signedReleaseFile }}
+
+      - name: Build Release APK
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+        run: ./gradlew assembleRelease -Pregion=colombia
+
+      - name: Sign APK
+        id: sign_apk
+        uses: ilharp/sign-android-release@v2
+        with:
+          releaseDir: app/build/outputs/apk/release
+          signingKey: ${{ secrets.SIGNING_KEY_COLOMBIA }}
+          keyAlias: ${{ secrets.KEY_ALIAS_COLOMBIA }}
+          keyStorePassword: ${{ secrets.KEY_STORE_PASSWORD_COLOMBIA }}
+          keyPassword: ${{ secrets.KEY_PASSWORD_COLOMBIA }}
+          buildToolsVersion: ${{ env.BUILD_TOOL_VERSION }}
+
+      - name: Upload Signed APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: VectorCam-colombia.apk
+          path: ${{ steps.sign_apk.outputs.signedReleaseFile }}
