@@ -45,6 +45,8 @@ jobs:
           alias: ${{ secrets.KEY_ALIAS_UGANDA }}
           keyStorePassword: ${{ secrets.KEY_STORE_PASSWORD_UGANDA }}
           keyPassword: ${{ secrets.KEY_PASSWORD_UGANDA }}
+        env:
+          BUILD_TOOLS_VERSION: ${{ env.BUILD_TOOL_VERSION }}
 
       - name: Upload Signed AAB
         uses: actions/upload-artifact@v4
