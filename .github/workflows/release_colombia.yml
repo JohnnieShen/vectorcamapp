@@ -38,13 +38,14 @@ jobs:
 
       - name: Sign AAB
         id: sign_aab
-        uses: r0adkll/sign-android-release@v1
+        uses: ilharp/sign-android-release@v2
         with:
-          releaseDirectory: app/build/outputs/bundle/release
-          signingKeyBase64: ${{ secrets.SIGNING_KEY_COLOMBIA }}
-          alias: ${{ secrets.KEY_ALIAS_COLOMBIA }}
+          releaseDir: app/build/outputs/bundle/release
+          signingKey: ${{ secrets.SIGNING_KEY_COLOMBIA }}
+          keyAlias: ${{ secrets.KEY_ALIAS_COLOMBIA }}
           keyStorePassword: ${{ secrets.KEY_STORE_PASSWORD_COLOMBIA }}
           keyPassword: ${{ secrets.KEY_PASSWORD_COLOMBIA }}
+          buildToolsVersion: ${{ env.BUILD_TOOL_VERSION }}
 
       - name: Upload Signed AAB
         uses: actions/upload-artifact@v4
@@ -59,15 +60,14 @@ jobs:
 
       - name: Sign APK
         id: sign_apk
-        uses: r0adkll/sign-android-release@v1
+        uses: ilharp/sign-android-release@v2
         with:
-          releaseDirectory: app/build/outputs/apk/release
-          signingKeyBase64: ${{ secrets.SIGNING_KEY_COLOMBIA }}
-          alias: ${{ secrets.KEY_ALIAS_COLOMBIA }}
+          releaseDir: app/build/outputs/apk/release
+          signingKey: ${{ secrets.SIGNING_KEY_COLOMBIA }}
+          keyAlias: ${{ secrets.KEY_ALIAS_COLOMBIA }}
           keyStorePassword: ${{ secrets.KEY_STORE_PASSWORD_COLOMBIA }}
           keyPassword: ${{ secrets.KEY_PASSWORD_COLOMBIA }}
-        env:
-          BUILD_TOOLS_VERSION: ${{ env.BUILD_TOOL_VERSION }}
+          buildToolsVersion: ${{ env.BUILD_TOOL_VERSION }}
 
       - name: Upload Signed APK
         uses: actions/upload-artifact@v4
