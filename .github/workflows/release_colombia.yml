@@ -25,6 +25,8 @@ jobs:
         run: echo "${{ secrets.SECRETS_PROPERTIES }}" | base64 --decode > secrets.properties
 
       - name: Build Release AAB
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
         run: ./gradlew bundleRelease -Pregion=colombia
 
       - name: Sign AAB
@@ -44,6 +46,8 @@ jobs:
           path: ${{ steps.sign_aab.outputs.signedReleaseFile }}
 
       - name: Build Release APK
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
         run: ./gradlew assembleRelease -Pregion=colombia
 
       - name: Sign APK
