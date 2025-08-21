@@ -8,7 +8,7 @@ import com.vci.vectorcamapp.core.data.room.entities.SpecimenEntity
 data class SessionWithSpecimensRelation(
     @Embedded val sessionEntity: SessionEntity,
     @Relation(
-        parentColumn = "id",
+        parentColumn = "localId",
         entityColumn = "sessionId"
     )
     val specimenEntities: List<SpecimenEntity>

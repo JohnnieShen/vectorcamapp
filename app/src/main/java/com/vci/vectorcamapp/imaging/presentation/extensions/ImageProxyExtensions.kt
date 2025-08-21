@@ -4,20 +4,11 @@ import android.graphics.Bitmap
 import android.graphics.Matrix
 import androidx.camera.core.ImageProxy
 
-fun ImageProxy.toUprightBitmap() : Bitmap {
-    val rotationDegrees = this.imageInfo.rotationDegrees.toFloat()
-
+fun ImageProxy.toUprightBitmap(): Bitmap {
+    val bitmap = this.toBitmap()
     val matrix = Matrix().apply {
-        postRotate(rotationDegrees)
+        postRotate(90f, bitmap.width / 2f, bitmap.height / 2f)
     }
 
-    return Bitmap.createBitmap(
-        this.toBitmap(),
-        0,
-        0,
-        this.width,
-        this.height,
-        matrix,
-        true,
-    )
+    return Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true)
 }

@@ -1,61 +1,98 @@
 package com.vci.vectorcamapp.navigation
 
-import android.widget.Toast
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.vci.vectorcamapp.animation.presentation.LoadingAnimation
+import com.vci.vectorcamapp.complete_session.details.presentation.CompleteSessionDetailsEvent
+import com.vci.vectorcamapp.complete_session.details.presentation.CompleteSessionDetailsScreen
+import com.vci.vectorcamapp.complete_session.details.presentation.CompleteSessionDetailsViewModel
+import com.vci.vectorcamapp.complete_session.list.presentation.CompleteSessionListEvent
+import com.vci.vectorcamapp.complete_session.list.presentation.CompleteSessionListScreen
+import com.vci.vectorcamapp.complete_session.list.presentation.CompleteSessionListViewModel
+import com.vci.vectorcamapp.core.presentation.components.scaffold.BaseScaffold
 import com.vci.vectorcamapp.core.presentation.util.ObserveAsEvents
-import com.vci.vectorcamapp.imaging.presentation.util.toString
 import com.vci.vectorcamapp.imaging.presentation.ImagingEvent
 import com.vci.vectorcamapp.imaging.presentation.ImagingScreen
 import com.vci.vectorcamapp.imaging.presentation.ImagingViewModel
+import com.vci.vectorcamapp.incomplete_session.presentation.IncompleteSessionEvent
+import com.vci.vectorcamapp.incomplete_session.presentation.IncompleteSessionScreen
+import com.vci.vectorcamapp.incomplete_session.presentation.IncompleteSessionViewModel
 import com.vci.vectorcamapp.landing.presentation.LandingEvent
 import com.vci.vectorcamapp.landing.presentation.LandingScreen
 import com.vci.vectorcamapp.landing.presentation.LandingViewModel
-import com.vci.vectorcamapp.animation.presentation.LoadingAnimation
-import com.vci.vectorcamapp.incomplete_session.presentation.IncompleteSessionScreen
-import com.vci.vectorcamapp.incomplete_session.presentation.IncompleteSessionViewModel
-import com.vci.vectorcamapp.surveillance_form.presentation.SurveillanceFormEvent
-import com.vci.vectorcamapp.surveillance_form.presentation.SurveillanceFormScreen
-import com.vci.vectorcamapp.surveillance_form.presentation.SurveillanceFormViewModel
+import com.vci.vectorcamapp.registration.presentation.RegistrationEvent
+import com.vci.vectorcamapp.registration.presentation.RegistrationScreen
+import com.vci.vectorcamapp.registration.presentation.RegistrationViewModel
+import com.vci.vectorcamapp.intake.presentation.IntakeEvent
+import com.vci.vectorcamapp.intake.presentation.IntakeScreen
+import com.vci.vectorcamapp.intake.presentation.IntakeViewModel
+import com.vci.vectorcamapp.main.presentation.SplashScreen
 
 @Composable
-fun NavGraph() {
+fun NavGraph(startDestination: Destination) {
     val navController = rememberNavController()
 
     NavHost(
-        navController = navController, startDestination = Destination.Landing
+        navController = navController, startDestination = startDestination
     ) {
+        composable<Destination.Registration> {
+            val viewModel = hiltViewModel<RegistrationViewModel>()
+            val state by viewModel.state.collectAsStateWithLifecycle()
+
+            ObserveAsEvents(events = viewModel.events) { event ->
+                when (event) {
+                    RegistrationEvent.NavigateToLandingScreen -> {
+                        navController.navigate(Destination.Landing) {
+                            popUpTo(Destination.Registration) { inclusive = true }
+                        }
+                    }
+                }
+            }
+
+            BaseScaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
+                RegistrationScreen(
+                    state = state,
+                    onAction = viewModel::onAction,
+                    modifier = Modifier.padding(innerPadding)
+                )
+            }
+        }
+
         composable<Destination.Landing> {
             val viewModel = hiltViewModel<LandingViewModel>()
             val state by viewModel.state.collectAsStateWithLifecycle()
 
             ObserveAsEvents(events = viewModel.events) { event ->
                 when (event) {
-                    LandingEvent.NavigateToNewSurveillanceSessionScreen -> navController.navigate(
-                        Destination.SurveillanceForm
+                    is LandingEvent.NavigateToIntakeScreen -> navController.navigate(
+                        Destination.Intake(event.sessionType)
                     )
 
                     LandingEvent.NavigateToIncompleteSessionsScreen -> navController.navigate(
                         Destination.IncompleteSession
                     )
+
+                    LandingEvent.NavigateToCompleteSessionsScreen -> navController.navigate(
+                        Destination.CompleteSessionList
+                    )
+
+                    LandingEvent.NavigateBackToRegistrationScreen -> navController.popBackStack(
+                        Destination.Registration, false
+                    )
                 }
             }
 
-            Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
+            BaseScaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                 when (state.isLoading) {
-                    true -> LoadingAnimation(
-                        text = "Loading...", modifier = Modifier.padding(innerPadding)
-                    )
+                    true -> SplashScreen(modifier = Modifier.fillMaxSize())
 
                     false -> LandingScreen(
                         state = state,
@@ -65,30 +102,34 @@ fun NavGraph() {
                 }
             }
         }
-        composable<Destination.SurveillanceForm> {
-            // TODO: UPON PRESSING THE BACK BUTTON, SHOULD CLEAR THE CACHE!
-            val viewModel = hiltViewModel<SurveillanceFormViewModel>()
+
+        composable<Destination.Intake> {
+            val viewModel = hiltViewModel<IntakeViewModel>()
             val state by viewModel.state.collectAsStateWithLifecycle()
 
             ObserveAsEvents(events = viewModel.events) { event ->
                 when (event) {
-                    SurveillanceFormEvent.NavigateToImagingScreen -> navController.navigate(
+                    IntakeEvent.NavigateToImagingScreen -> navController.navigate(
                         Destination.Imaging
                     )
 
-                    SurveillanceFormEvent.NavigateBackToLandingScreen -> {
-                        navController.popBackStack(Destination.Landing, false)
-                    }
+                    IntakeEvent.NavigateBackToLandingScreen -> navController.popBackStack(
+                        Destination.Landing, false
+                    )
+
+                    IntakeEvent.NavigateBackToRegistrationScreen -> navController.popBackStack(
+                        Destination.Registration, false
+                    )
                 }
             }
 
-            Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
+            BaseScaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                 when (state.isLoading) {
                     true -> LoadingAnimation(
                         text = "Loading...", modifier = Modifier.padding(innerPadding)
                     )
 
-                    false -> SurveillanceFormScreen(
+                    false -> IntakeScreen(
                         state = state,
                         onAction = viewModel::onAction,
                         modifier = Modifier.padding(innerPadding)
@@ -96,39 +137,93 @@ fun NavGraph() {
                 }
             }
         }
+
         composable<Destination.Imaging> {
-            val context = LocalContext.current
             val viewModel = hiltViewModel<ImagingViewModel>()
             val state by viewModel.state.collectAsStateWithLifecycle()
 
             ObserveAsEvents(events = viewModel.events) { event ->
                 when (event) {
-                    is ImagingEvent.DisplayImagingError -> {
-                        Toast.makeText(context, event.error.toString(context), Toast.LENGTH_LONG)
-                            .show()
-                    }
-
                     ImagingEvent.NavigateBackToLandingScreen -> {
                         navController.popBackStack(Destination.Landing, false)
                     }
                 }
             }
 
-            Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                ImagingScreen(
+            BaseScaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
+                when (state.isLoading) {
+                    true -> LoadingAnimation(
+                        text = "Loading specimens...", modifier = Modifier.padding(innerPadding)
+                    )
+                    
+                    false -> ImagingScreen(
+                        state = state,
+                        onAction = viewModel::onAction,
+                        modifier = Modifier.padding(innerPadding)
+                    )
+                }
+            }
+        }
+
+        composable<Destination.IncompleteSession> {
+            val viewModel = hiltViewModel<IncompleteSessionViewModel>()
+            val state by viewModel.state.collectAsStateWithLifecycle()
+
+            ObserveAsEvents(events = viewModel.events) { event ->
+                when (event) {
+                    IncompleteSessionEvent.NavigateBackToLandingScreen -> navController.popBackStack()
+
+                    is IncompleteSessionEvent.NavigateToIntakeScreen ->
+                        navController.navigate(Destination.Intake(event.sessionType))
+                }
+            }
+
+            BaseScaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
+                IncompleteSessionScreen(
                     state = state,
                     onAction = viewModel::onAction,
                     modifier = Modifier.padding(innerPadding)
                 )
             }
         }
-        composable<Destination.IncompleteSession> {
-            val viewModel = hiltViewModel<IncompleteSessionViewModel>()
+
+        composable<Destination.CompleteSessionList> {
+            val viewModel = hiltViewModel<CompleteSessionListViewModel>()
             val state by viewModel.state.collectAsStateWithLifecycle()
 
-            Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                IncompleteSessionScreen(
+            ObserveAsEvents(events = viewModel.events) { event ->
+                when (event) {
+                    CompleteSessionListEvent.NavigateBackToLandingScreen -> navController.popBackStack()
+
+                    is CompleteSessionListEvent.NavigateToCompleteSessionDetails -> navController.navigate(
+                        Destination.CompleteSessionDetails(event.sessionId.toString())
+                    )
+                }
+            }
+
+            BaseScaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
+                CompleteSessionListScreen(
                     state = state,
+                    onAction = viewModel::onAction,
+                    modifier = Modifier.padding(innerPadding)
+                )
+            }
+        }
+
+        composable<Destination.CompleteSessionDetails> {
+            val viewModel = hiltViewModel<CompleteSessionDetailsViewModel>()
+            val state by viewModel.state.collectAsStateWithLifecycle()
+
+            ObserveAsEvents(events = viewModel.events) { event ->
+                when (event) {
+                    CompleteSessionDetailsEvent.NavigateBackToCompleteSessionListScreen -> navController.popBackStack()
+                }
+            }
+
+            BaseScaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
+                CompleteSessionDetailsScreen(
+                    state = state,
+                    onAction = viewModel::onAction,
                     modifier = Modifier.padding(innerPadding)
                 )
             }

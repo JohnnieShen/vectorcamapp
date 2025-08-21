@@ -1,158 +1,131 @@
 package com.vci.vectorcamapp.landing.presentation
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.material3.Badge
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.PreviewLightDark
-import androidx.compose.ui.unit.dp
+import com.vci.vectorcamapp.R
+import com.vci.vectorcamapp.core.presentation.components.header.ScreenHeader
+import com.vci.vectorcamapp.landing.presentation.components.LandingActionTile
+import com.vci.vectorcamapp.landing.presentation.components.LandingSection
+import com.vci.vectorcamapp.landing.presentation.util.LandingTestTags
+import com.vci.vectorcamapp.ui.extensions.colors
+import com.vci.vectorcamapp.ui.extensions.dimensions
 import com.vci.vectorcamapp.ui.theme.VectorcamappTheme
 
 @Composable
 fun LandingScreen(
-    state: LandingState, onAction: (LandingAction) -> Unit, modifier: Modifier = Modifier
+    state: LandingState,
+    onAction: (LandingAction) -> Unit,
+    modifier: Modifier = Modifier
 ) {
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(16.dp), // Padding for the overall layout
-        verticalArrangement = Arrangement.SpaceEvenly, // Spread content vertically
-        horizontalAlignment = Alignment.CenterHorizontally
+    ScreenHeader(
+        title = "Welcome to VectorCam!",
+        subtitle = "Program: ${state.enrolledProgram.name}",
+        modifier = modifier.testTag(LandingTestTags.SCREEN)
     ) {
-        // Title Section
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text(
-                text = "VectorCam",
-                style = MaterialTheme.typography.displayLarge,
-                color = MaterialTheme.colorScheme.onBackground,
-                fontWeight = FontWeight.ExtraBold,
-            )
-            Spacer(modifier = Modifier.height(16.dp)) // Space below title
-            Text(
-                text = "Democratizing Vector Surveillance",
-                style = MaterialTheme.typography.headlineMedium,
-                color = MaterialTheme.colorScheme.onBackground,
-                textAlign = TextAlign.Center // Align the text content to the center
-            )
-        }
-
-        // Buttons Section
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(32.dp) // Add spacing between buttons
-        ) {
-            // Surveillance Button
-            Button(
-                onClick = { onAction(LandingAction.StartNewSurveillanceSession) },
-                modifier = Modifier
-                    .fillMaxWidth(0.8f)
-                    .height(60.dp), // Larger height for the button
-                shape = MaterialTheme.shapes.medium, // Rounded rectangle shape
+        item {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(MaterialTheme.dimensions.spacingMedium),
+                modifier = Modifier.padding(top = MaterialTheme.dimensions.spacingMedium)
             ) {
-                Text(
-                    text = "New Surveillance Session",
-                    style = MaterialTheme.typography.bodyLarge,
-                    fontWeight = FontWeight.Bold,
-                )
-            }
+                LandingSection(
+                    title = "Imaging",
+                    testTag = LandingTestTags.SECTION_IMAGING
+                ) {
+                    LandingActionTile(
+                        title = "New Surveillance Session",
+                        description = "Begin a new household visit and capture mosquito images.",
+                        icon = painterResource(R.drawable.ic_specimen),
+                        onClick = { onAction(LandingAction.StartNewSurveillanceSession) },
+                        testTag = LandingTestTags.TILE_NEW_SURVEILLANCE
+                    )
 
-            // Non-Surveillance Button
-            Button(
-                onClick = { onAction(LandingAction.StartNewNonSurveillanceSession) },
-                modifier = Modifier
-                    .fillMaxWidth(0.8f)
-                    .height(60.dp), // Larger height for the button
-                shape = MaterialTheme.shapes.medium, // Rounded rectangle shape
-            ) {
-                Text(
-                    text = "New Non-Surveillance Session",
-                    style = MaterialTheme.typography.bodyLarge,
-                    fontWeight = FontWeight.Bold,
-                )
-            }
+                    LandingActionTile(
+                        title = "Data Collection Mode",
+                        description = "Capture and upload mosquito images without filling forms.",
+                        icon = painterResource(R.drawable.ic_database),
+                        onClick = { onAction(LandingAction.StartNewDataCollectionSession) },
+                        testTag = LandingTestTags.TILE_DATA_COLLECTION
+                    )
+                }
 
-            // Incomplete Sessions Button with Badge
-            OutlinedButton(
-                onClick = { onAction(LandingAction.ViewIncompleteSessions) },
-                modifier = Modifier
-                    .fillMaxWidth(0.8f)
-                    .height(60.dp), // Larger height for the button
-                shape = MaterialTheme.shapes.medium, // Rounded rectangle shape
-                colors = ButtonDefaults.outlinedButtonColors(
-                    contentColor = MaterialTheme.colorScheme.secondary // Text color matches border
-                ),
-                border = BorderStroke(
-                    2.dp, MaterialTheme.colorScheme.secondary
-                ) // Custom border
-            ) {
-                Text(
-                    text = "View Incomplete Sessions",
-                    style = MaterialTheme.typography.bodyLarge,
-                    fontWeight = FontWeight.Bold,
-                )
-                Spacer(modifier = Modifier.width(8.dp)) // Space between text and badge
-                if (state.incompleteSessions.isNotEmpty()) {
-                    Badge(
-                        containerColor = MaterialTheme.colorScheme.error,
-                        contentColor = MaterialTheme.colorScheme.onError,
-                        modifier = Modifier.size(24.dp, 24.dp)
-                    ) {
-                        Text(
-                            text = "${state.incompleteSessions.size}",
-                            style = MaterialTheme.typography.bodySmall,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
+                LandingSection(
+                    title = "Library",
+                    testTag = LandingTestTags.SECTION_LIBRARY
+                ) {
+                    LandingActionTile(
+                        title = "View Incomplete Sessions",
+                        description = "Resume and complete any unfinished sessions.",
+                        icon = painterResource(R.drawable.ic_minus_circle),
+                        onClick = { onAction(LandingAction.ViewIncompleteSessions) },
+                        badgeCount = state.incompleteSessionsCount,
+                        testTag = LandingTestTags.TILE_INCOMPLETE,
+                    )
+
+                    LandingActionTile(
+                        title = "View Complete Sessions",
+                        description = "Review fully completed sessions and uploaded data.",
+                        icon = painterResource(R.drawable.ic_complete),
+                        onClick = { onAction(LandingAction.ViewCompleteSessions) },
+                        testTag = LandingTestTags.TILE_COMPLETE
+                    )
                 }
             }
-
-            // Complete Sessions Button
-            OutlinedButton(
-                onClick = { onAction(LandingAction.ViewCompleteSessions) },
-                modifier = Modifier
-                    .fillMaxWidth(0.8f)
-                    .height(60.dp), // Larger height for the button
-                shape = MaterialTheme.shapes.medium, // Rounded rectangle shape
-                colors = ButtonDefaults.outlinedButtonColors(
-                    contentColor = MaterialTheme.colorScheme.secondary // Text color matches border
-                ),
-                border = BorderStroke(
-                    2.dp, MaterialTheme.colorScheme.secondary
-                ) // Custom border
-            ) {
-                Text(
-                    text = "View Complete Sessions",
-                    style = MaterialTheme.typography.bodyLarge,
-                    fontWeight = FontWeight.Bold,
-                )
-            }
         }
+    }
 
-        // Footer Section
-        Text(
-            text = "Version: ${state.versionName}",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onBackground,
+    if (state.showResumeDialog) {
+        AlertDialog(
+            onDismissRequest = { onAction(LandingAction.DismissResumePrompt) },
+            title = {
+                Text(
+                    text = "Resume unfinished session?",
+                    style = MaterialTheme.typography.headlineMedium,
+                    color = MaterialTheme.colors.textPrimary
+                )
+            },
+            text = {
+                Text(
+                    text = "You have an incomplete surveillance session. Resume where you left off?",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colors.textSecondary
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = { onAction(LandingAction.ResumeSession) },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colors.successConfirm
+                    ),
+                    modifier = Modifier.testTag(LandingTestTags.RESUME_CONFIRM)
+                ) {
+                    Text(
+                        text = "Yes, resume",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colors.buttonText
+                    )
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { onAction(LandingAction.DismissResumePrompt) },
+                    modifier = Modifier.testTag(LandingTestTags.RESUME_DISMISS)
+                ) {
+                    Text(
+                        text = "No, start new",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colors.error
+                    )
+                }
+            },
+            modifier = Modifier.testTag(LandingTestTags.RESUME_DIALOG)
         )
     }
 }
@@ -163,7 +136,9 @@ fun LandingScreenPreview() {
     VectorcamappTheme {
         Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
             LandingScreen(
-                state = LandingState(), onAction = { }, modifier = Modifier.padding(innerPadding)
+                state = LandingState(),
+                onAction = {},
+                modifier = Modifier.padding(innerPadding)
             )
         }
     }

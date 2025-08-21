@@ -6,13 +6,16 @@ import androidx.camera.core.ImageProxy
 class SpecimenImageAnalyzer(
     private val onFrameReady: (ImageProxy) -> Unit
 ) : ImageAnalysis.Analyzer {
+    companion object {
+        const val FRAME_SKIP_RATE = 15
+    }
 
     private var frameCounter = 0
 
     override fun analyze(frame: ImageProxy) {
-        if (frameCounter % 30 == 0) {
+        if (frameCounter % FRAME_SKIP_RATE == 0) {
             onFrameReady(frame)
-            frameCounter = 1
+            frameCounter = 0
         } else {
             frame.close()
             frameCounter++

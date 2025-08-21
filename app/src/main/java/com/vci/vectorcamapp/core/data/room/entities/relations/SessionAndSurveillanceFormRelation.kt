@@ -8,8 +8,8 @@ import com.vci.vectorcamapp.core.data.room.entities.SurveillanceFormEntity
 data class SessionAndSurveillanceFormRelation(
     @Embedded val sessionEntity: SessionEntity,
     @Relation(
-        parentColumn = "id",
+        parentColumn = "localId",
         entityColumn = "sessionId"
     )
-    val surveillanceFormEntity: SurveillanceFormEntity
+    val surveillanceFormEntity: SurveillanceFormEntity?
 )

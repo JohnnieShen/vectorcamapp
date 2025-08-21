@@ -31,7 +31,14 @@ build/
 .navigation
 captures/
 output.json
+app/release/
 
 #NDK
 obj/
 .externalNativeBuild
+
+# Sentry Config File
+sentry.properties
+
+# Secrets Config File
+secrets.properties

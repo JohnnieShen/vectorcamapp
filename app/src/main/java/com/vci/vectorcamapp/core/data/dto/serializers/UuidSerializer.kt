@@ -9,8 +9,8 @@ import kotlinx.serialization.encoding.Encoder
 import java.util.UUID
 
 object UuidSerializer : KSerializer<UUID> {
-    override val descriptor: SerialDescriptor =
-        PrimitiveSerialDescriptor("UUID", PrimitiveKind.STRING)
+    override val descriptor: SerialDescriptor
+        get() = PrimitiveSerialDescriptor("UUID", PrimitiveKind.STRING)
 
     override fun serialize(encoder: Encoder, value: UUID) {
         encoder.encodeString(value.toString())
