@@ -46,5 +46,5 @@ class VectorCamApp : Application(), Configuration.Provider {
         postHogConfig.optOut = BuildConfig.DEBUG
 
         PostHogAndroid.setup(this, postHogConfig)
-    }
+    } 
 }
