@@ -2,7 +2,7 @@ name: CI Checks
 
 on:
   pull_request:
-    branches: [ "main" ]
+    branches: [ "develop" ]
 
 jobs:
   lint:
